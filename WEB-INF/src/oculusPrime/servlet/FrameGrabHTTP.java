@@ -1,4 +1,4 @@
-package oculusPrime;
+package oculusPrime.servlet;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
@@ -26,6 +26,7 @@ import developer.Navigation;
 import developer.Ros;
 import developer.depth.Mapper;
 import developer.depth.ScanUtils;
+import oculusPrime.*;
 import oculusPrime.State.values;
 
 @SuppressWarnings("serial")
@@ -36,7 +37,7 @@ import oculusPrime.State.values;
 public class FrameGrabHTTP extends HttpServlet {
 	
 	private static State state = State.getReference();
-	private static BanList ban = BanList.getRefrence();  // TODO: PULL DATA FROM LOG FILES 
+	private static BanList ban = BanList.getRefrence();  // TODO: PULL DATA FROM LOG FILES
 	private static BufferedImage batteryImage = null;
 	private static RenderedImage cpuImage = null;
 	private static BufferedImage radarImage = null;

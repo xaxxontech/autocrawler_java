@@ -1,4 +1,6 @@
-package oculusPrime;
+package oculusPrime.servlet;
+
+import oculusPrime.Settings;
 
 import java.io.IOException;
 import java.io.PrintWriter;

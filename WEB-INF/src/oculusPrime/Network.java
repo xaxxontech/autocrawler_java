@@ -179,7 +179,7 @@ public class Network {
 //                    + " " + comport.maxclickcam
 //                    + " " + comport.fullrotationdelay + " " + comport.onemeterdelay + " "
 //                    + settings.readSetting(GUISettings.steeringcomp.name()) + " "
-//                    + ArduinoPrime.CAM_HORIZ + " " + ArduinoPrime.CAM_REVERSE;
+//                    + Malg.CAM_HORIZ + " " + Malg.CAM_REVERSE;
 //            sendplayerfunction("drivingsettingsdisplay", str);
 
         String[] networksinrange = new String[0];

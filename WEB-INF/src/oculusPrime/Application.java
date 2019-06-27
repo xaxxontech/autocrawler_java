@@ -10,6 +10,10 @@ import java.nio.channels.FileChannel;
 import java.util.Collection;
 import java.util.Set;
 
+import oculusPrime.commport.Malg;
+import oculusPrime.servlet.CommServlet;
+import oculusPrime.servlet.DashboardServlet;
+import oculusPrime.servlet.FrameGrabHTTP;
 import org.jasypt.util.password.ConfigurablePasswordEncryptor;
 import org.red5.server.adapter.MultiThreadedApplicationAdapter;
 import org.red5.server.api.IConnection;
@@ -25,8 +29,7 @@ import developer.image.OpenCVMotionDetect;
 import developer.image.OpenCVObjectDetect;
 import developer.image.OpenCVUtils;
 import oculusPrime.State.values;
-import oculusPrime.commport.ArduinoPower;
-import oculusPrime.commport.ArduinoPrime;
+import oculusPrime.commport.Power;
 import oculusPrime.commport.PowerLogger;
 
 
@@ -63,8 +66,8 @@ public class Application extends MultiThreadedApplicationAdapter {
 	private AutoDock docker = null;
 	public Video video = null;
 
-	public ArduinoPrime comport = null;
-	public ArduinoPower powerport = null;
+	public Malg comport = null;
+	public Power powerport = null;
 	public TelnetServer commandServer = null;
 	
 	public static developer.depth.OpenNIRead openNIRead = null;
@@ -93,7 +96,8 @@ public class Application extends MultiThreadedApplicationAdapter {
 		passwordEncryptor.setAlgorithm("SHA-1");
 		passwordEncryptor.setPlainDigest(true);
 		loginRecords = LoginRecords.getReference();
-		DashboardServlet.setApp(this);
+        CommServlet.setApp(this);
+        DashboardServlet.setApp(this);
 		FrameGrabHTTP.setApp(this);
 		initialize();
 
@@ -326,8 +330,8 @@ public class Application extends MultiThreadedApplicationAdapter {
 //			settings.newSetting("pass0", encryptedPassword);
 		}
 
-		comport = new ArduinoPrime(this);   // note: blocking
-		powerport = new ArduinoPower(this); // note: blocking
+		comport = new Malg(this);   // note: blocking
+		powerport = new Power(this); // note: blocking
 
 		state.set(State.values.httpport, settings.readRed5Setting("http.port"));
 		initialstatuscalled = false;
@@ -343,8 +347,8 @@ public class Application extends MultiThreadedApplicationAdapter {
 
 		// OpenCV, requires restart if ubuntu 14.04 running, with jar file targeted at 16.04 was present
 		OpenCVUtils ocv = new OpenCVUtils(this);
-//		ocv.loadOpenCVnativeLib();
-		if (ocv.jarfiledeleted) restart();
+		ocv.loadOpenCVnativeLib();
+//		if (ocv.jarfiledeleted) restart();
 
 		Util.setSystemVolume(settings.getInteger(GUISettings.volume));
 		state.set(State.values.volume, settings.getInteger(GUISettings.volume));
@@ -532,6 +536,29 @@ public class Application extends MultiThreadedApplicationAdapter {
 		}
 	}
 
+	// nonflash xmlhttp clients only TODO: multiple clients + relay omitted, set xmlhttpclient flag here
+	public void driverSignIn(String username) {
+	    Util.log("driver sign in: "+username, this);
+        state.set(State.values.driver, username);
+
+        String str = "connection connected user " + username;
+        str += " streamsettings " + streamSettings();
+        if (authtoken != null) {
+            str += " storecookie " + authtoken;
+            authtoken = null;
+        }
+        messageplayer(username + " connected to OCULUS PRIME", "multiple", str);
+        initialstatuscalled = false;
+
+        loginRecords.beDriver();
+
+        if (settings.getBoolean(GUISettings.loginnotify)) {
+            saySpeech("lawg inn " + state.get(State.values.driver));
+        }
+
+        watchdog.lastpowererrornotify = null; // new driver not notified of any errors yet
+    }
+
 	public void driverCallServer(PlayerCommands fn, String str) {
 		playerCallServer(fn, str, true);
 	}
@@ -599,14 +626,14 @@ public class Application extends MultiThreadedApplicationAdapter {
 			if (settings.getBoolean(GUISettings.navigation)) navigation.navdockactive = false;
 
 			if (state.exists(State.values.navigationroute) && !passengerOverride && 
-					str.equals(ArduinoPrime.direction.stop.toString())) {
+					str.equals(Malg.direction.stop.toString())) {
 				messageplayer("navigation route "+state.get(State.values.navigationroute)+" cancelled by stop", null, null);
 				navigation.navlog.newItem(NavigationLog.INFOSTATUS, "Route cancelled by user",
 						Navigation.routestarttime, null, state.get(values.navigationroute),
 						Navigation.consecutiveroute, 0);
 				navigation.cancelAllRoutes();
 			}
-			else if (state.exists(State.values.roscurrentgoal) && !passengerOverride && str.equals(ArduinoPrime.direction.stop.toString())) {
+			else if (state.exists(State.values.roscurrentgoal) && !passengerOverride && str.equals(Malg.direction.stop.toString())) {
 				Navigation.goalCancel();
 				messageplayer("navigation goal cancelled by stop", null, null);
 			}
@@ -623,7 +650,7 @@ public class Application extends MultiThreadedApplicationAdapter {
 				messageplayer("command dropped, autodocking", null, null);
 				return;
 			}
-			comport.camCommand(ArduinoPrime.cameramove.valueOf(str));
+			comport.camCommand(Malg.cameramove.valueOf(str));
 			break;
 //		case camtiltfast: comport.cameraToPosition(Integer.parseInt(str)); break;
 		case camtilt: comport.camtilt(Integer.parseInt(str)); break;
@@ -744,8 +771,8 @@ public class Application extends MultiThreadedApplicationAdapter {
 				break;
 			}
 			moveMacroCancel();
-			comport.rotate(ArduinoPrime.direction.valueOf(fn.toString()), Double.parseDouble(str));
-			messageplayer(ArduinoPrime.direction.valueOf(fn.toString())+" " + str+"&deg;", "motion", "moving");
+			comport.rotate(Malg.direction.valueOf(fn.toString()), Double.parseDouble(str));
+			messageplayer(Malg.direction.valueOf(fn.toString())+" " + str+"&deg;", "motion", "moving");
 			break;
 
 		case rotate:
@@ -773,8 +800,8 @@ public class Application extends MultiThreadedApplicationAdapter {
 				break;
 			}
 			moveMacroCancel();
-			comport.movedistance(ArduinoPrime.direction.valueOf(fn.toString()),Double.parseDouble(str));
-			messageplayer(ArduinoPrime.direction.valueOf(fn.toString())+" " + str+"m", "motion", "moving");
+			comport.movedistance(Malg.direction.valueOf(fn.toString()),Double.parseDouble(str));
+			messageplayer(Malg.direction.valueOf(fn.toString())+" " + str+"m", "motion", "moving");
 			break;
 
 		case arcmove:
@@ -1429,6 +1456,9 @@ public class Application extends MultiThreadedApplicationAdapter {
 			IServiceCapableConnection sc = (IServiceCapableConnection) player;
 			sc.invoke("message", new Object[] { str, "green", status, value });
 		}
+		else {
+            CommServlet.sendToClient(str, "green", status, value );
+        }
 		
 		if(commandServer!=null) {
 			if(str!=null){
@@ -1740,7 +1770,7 @@ public class Application extends MultiThreadedApplicationAdapter {
 
 	private void move(final String str) {
 
-		if (str.equals(ArduinoPrime.direction.stop.name())) {
+		if (str.equals(Malg.direction.stop.name())) {
 			if (state.getBoolean(State.values.autodocking))
 				docker.autoDockCancel();
 			state.set(values.calibratingrotation, false);
@@ -1758,13 +1788,13 @@ public class Application extends MultiThreadedApplicationAdapter {
 			return;
 		}
 		
-		if (str.equals(ArduinoPrime.direction.forward.toString())) {
+		if (str.equals(Malg.direction.forward.toString())) {
 			if (!state.getBoolean(State.values.motionenabled)) state.set(State.values.motionenabled, true);
 			comport.goForward();
 			return;
 		}
 
-		if (str.equals(ArduinoPrime.direction.backward.toString()) && state.getBoolean(values.controlsinverted)) {
+		if (str.equals(Malg.direction.backward.toString()) && state.getBoolean(values.controlsinverted)) {
 			if (!state.getBoolean(State.values.motionenabled)) state.set(State.values.motionenabled, true);
 			comport.goBackward();
 			return;
@@ -1777,7 +1807,7 @@ public class Application extends MultiThreadedApplicationAdapter {
 		
 		moveMacroCancel();
 		
-		ArduinoPrime.direction dir = ArduinoPrime.direction.valueOf(str);
+		Malg.direction dir = Malg.direction.valueOf(str);
 		switch (dir) {
 			case backward: comport.goBackward(); break;
 			case right: comport.turnRight(); break;
@@ -1801,7 +1831,7 @@ public class Application extends MultiThreadedApplicationAdapter {
 			return;
 		}
 
-		comport.nudge(ArduinoPrime.direction.valueOf(str));
+		comport.nudge(Malg.direction.valueOf(str));
 		messageplayer("command received: nudge " + str, null, null);
 		if (state.getBoolean(State.values.docking)	|| state.getBoolean(State.values.autodocking)) moveMacroCancel();
 	}
@@ -1851,25 +1881,35 @@ public class Application extends MultiThreadedApplicationAdapter {
 		}
 	}
 
-	private String logintest(String user, String pass) {
+	public String logintest(String user, String pass, String remember) {
+        String encryptedPassword = (passwordEncryptor.encryptPassword(user + salt + pass)).trim();
+
+        if(logintest(user, encryptedPassword) == null) return null;
+
+        if (remember.equals("remember")) authtoken = encryptedPassword;
+	    return user;
+    }
+
+	public String logintest(String user, String encryptedpass) {
+	    Util.debug("logintest user: "+user+", encryptedpass: "+encryptedpass, this);
 		int i;
 		String value = "";
 		String returnvalue = null;
-		if (user.equals("")) {
+		if (user.equals("")) { // cookie login
 			i = 0;
 			while (true) {
 				value = settings.readSetting("pass" + i);
 				if (value == null) {
 					break;
 				} else {
-					if (value.equals(pass)) {
+					if (value.equals(encryptedpass)) {
 						returnvalue = settings.readSetting("user" + i);
 						break;
 					}
 				}
 				i++;
 			}
-		} else {
+		} else { // user, pass login
 			i = 0;
 			while (true) {
 				value = settings.readSetting("user" + i);
@@ -1877,7 +1917,7 @@ public class Application extends MultiThreadedApplicationAdapter {
 					break;
 				} else {
 					if (value.equals(user)) {
-						if ((settings.readSetting("pass" + i)).equals(pass)) {
+						if ((settings.readSetting("pass" + i)).equals(encryptedpass)) {
 							returnvalue = user;
 						}
 						break;

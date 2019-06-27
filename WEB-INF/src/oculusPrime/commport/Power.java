@@ -11,7 +11,7 @@ import jssc.SerialPortException;
 import jssc.SerialPortList;
 import oculusPrime.*;
 
-public class ArduinoPower implements SerialPortEventListener  {
+public class Power implements SerialPortEventListener  {
 
 	public static final double FIRMWARE_VERSION_REQUIREDV1 = 0.957; // trailing zeros ignored!
 	public static final String FIRMWARE_IDV1 = "oculusPower";
@@ -71,7 +71,7 @@ public class ArduinoPower implements SerialPortEventListener  {
 	private volatile boolean commandlock = false;
 	private boolean batterypresent = true;
 
-	public ArduinoPower(Application app) {
+	public Power(Application app) {
 		application = app;	
 		state.set(State.values.powerport, portname);
 		state.set(State.values.dockstatus, AutoDock.UNKNOWN);
@@ -461,7 +461,7 @@ public class ArduinoPower implements SerialPortEventListener  {
                 application.comport.strobeflash("on", 120, 20);
 
                 if (state.getBoolean(State.values.autodocking) && !state.getBoolean(State.values.docking))
-					application.driverCallServer(PlayerCommands.move, ArduinoPrime.direction.stop.name()); // calls autodockcancel
+					application.driverCallServer(PlayerCommands.move, Malg.direction.stop.name()); // calls autodockcancel
 			}
 
 			if (!state.equals(State.values.redockifweakconnection, Settings.TRUE))
@@ -497,7 +497,7 @@ public class ArduinoPower implements SerialPortEventListener  {
 				state.set(State.values.wallpower, true);
 				state.set(State.values.motionenabled, false);
 				if (state.getBoolean(State.values.moving))
-					application.driverCallServer(PlayerCommands.move, ArduinoPrime.direction.stop.toString());
+					application.driverCallServer(PlayerCommands.move, Malg.direction.stop.toString());
 			}
 		}
 
@@ -533,7 +533,7 @@ public class ArduinoPower implements SerialPortEventListener  {
 		else if (s[0].equals("high_current")) {
 		    if (application.comport.highCurrentOdomTurnCheck()) return;
 
-			application.driverCallServer(PlayerCommands.move, ArduinoPrime.direction.stop.toString());
+			application.driverCallServer(PlayerCommands.move, Malg.direction.stop.toString());
 			if (state.getBoolean(State.values.motionenabled))
 				application.driverCallServer(PlayerCommands.motionenabletoggle, null);
 			application.message("high current detected", null, null);

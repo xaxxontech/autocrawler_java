@@ -189,6 +189,8 @@ public class BanList {
 			appendLog(address + " is not a valid address?"); 
 			return;
 		}
+
+		Util.debug("cleared "+address, this);
 		
 		if(attempts.containsKey(address)) attempts.remove(address);
 		if(blocked.containsKey(address)) blocked.remove(address);

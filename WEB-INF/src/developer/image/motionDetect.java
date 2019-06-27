@@ -6,7 +6,7 @@ import java.io.ByteArrayInputStream;
 import javax.imageio.ImageIO;
 
 import oculusPrime.PlayerCommands;
-import oculusPrime.commport.ArduinoPrime;
+import oculusPrime.commport.Malg;
 import org.red5.server.api.IConnection;
 import org.red5.server.api.service.IServiceCapableConnection;
 
@@ -90,7 +90,7 @@ public class motionDetect {
 							if (compared> threshold && state.getBoolean(State.values.motiondetect)) { //motion detected above noise level
 //								lastMassCtr[0] = -1;
 								state.set(State.values.motiondetect, false);
-								if (!state.get(State.values.direction).equals(ArduinoPrime.direction.stop.toString())) {
+								if (!state.get(State.values.direction).equals(Malg.direction.stop.toString())) {
 									Util.log("error motion detect attempt while moving", true);
 									return;
 								}

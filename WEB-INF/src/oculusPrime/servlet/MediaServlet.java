@@ -1,4 +1,9 @@
-package oculusPrime;
+package oculusPrime.servlet;
+
+import oculusPrime.BanList;
+import oculusPrime.Settings;
+import oculusPrime.State;
+import oculusPrime.Util;
 
 import java.io.File;
 import java.io.FileFilter;
@@ -64,7 +69,7 @@ public class MediaServlet extends HttpServlet {
 		File[] frames;
 		
 		if(f == null){
-			streams = new File(Settings.streamfolder).listFiles();	
+			streams = new File(Settings.streamfolder).listFiles();
 			frames = new File(Settings.framefolder).listFiles();		
 		} else {
 

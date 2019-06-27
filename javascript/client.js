@@ -74,12 +74,10 @@ var lastcommand;
 var maintopbarTimer = null;
 var subwindows = ["aux", "context", "menu", "main", "rosmap", "radar"];  // purposely skipped "error" window
 var windowpos = [null, null, null, null]; // needs same length as above
-var oculusPrimeplayerSWF;
+var oculusPrimeplayerSWF = null;
 var recordmode = streammode;
 
 function loaded() {
-	oculusPrimeplayerSWF = document.getElementById("oculusPrime_player");
-	
 	loadwindowpositions();
 	loadrosmapwindowpos();
 	
@@ -106,12 +104,16 @@ function loaded() {
 	under.style.width = (mm.offsetWidth + margin*2) + "px";
 	under.style.height = (mm.offsetHeight + margin*2) + "px";
 	under.style.display = "none";
-	
-	
+		
 	if (clicksteeron) { clicksteer("on"); }
     overlay("on");
     browserwindowresized();
 	bworig= document.body.clientWidth;
+	
+	try {	oculusPrimeplayerSWF = document.getElementById("oculusPrime_player"); } 
+	catch { console.log("non flash client"); } 	
+	
+	if (oculusPrimeplayerSWF == null) commClientLoaded();
 }
 
 function flashloaded() {
@@ -255,7 +257,8 @@ function callServer(fn, str) {
 		
 		var nowtime = new Date().getTime();
 		if (!(lastcommandsent == fn+str && nowtime - sendcommandtimelast < 200)) {
-			oculusPrimeplayerSWF.flashCallServer(fn,str);
+			if (oculusPrimeplayerSWF == null) callServerComm(fn, str);
+			else  oculusPrimeplayerSWF.flashCallServer(fn,str);  // client flash (legacy)
 		}
 		else message("rapid succession command dropped",sentcmdcolor);
 		sendcommandtimelast = nowtime;
@@ -275,7 +278,6 @@ function play(str) { // called by javascript only?
 function getFlashMovie(movieName) {
 	var isIE = navigator.appName.indexOf("Microsoft") != -1;
 	return (isIE) ? window[movieName] : document[movieName];
-	// return document.getElementById(movieName);
 }
 
 function publish(str) { 
@@ -299,6 +301,8 @@ function publish(str) {
 }
 
 function message(message, colour, status, value) {
+	
+	console.log("message("+message+", "+colour+", "+status+", "+value+")");
 	
 	if (message != null) {
 		var tempmessage = message;
@@ -1882,8 +1886,12 @@ function loginsend() {
 	var str3= document.getElementById("user_remember").checked;
 	if (str3 == true) { str3="remember"; }
 	else { eraseCookie("auth"); }
-	oculusPrimeplayerSWF.connect(str1+" "+str2+" "+str3+" ");
-	logintimer = setTimeout("window.location.reload()", logintimeout);
+	
+	if (oculusPrimeplayerSWF == null) commLogin(str1, str2, str3);
+	else { 
+		oculusPrimeplayerSWF.connect(str1+" "+str2+" "+str3+" ");
+		logintimer = setTimeout("window.location.reload()", logintimeout);
+	}
 }
 
 function logout() {

@@ -9,12 +9,11 @@ import jssc.SerialPortEvent;
 import jssc.SerialPortException;
 import jssc.SerialPortList;
 import oculusPrime.*;
-import developer.depth.Mapper;
 
 /**
  *  Communicate with the MALG board 
  */
-public class ArduinoPrime  implements jssc.SerialPortEventListener {
+public class Malg implements jssc.SerialPortEventListener {
 
 	public enum direction { stop, right, left, forward, backward, unknown, arcright, arcleft };
 	public enum cameramove { stop, up, down, horiz, upabit, downabit, rearstop, reverse };
@@ -133,7 +132,7 @@ public class ArduinoPrime  implements jssc.SerialPortEventListener {
 
 	private int timeddelay;
 
-	public ArduinoPrime(Application app) {	
+	public Malg(Application app) {
 		
 		application = app;	
 		state.set(State.values.motorspeed, speedfast);
@@ -151,7 +150,7 @@ public class ArduinoPrime  implements jssc.SerialPortEventListener {
 		state.set(State.values.odomturnpwm, settings.readSetting(ManualSettings.odomturnpwm.name()));
 		state.set(State.values.odomlinearpwm, settings.readSetting(ManualSettings.odomlinearpwm.name()));
 
-		state.set(State.values.odometrybroadcast, ArduinoPrime.ODOMBROADCASTDEFAULT);
+		state.set(State.values.odometrybroadcast, Malg.ODOMBROADCASTDEFAULT);
 
 		if(!settings.readSetting(ManualSettings.motorport).equals(Settings.DISABLED)) {
 			connect();
@@ -174,7 +173,7 @@ public class ArduinoPrime  implements jssc.SerialPortEventListener {
 		new Thread(new Runnable() {
 			public void run() {
 				Util.delay(10000);  // arduino takes 10 sec to reach full power?
-				if(isconnected) strobeflash(ArduinoPrime.mode.on.toString(), 200, 30);
+				if(isconnected) strobeflash(Malg.mode.on.toString(), 200, 30);
 			}
 		}).start();
 	}
@@ -317,7 +316,7 @@ public class ArduinoPrime  implements jssc.SerialPortEventListener {
 		final long duration = d;
 		if (i==0) i=100;
 		final int intensity = i * 255 / 100;
-		if (mode.equalsIgnoreCase(ArduinoPrime.mode.on.toString()) && !state.getBoolean(State.values.strobeflashon)) {
+		if (mode.equalsIgnoreCase(Malg.mode.on.toString()) && !state.getBoolean(State.values.strobeflashon)) {
 			state.set(State.values.strobeflashon, true);
 			final long strobestarted = System.currentTimeMillis();
 			new Thread(new Runnable() {
@@ -342,7 +341,7 @@ public class ArduinoPrime  implements jssc.SerialPortEventListener {
 					} catch (Exception e) { } }
 			}).start();
 		}
-		if (mode.equalsIgnoreCase(ArduinoPrime.mode.off.toString())) {
+		if (mode.equalsIgnoreCase(Malg.mode.off.toString())) {
 			state.set(State.values.strobeflashon, false);
 		}
 	}
@@ -549,10 +548,10 @@ public class ArduinoPrime  implements jssc.SerialPortEventListener {
 
 		if (state.getBoolean(State.values.controlsinverted)) {
 			switch (cmd[0]) {
-				case ArduinoPrime.FORWARD: cmd[0]=ArduinoPrime.BACKWARD; break;
-				case ArduinoPrime.BACKWARD: cmd[0]=ArduinoPrime.FORWARD; break;
-				case ArduinoPrime.FORWARDTIMED: cmd[0]=ArduinoPrime.BACKWARDTIMED; break;
-				case ArduinoPrime.BACKWARDTIMED: cmd[0]=ArduinoPrime.FORWARDTIMED;
+				case Malg.FORWARD: cmd[0]= Malg.BACKWARD; break;
+				case Malg.BACKWARD: cmd[0]= Malg.FORWARD; break;
+				case Malg.FORWARDTIMED: cmd[0]= Malg.BACKWARDTIMED; break;
+				case Malg.BACKWARDTIMED: cmd[0]= Malg.FORWARDTIMED;
 			}
 		}
 		
@@ -1423,8 +1422,8 @@ public class ArduinoPrime  implements jssc.SerialPortEventListener {
 
     public boolean highCurrentOdomTurnCheck() { // high current detected by power PCB
 
-        if (state.get(State.values.direction).equals(ArduinoPrime.direction.left.toString()) ||
-                state.get(State.values.direction).equals(ArduinoPrime.direction.right.toString()) ) {
+        if (state.get(State.values.direction).equals(Malg.direction.left.toString()) ||
+                state.get(State.values.direction).equals(Malg.direction.right.toString()) ) {
 
              if (state.exists(State.values.odomturndpms) && state.getInteger(State.values.odomturnpwm) < 255) { // tried 210, 230, was too low
 
@@ -1439,7 +1438,7 @@ public class ArduinoPrime  implements jssc.SerialPortEventListener {
             }
 
             Util.log("high current during normal turn, stopping", this);
-            application.driverCallServer(PlayerCommands.move, ArduinoPrime.direction.stop.toString());
+            application.driverCallServer(PlayerCommands.move, Malg.direction.stop.toString());
         }
 
 	    return false; // not turning

@@ -9,7 +9,7 @@ import java.io.IOException;
 import java.util.Calendar;
 import java.util.Date;
 
-import oculusPrime.commport.PowerLogger;
+import oculusPrime.commport.Malg;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -19,7 +19,7 @@ import oculusPrime.Application;
 import oculusPrime.AutoDock;
 import oculusPrime.AutoDock.autodockmodes;
 import oculusPrime.State.values;
-import oculusPrime.FrameGrabHTTP;
+import oculusPrime.servlet.FrameGrabHTTP;
 import oculusPrime.GUISettings;
 import oculusPrime.ManualSettings;
 import oculusPrime.Observer;
@@ -28,7 +28,6 @@ import oculusPrime.Settings;
 import oculusPrime.State;
 import oculusPrime.SystemWatchdog;
 import oculusPrime.Util;
-import oculusPrime.commport.ArduinoPrime;
 
 public class Navigation implements Observer {
 	
@@ -282,8 +281,8 @@ public class Navigation implements Observer {
 			app.comport.checkisConnectedBlocking(); // just in case
 
 			//start gyro again
-			state.set(values.odometrybroadcast, ArduinoPrime.ODOMBROADCASTDEFAULT);
-			state.set(values.rotatetolerance, ArduinoPrime.ROTATETOLERANCE);
+			state.set(values.odometrybroadcast, Malg.ODOMBROADCASTDEFAULT);
+			state.set(values.rotatetolerance, Malg.ROTATETOLERANCE);
 			app.driverCallServer(PlayerCommands.odometrystart, null);
 
 			app.driverCallServer(PlayerCommands.spotlight, "0");
@@ -337,9 +336,9 @@ public class Navigation implements Observer {
 				Util.delay(10); // thread safe
 
 				start = System.currentTimeMillis();
-				while(!state.get(State.values.direction).equals(ArduinoPrime.direction.stop.toString())
+				while(!state.get(State.values.direction).equals(Malg.direction.stop.toString())
 						&& System.currentTimeMillis() - start < 5000) { Util.delay(10); } // wait
-				Util.delay(ArduinoPrime.TURNING_STOP_DELAY);
+				Util.delay(Malg.TURNING_STOP_DELAY);
 			}
 			rot ++;
 
@@ -632,7 +631,7 @@ public class Navigation implements Observer {
 					SystemWatchdog.waitForCpu();
 					undockandlocalize();
 				}
-				app.driverCallServer(PlayerCommands.cameracommand, ArduinoPrime.cameramove.horiz.toString());
+				app.driverCallServer(PlayerCommands.cameracommand, Malg.cameramove.horiz.toString());
 
 		    	// go to each waypoint
 		    	NodeList waypoints = navroute.getElementsByTagName("waypoint");	    	
@@ -769,7 +768,7 @@ public class Navigation implements Observer {
 		app.driverCallServer(PlayerCommands.forward, String.valueOf(distance));
 		Util.delay((long) (distance / state.getDouble(values.odomlinearmpms.toString()))); // required for fast systems?!
 		long start = System.currentTimeMillis();
-		while(!state.get(values.direction).equals(ArduinoPrime.direction.stop.toString())
+		while(!state.get(values.direction).equals(Malg.direction.stop.toString())
 				&& System.currentTimeMillis() - start < 10000) { Util.delay(10); } // wait
 	}
 
@@ -910,9 +909,9 @@ public class Navigation implements Observer {
 			}
 
 			if (photo)
-				app.driverCallServer(PlayerCommands.camtilt, String.valueOf(ArduinoPrime.CAM_HORIZ - ArduinoPrime.CAM_NUDGE * 2));
+				app.driverCallServer(PlayerCommands.camtilt, String.valueOf(Malg.CAM_HORIZ - Malg.CAM_NUDGE * 2));
 			else
-				app.driverCallServer(PlayerCommands.camtilt, String.valueOf(ArduinoPrime.CAM_HORIZ-ArduinoPrime.CAM_NUDGE*3));
+				app.driverCallServer(PlayerCommands.camtilt, String.valueOf(Malg.CAM_HORIZ- Malg.CAM_NUDGE*3));
 		}
 
 		// turn on cam and or mic, allow delay for normalize
@@ -1128,14 +1127,14 @@ public class Navigation implements Observer {
 				SystemWatchdog.waitForCpu(8000); // lots of missed stop commands, cpu timeouts here
 
 				double degperms = state.getDouble(State.values.odomturndpms.toString());   // typically 0.0857;
-				app.driverCallServer(PlayerCommands.move, ArduinoPrime.direction.left.toString());
+				app.driverCallServer(PlayerCommands.move, Malg.direction.left.toString());
 				Util.delay((long) (50.0 / degperms));
-				app.driverCallServer(PlayerCommands.move, ArduinoPrime.direction.stop.toString());
+				app.driverCallServer(PlayerCommands.move, Malg.direction.stop.toString());
 
 				long stopwaiting = System.currentTimeMillis()+750; // timeout if error
-				while(!state.get(State.values.direction).equals(ArduinoPrime.direction.stop.toString()) &&
+				while(!state.get(State.values.direction).equals(Malg.direction.stop.toString()) &&
 						System.currentTimeMillis() < stopwaiting) { Util.delay(1); } // wait for stop
-				if (!state.get(State.values.direction).equals(ArduinoPrime.direction.stop.toString()))
+				if (!state.get(State.values.direction).equals(Malg.direction.stop.toString()))
 					Util.log("error, missed turnstop within 750ms", this);
 
 				Util.delay(4000); // 2000 if condition below enabled
@@ -1179,7 +1178,7 @@ public class Navigation implements Observer {
 			app.driverCallServer(PlayerCommands.publish, Application.streamstate.stop.toString());
 		if (camera) {
 			app.driverCallServer(PlayerCommands.spotlight, "0");
-			app.driverCallServer(PlayerCommands.cameracommand, ArduinoPrime.cameramove.horiz.toString());
+			app.driverCallServer(PlayerCommands.cameracommand, Malg.cameramove.horiz.toString());
 		}
 		if (mic) app.driverCallServer(PlayerCommands.videosoundmode, previousvideosoundmode);
 

@@ -20,7 +20,7 @@ public class OpenCVUtils {
 	Application app;
 	public boolean jarfiledeleted = false;
 	private static final String UBUNTU1604OPENCV = "opencv-2413.jar";
-	private static final String UBUNTU1404OPENCV = "opencv-2410.jar";
+//	private static final String UBUNTU1404OPENCV = "opencv-2410.jar";
 
 //	VideoCapture capture;
 
@@ -41,19 +41,18 @@ public class OpenCVUtils {
 			return;
 		}
 
-		String deleteopencvjar = UBUNTU1604OPENCV;
-		// need to nuke newer opencv jar if older linux only, otherwise won't load native lib
-		if (Application.UBUNTU1604.equals(Util.getUbuntuVersion())) deleteopencvjar = UBUNTU1404OPENCV;
-
-		String jarfile = Settings.redhome+ Util.sep+"webapps"+Util.sep+"oculusPrime"+Util.sep+"WEB-INF"+Util.sep+"lib"+
-				Util.sep+deleteopencvjar;
-
-		File file = new File(jarfile);
-		if (file.exists()) {
-			file.delete();
-			Util.log("deleted file " + file.getAbsolutePath(), this);
-			jarfiledeleted = true;
-		}
+//		String deleteopencvjar = UBUNTU1604OPENCV;
+//		if (Application.UBUNTU1604.equals(Util.getUbuntuVersion())) deleteopencvjar = UBUNTU1404OPENCV;
+//
+//		String jarfile = Settings.redhome+ Util.sep+"webapps"+Util.sep+"oculusPrime"+Util.sep+"WEB-INF"+Util.sep+"lib"+
+//				Util.sep+deleteopencvjar;
+//
+//		File file = new File(jarfile);
+//		if (file.exists()) {
+//			file.delete();
+//			Util.log("deleted file " + file.getAbsolutePath(), this);
+//			jarfiledeleted = true;
+//		}
 
 
 		try {

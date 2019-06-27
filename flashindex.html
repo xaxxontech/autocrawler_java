@@ -7,11 +7,11 @@
 <meta http-equiv="Expires" content="-1">
 <style type="text/css">
 html, body {height: 100%;}
-body { background-color: #151515; }
+body { background-color: #151515; } 
 body, p, ol, ul, td, tr {
 font-family: verdana, arial, helvetica, sans-serif;
 font-size:   14px;
-line-height: 20px;
+line-height: 20px; 
 color: #aaaaaa;
 padding: 0px; margin: 0px;}
 TABLE {   border: 0px; border-collapse: collapse; padding: 0px }
@@ -39,7 +39,7 @@ select  { background-color: #cccccc; color: #000000; border: 1px solid #666666; 
 .blackbg { color: #eeeeee; background-color: transparent; text-decoration: none; white-space: nowrap;}
 .blackbg:link { color: #eeeeee; background-color: transparent; text-decoration: none; white-space: nowrap;}
 .blackbg:visited { color: #eeeeee; background-color: transparent; text-decoration: none; white-space: nowrap;}
-.blackbg:hover { color: #ffffff; background-color: #555555; text-decoration: none; white-space: nowrap;}
+.blackbg:hover { color: #ffffff; background-color: #555555; text-decoration: none; white-space: nowrap;} 
 .boxcolor { background-color: #1b1b1b; }
 .boxbg { color: #cccccc; background-color: transparent; text-decoration: none; }
 .boxbg:link { color: #cccccc; background-color: transparent; text-decoration: none; }
@@ -66,14 +66,24 @@ select  { background-color: #cccccc; color: #000000; border: 1px solid #666666; 
 .slider { color: #cccccc; background-color: #111111; height: 26px; text-align: center; cursor: pointer; }
 .wpaction { color: #ffffff; background-color: #555555; padding-left: 3px; padding-right: 3px }
 </style>
-
 <script src="javascript/client.js" type="text/javascript"></script>
 <script src="javascript/map.js" type="text/javascript"></script>
-<script src="javascript/comm_client.js" type="text/javascript"></script>
-<script src="javascript/webrtc.js" type="text/javascript"></script>
-
+<script src="flash/AC_OETags.js" type="text/javascript"></script>
+<script type="text/javascript">
+<!--
+// -----------------------------------------------------------------------------
+// Globals
+// Major version of Flash required
+var requiredMajorVersion = 11;
+// Minor version of Flash required
+var requiredMinorVersion = 1;
+// Minor version of Flash required
+var requiredRevision = 0;
+// -----------------------------------------------------------------------------
+// -->
+</script>
 </head>
-<body id="thebody" onkeydown= "keyBoardPressed(event);" onkeyup = "keyBoardReleased(event);"
+<body id="thebody" onkeydown= "keyBoardPressed(event);" onkeyup = "keyBoardReleased(event);" 
 onload="loaded();" onunload="playerexit();" onresize="browserwindowresized();">
 
 <table><tr><td style="height: 8px"></td></tr></table>
@@ -88,10 +98,10 @@ onmousedown="popupmenu('main', 'move');" > &nbsp; </div>
 
 <table id="maintable" align="center" ><tr valign="top">
 <td style="padding-left: 5px; padding-top: 10px;">
-<div id="mainmenulink" onmouseover="camiconbutton('over',this.id);"
+<div id="mainmenulink" onmouseover="camiconbutton('over',this.id);" 
 onmouseout="camiconbutton('out',this.id);" onclick="mainmenu('mainmenulink');"
-onmousedown="camiconbutton('down',this.id);" onmouseup="camiconbutton('up',this.id);"
-class="cambutton"
+onmousedown="camiconbutton('down',this.id);" onmouseup="camiconbutton('up',this.id);" 
+class="cambutton" 
 style="width: 28px; height: 32px; background-image: url(images/wrench.png);">
 </div>
 
@@ -99,9 +109,45 @@ style="width: 28px; height: 32px; background-image: url(images/wrench.png);">
 <td style="padding-left: 5px;">
 
 <table><tr valign="top"><td style="text-align: right">
-
 <div id="video" style="position: relative; z-index: 0; width: 640px; height: 480px;">
-<video id="stream" autoplay playsinline>Your browser doesn't support video</video>
+<script type="text/javascript">
+
+// Version check based upon the values defined in globals
+var hasRequestedVersion = DetectFlashVer(requiredMajorVersion, requiredMinorVersion, requiredRevision);
+
+if (hasRequestedVersion) {
+	// if we've detected an acceptable version
+	// embed the Flash Content SWF when all tests are passed
+	AC_FL_RunContent(
+			"src", "flash/oculusPrime_player",
+			"width", "640",
+			"height", "480",
+			"wmode","transparent",
+			"id", "oculusPrime_player",
+			"quality", "high",
+			"bgcolor", "#869ca7",
+			"name", "oculusPrime_player",
+			"allowScriptAccess","always",
+			"type", "application/x-shockwave-flash",
+			"pluginspage", "http://www.adobe.com/go/getflashplayer"
+	);
+  } else {  // flash is older than requested version
+		AC_FL_RunContent(
+				"src", "flash/oculusPrime_player9",
+				"width", "640",
+				"height", "480",
+				"wmode","transparent",
+				"id", "oculusPrime_player",
+				"quality", "high",
+				"bgcolor", "#869ca7",
+				"name", "oculusPrime_player",
+				"allowScriptAccess","always",
+				"type", "application/x-shockwave-flash",
+				"pluginspage", "http://www.adobe.com/go/getflashplayer"
+		);
+  }
+</script>
+
 </div>
 </td>
 
@@ -167,7 +213,7 @@ rov stream<span class="grey">:</span>
 <span class="status_unknown">unknown</span></span>
 &nbsp; &nbsp;</span><br>
 </div>
-<!--
+<!-- 
 <div style="padding-left: 7px">
 <a class="dkbluelink" id="mainmenulink" href="javascript: mainmenu('mainmenulink');" >
 MENU <img src="images/wrench.gif" border=0 style="vertical-align: middle;"></a><br>
@@ -179,7 +225,7 @@ MENU <img src="images/wrench.gif" border=0 style="vertical-align: middle;"></a><
 <table style="background-image: url('images/steering_icons.png'); background-repeat: no-repeat;
 background-position: bottom; width: 190px; height: 200px; background-color: transparent">
 
-<tr><td colspan="5" style="text-align: center; height: 18px; line-height: 15px;
+<tr><td colspan="5" style="text-align: center; height: 18px; line-height: 15px; 
 font-size: 11px; "
 id="steering_textbox"> </td></tr>
 <tr><td colspan="5" class="keycmds" style="text-align: center; height: 20px;
@@ -187,64 +233,64 @@ padding-bottom: 5px"
 id="steeringkeytextbox"> </td></tr>
 
 <tr>
-<td class="steering_button" id="camera up" onmouseover="steeringmouseover(this.id, 'R')"
-onmouseout="steeringmouseout(this.id);" onmousedown="steeringmousedown(this.id);"
+<td class="steering_button" id="camera up" onmouseover="steeringmouseover(this.id, 'R')" 
+onmouseout="steeringmouseout(this.id);" onmousedown="steeringmousedown(this.id);" 
 onmouseup="steeringmouseup(this.id);"> </td>
 <td> </td>
-<td class="steering_button" id="camera horizontal" onmouseover="steeringmouseover(this.id, 'F')"
-onmouseout="steeringmouseout(this.id);" onmousedown="steeringmousedown(this.id);"
+<td class="steering_button" id="camera horizontal" onmouseover="steeringmouseover(this.id, 'F')" 
+onmouseout="steeringmouseout(this.id);" onmousedown="steeringmousedown(this.id);" 
 onmouseup="steeringmouseup(this.id);"> </td>
 <td> </td>
-<td class="steering_button" id="camera down" onmouseover="steeringmouseover(this.id, 'V')"
-onmouseout="steeringmouseout(this.id);" onmousedown="steeringmousedown(this.id);"
+<td class="steering_button" id="camera down" onmouseover="steeringmouseover(this.id, 'V')" 
+onmouseout="steeringmouseout(this.id);" onmousedown="steeringmousedown(this.id);" 
 onmouseup="steeringmouseup(this.id);"> </td>
 </tr><tr>
 <td> </td>
 <td> </td>
 <td class="steering_button" id="forward" onmouseover="steeringmouseover(this.id, 'UP&uarr; arrow or W'); "
-onmouseout="steeringmouseout(this.id);" onmousedown="steeringmousedown(this.id);"
+onmouseout="steeringmouseout(this.id);" onmousedown="steeringmousedown(this.id);" 
 onmouseup="steeringmouseup(this.id);">  </td>
-<td class="steering_button" id="nudge forward" onmouseover="steeringmouseover(this.id, 'T')"
-onmouseout="steeringmouseout(this.id);" onmousedown="steeringmousedown(this.id);"
+<td class="steering_button" id="nudge forward" onmouseover="steeringmouseover(this.id, 'T')" 
+onmouseout="steeringmouseout(this.id);" onmousedown="steeringmousedown(this.id);" 
 onmouseup="steeringmouseup(this.id);"> </td>
 <td> </td>
 </tr><tr>
 <td class="steering_button" id="nudge left" onmouseover="steeringmouseover(this.id, 'A')"
-onmouseout="steeringmouseout(this.id);" onmousedown="steeringmousedown(this.id);"
+onmouseout="steeringmouseout(this.id);" onmousedown="steeringmousedown(this.id);" 
 onmouseup="steeringmouseup(this.id);"> </td>
 <td class="steering_button" id="rotate left" onmouseover="steeringmouseover(this.id,'LEFT&larr; arrow or Q')"
-onmouseout="steeringmouseout(this.id);" onmousedown="steeringmousedown(this.id);"
+onmouseout="steeringmouseout(this.id);" onmousedown="steeringmousedown(this.id);" 
 onmouseup="steeringmouseup(this.id);"> </td>
-<td class="steering_button" id="stop" onmouseover="steeringmouseover(this.id,'SPACE bar or S')"
-onmouseout="steeringmouseout(this.id);" onmousedown="steeringmousedown(this.id);"
+<td class="steering_button" id="stop" onmouseover="steeringmouseover(this.id,'SPACE bar or S')"  
+onmouseout="steeringmouseout(this.id);" onmousedown="steeringmousedown(this.id);" 
 onmouseup="steeringmouseup(this.id);"> </td>
 <td class="steering_button" id="rotate right" onmouseover="steeringmouseover(this.id, 'RIGHT&rarr; arrow or E')"
-onmouseout="steeringmouseout(this.id);" onmousedown="steeringmousedown(this.id);"
+onmouseout="steeringmouseout(this.id);" onmousedown="steeringmousedown(this.id);" 
 onmouseup="steeringmouseup(this.id);"> </td>
 <td class="steering_button" id="nudge right" onmouseover="steeringmouseover(this.id,'D')"
-onmouseout="steeringmouseout(this.id);" onmousedown="steeringmousedown(this.id);"
+onmouseout="steeringmouseout(this.id);" onmousedown="steeringmousedown(this.id);" 
 onmouseup="steeringmouseup(this.id);"> </td>
 </tr><tr>
 <td> </td>
 <td> </td>
 <td class="steering_button" id="backward" onmouseover="steeringmouseover(this.id,'DOWN&darr; arrow or X')"
-onmouseout="steeringmouseout(this.id);" onmousedown="steeringmousedown(this.id);"
+onmouseout="steeringmouseout(this.id);" onmousedown="steeringmousedown(this.id);" 
 onmouseup="steeringmouseup(this.id);"> </td>
 <td class="steering_button" id="nudge backward" onmouseover="steeringmouseover(this.id, 'B')"
-onmouseout="steeringmouseout(this.id);" onmousedown="steeringmousedown(this.id);"
+onmouseout="steeringmouseout(this.id);" onmousedown="steeringmousedown(this.id);" 
 onmouseup="steeringmouseup(this.id);"> </td>
 <td> </td>
 </tr><tr>
 <td class="steering_button" id="speed slow" onmouseover="steeringmouseover(this.id,'1')"
-onmouseout="steeringmouseout(this.id);" onmousedown="steeringmousedown(this.id);"
+onmouseout="steeringmouseout(this.id);" onmousedown="steeringmousedown(this.id);" 
 onmouseup="steeringmouseup(this.id);"> </td>
 <td> </td>
 <td class="steering_button" id="speed medium" onmouseover="steeringmouseover(this.id,'2')"
-onmouseout="steeringmouseout(this.id);" onmousedown="steeringmousedown(this.id);"
+onmouseout="steeringmouseout(this.id);" onmousedown="steeringmousedown(this.id);" 
 onmouseup="steeringmouseup(this.id);"> </td>
 <td> </td>
 <td class="steering_button" id="speed fast" onmouseover="steeringmouseover(this.id,'3')"
-onmouseout="steeringmouseout(this.id);" onmousedown="steeringmousedown(this.id);"
+onmouseout="steeringmouseout(this.id);" onmousedown="steeringmousedown(this.id);" 
 onmouseup="steeringmouseup(this.id);"> </td>
 </tr>
 
@@ -257,12 +303,12 @@ onmouseup="steeringmouseup(this.id);"> </td>
 <table><tr><td style="height: 7px"></td></tr></table>
 <table><tr valign="top">
 <td  style="padding-right: 35px">
-<div class="boxcolor" id="messageboxcontainer" style="height: 104px; width: 300px;
+<div class="boxcolor" id="messageboxcontainer" style="height: 104px; width: 300px; 
 overflow: hidden; padding-left: 5px;"
-onmouseover = "this.style.overflow = 'auto';"
+onmouseover = "this.style.overflow = 'auto';" 
 onmouseout="this.style.overflow = 'hidden';">
 <div id="messagebox" class="messagebox" style="width: 100%;"
-onmouseover = "document.getElementById('messageboxcontainer').style.overflow = 'auto';"
+onmouseover = "document.getElementById('messageboxcontainer').style.overflow = 'auto';" 
 onmouseout="document.getElementById('messageboxcontainer').style.overflow = 'hidden';"> </div>
 <a class="boxbg" id="messagemorelink" href='javascript: hiddenmessageboxShow();' style="display: none">
 ...show more</a>
@@ -272,36 +318,36 @@ onmouseout="document.getElementById('messageboxcontainer').style.overflow = 'hid
 <!--  bottom menu area  -->
 <td style="padding-right: 8px;">
 
-<div id="camera" class="cambutton" onmouseover="camiconbutton('over',this.id);"
+<div id="camera" class="cambutton" onmouseover="camiconbutton('over',this.id);" 
 onmouseout="camiconbutton('out',this.id);" onclick="camiconbutton('click',this.id);"
-onmousedown="camiconbutton('down',this.id);" onmouseup="camiconbutton('up',this.id);"
+onmousedown="camiconbutton('down',this.id);" onmouseup="camiconbutton('up',this.id);" 
 style="padding-left: 3px; padding-right: 3px">
 <table><tr valign="middle">
 <td class="cambutton" style="width: 52px; background-image: url(images/cam_icon.png);"> &nbsp; </td>
 <td  class="cambutton" style="padding-left: 10px">cam ON</td>
 </tr></table>
 </div>
-<div id="camandmic" class="cambutton" onmouseover="camiconbutton('over',this.id);"
+<div id="camandmic" class="cambutton" onmouseover="camiconbutton('over',this.id);" 
 onmouseout="camiconbutton('out',this.id);" onclick="camiconbutton('click',this.id);"
-onmousedown="camiconbutton('down',this.id);" onmouseup="camiconbutton('up',this.id);"
+onmousedown="camiconbutton('down',this.id);" onmouseup="camiconbutton('up',this.id);" 
 style="padding-left: 3px; padding-right: 3px">
 <table><tr valign="middle">
 <td class="cambutton" style="width: 52px; background-image: url(images/cammic.png);"> &nbsp; </td>
 <td  class="cambutton" style="padding-left: 10px">cam/mic ON</td>
 </tr></table>
 </div>
-<div id="mic" class="cambutton" onmouseover="camiconbutton('over',this.id);"
+<div id="mic" class="cambutton" onmouseover="camiconbutton('over',this.id);" 
 onmouseout="camiconbutton('out',this.id);" onclick="camiconbutton('click',this.id);"
-onmousedown="camiconbutton('down',this.id);" onmouseup="camiconbutton('up',this.id);"
+onmousedown="camiconbutton('down',this.id);" onmouseup="camiconbutton('up',this.id);" 
 style="padding-left: 3px; padding-right: 3px">
 <table><tr valign="middle">
 <td class="cambutton" style="width: 52px; background-image: url(images/mic_right.png);"> &nbsp; </td>
 <td  class="cambutton" style="padding-left: 10px; 3px">mic ON</td>
 </tr></table>
 </div>
-<div id="pubstop" class="cambutton" onmouseover="camiconbutton('over',this.id);"
+<div id="pubstop" class="cambutton" onmouseover="camiconbutton('over',this.id);" 
 onmouseout="camiconbutton('out',this.id);" onclick="camiconbutton('click',this.id);"
-onmousedown="camiconbutton('down',this.id);" onmouseup="camiconbutton('up',this.id);"
+onmousedown="camiconbutton('down',this.id);" onmouseup="camiconbutton('up',this.id);" 
 style="padding-left: 3px; padding-right: 3px">
 <table><tr valign="middle">
 <td class="cambutton" style="width: 52px; background-image: url(images/cammicoff.png);"> &nbsp; </td>
@@ -312,9 +358,9 @@ style="padding-left: 3px; padding-right: 3px">
 </td>
 <td style="padding-right: 8px;">
 
-<div id="docklink" class="cambutton" onmouseover="camiconbutton('over',this.id);"
+<div id="docklink" class="cambutton" onmouseover="camiconbutton('over',this.id);" 
 onmouseout="camiconbutton('out',this.id);" onclick="autodock('start');"
-onmousedown="camiconbutton('down',this.id);" onmouseup="camiconbutton('up',this.id);"
+onmousedown="camiconbutton('down',this.id);" onmouseup="camiconbutton('up',this.id);" 
 style="padding-left: 3px; padding-right: 3px">
 <table><tr valign="middle">
 <td class="cambutton" style="width: 27px; background-image: url(images/charge.png);"> &nbsp; </td>
@@ -322,9 +368,9 @@ style="padding-left: 3px; padding-right: 3px">
 </tr></table>
 </div>
 
-<div id="dockcamonlink" class="cambutton" onmouseover="camiconbutton('over',this.id);"
+<div id="dockcamonlink" class="cambutton" onmouseover="camiconbutton('over',this.id);" 
 onmouseout="camiconbutton('out',this.id);" onclick="callServer('dockcam','on');"
-onmousedown="camiconbutton('down',this.id);" onmouseup="camiconbutton('up',this.id);"
+onmousedown="camiconbutton('down',this.id);" onmouseup="camiconbutton('up',this.id);" 
 style="padding-left: 3px; padding-right: 3px">
 <table><tr valign="middle">
 <td class="cambutton" style="width: 27px; background-image: url(images/charge.png);"> &nbsp; </td>
@@ -332,9 +378,9 @@ style="padding-left: 3px; padding-right: 3px">
 </tr></table>
 </div>
 
-<div id="dockcamofflink" class="cambutton" onmouseover="camiconbutton('over',this.id);"
+<div id="dockcamofflink" class="cambutton" onmouseover="camiconbutton('over',this.id);" 
 onmouseout="camiconbutton('out',this.id);" onclick="callServer('dockcam','off');"
-onmousedown="camiconbutton('down',this.id);" onmouseup="camiconbutton('up',this.id);"
+onmousedown="camiconbutton('down',this.id);" onmouseup="camiconbutton('up',this.id);" 
 style="padding-left: 3px; padding-right: 3px">
 <table><tr valign="middle">
 <td class="cambutton" style="width: 27px; background-image: url(images/charge.png);"> &nbsp; </td>
@@ -343,19 +389,19 @@ style="padding-left: 3px; padding-right: 3px">
 </div>
 
 <!-- div selfstream_controls -->
-<div id="selfstream_controls" style="display: none">
-<div id="broadcast_mic" class="cambutton" onmouseover="camiconbutton('over',this.id);"
+<div id="selfstream_controls" style="display: none"> 
+<div id="broadcast_mic" class="cambutton" onmouseover="camiconbutton('over',this.id);" 
 onmouseout="camiconbutton('out',this.id);" onclick="camiconbutton('click',this.id);"
-onmousedown="camiconbutton('down',this.id);" onmouseup="camiconbutton('up',this.id);"
+onmousedown="camiconbutton('down',this.id);" onmouseup="camiconbutton('up',this.id);" 
 style="padding-left: 3px; padding-right: 3px">
 <table><tr valign="middle">
 <td class="cambutton" style="width: 27px; background-image: url(images/mic_icon.png);"> &nbsp; </td>
 <td  class="cambutton" style="padding-left: 10px">self mic ON</td>
 </tr></table>
 </div>
-<div id="broadcast_off" class="cambutton" onmouseover="camiconbutton('over',this.id);"
+<div id="broadcast_off" class="cambutton" onmouseover="camiconbutton('over',this.id);" 
 onmouseout="camiconbutton('out',this.id);" onclick="camiconbutton('click',this.id);"
-onmousedown="camiconbutton('down',this.id);" onmouseup="camiconbutton('up',this.id);"
+onmousedown="camiconbutton('down',this.id);" onmouseup="camiconbutton('up',this.id);" 
 style="padding-left: 3px; padding-right: 3px">
 <table><tr valign="middle">
 <td class="cambutton" style="width: 27px; background-image: url(images/mic_off.png);"> &nbsp; </td>
@@ -364,9 +410,9 @@ style="padding-left: 3px; padding-right: 3px">
 </div>
 </div> <!-- end of div selfstream_controls -->
 
-<div id="speakchatlinks" class="cambutton" onmouseover="camiconbutton('over',this.id);"
+<div id="speakchatlinks" class="cambutton" onmouseover="camiconbutton('over',this.id);" 
 onmouseout="camiconbutton('out',this.id);" onclick="speakchat('show','speechbox');"
-onmousedown="camiconbutton('down',this.id);" onmouseup="camiconbutton('up',this.id);"
+onmousedown="camiconbutton('down',this.id);" onmouseup="camiconbutton('up',this.id);" 
 style="padding-left: 3px; padding-right: 3px">
 <table><tr valign="middle">
 <td class="cambutton" style="width: 27px; background-image: url(images/bubble.png);"> &nbsp; </td>
@@ -377,7 +423,7 @@ style="padding-left: 3px; padding-right: 3px">
 </td>
 
 </tr></table>
-
+ 
 </td></tr></table>
 </div><!-- ** end of main_menu_contents div ** -->
 </div><!-- ** end of main_menu_over div ** -->
@@ -390,32 +436,32 @@ style="padding-left: 3px; padding-right: 3px">
 <div id="docklineright" class="docklineright" style="position: absolute; display: none; "></div>
 
 <!-- crosshair -->
-<div id="crosshair_top" class="crosshair" style="position: absolute; display: none;
+<div id="crosshair_top" class="crosshair" style="position: absolute; display: none; 
 border-top: none; border-left: none; border-bottom: none; height: 30px; width:1px"></div>
-<div id="crosshair_right" class="crosshair" style="position: absolute; display: none;
+<div id="crosshair_right" class="crosshair" style="position: absolute; display: none; 
 border-top: none; border-right: none; border-left: none; height: 1px; width:30px"></div>
-<div id="crosshair_bottom" class="crosshair"  style="position: absolute; display: none;
+<div id="crosshair_bottom" class="crosshair"  style="position: absolute; display: none; 
 border-top: none; border-left: none; border-bottom: none; height: 30px; width:1px"></div>
-<div id="crosshair_left" class="crosshair" style="position: absolute; display: none;
+<div id="crosshair_left" class="crosshair" style="position: absolute; display: none; 
 border-top: none; border-right: none; border-left: none height: 1px; width:30px"></div>
 
 <!-- target -->
-<div id="videocursor_top" class="videocursor" style="position: absolute; display: none;
+<div id="videocursor_top" class="videocursor" style="position: absolute; display: none; 
 border-top: none; border-left: none; border-bottom: none; width:1px"></div>
-<div id="videocursor_bottom" class="videocursor" style="position: absolute; display: none;
+<div id="videocursor_bottom" class="videocursor" style="position: absolute; display: none; 
 border-top: none; border-left: none; border-bottom: none; width:1px"></div>
-<div id="videocursor_left" class="videocursor" style="position: absolute; display: none;
+<div id="videocursor_left" class="videocursor" style="position: absolute; display: none; 
 border-top: none; border-right: none; border-left: none; height: 1px;"></div>
-<div id="videocursor_right" class="videocursor" style="position: absolute; display: none;
+<div id="videocursor_right" class="videocursor" style="position: absolute; display: none; 
 border-top: none; border-right: none; border-left: none; height: 1px;"></div>
-<!--  <canvas id="videocursor_ctr" width="50" height="50" style="display:none; position: absolute"></canvas> -->
+<!--  <canvas id="videocursor_ctr" width="50" height="50" style="display:none; position: absolute"></canvas> --> 
 <div id="videocursor_ctr_html4" class="videocursor" style="width: 30px; height: 30px; display: none;
 position: absolute"> </div>
 
 <!-- facebox (used for autodocklock) -->
 <div id="facebox" class="facebox" style="display: none; position: absolute;"> </div>
 
-<div id="mousecontrolshighlitebox" class="mousecontrolshighlitebox" style="display: none;
+<div id="mousecontrolshighlitebox" class="mousecontrolshighlitebox" style="display: none; 
 position: absolute; "> </div>
 <div id="forwardhighlitebox" class="forwardhighlitebox" style="display: none; position: absolute;"> </div>
 
@@ -424,13 +470,13 @@ position: absolute; "> </div>
 filter:alpha(opacity=0); opacity: 0.0; -moz-opacity:0.0; line-height: 0px"></div>
 
 <!-- video overlay logo -->
-<img id="videologo" src="images/eye.gif" width="640" height="480"
+<img id="videologo" src="images/eye.gif" width="640" height="480" 
 style="position: absolute; display: none; z-index: 4" alt="">
 
 <!-- speechbox -->
 <div id="speechbox" style="position: absolute; display: none; padding: 4px; padding-left: 7px">
-<input id="speechbox_input" onblur="javascript: speakchat('hide','speechbox');" type="text"
-onKeyPress="if (keypress(event)==13) { speech(); }"
+<input id="speechbox_input" onblur="javascript: speakchat('hide','speechbox');" type="text"  
+onKeyPress="if (keypress(event)==13) { speech(); }" 
 class="inputbox" style="width: 150px; background-color: #000000;">
 <a class="blackbg" href="">
 <span class="cancelbox"><b>X</b></span></a>&thinsp;
@@ -472,31 +518,31 @@ onmousedown="popupmenu('rosmap', 'move');" > &nbsp; </div>
 <div id="rosmap_menu_contents"  class="popupcontents" style="padding: 10px; padding-top: 7px;"></div>
 <div style="height: 0px; position: relative; top: -20px; text-align: right"
 onmousedown="popupmenusize('rosmap', event);" >
-<span id="rosmap_menu_resizehandle" class="popupmenu_underlay" style="font-size: 20px; padding-left: 5px;
+<span id="rosmap_menu_resizehandle" class="popupmenu_underlay" style="font-size: 20px; padding-left: 5px; 
 padding-right: 0px; cursor: move; color: #cccccc;  "> &#x2798; </span>   <!-- &#x2798 -->
 </div>
 </div>
 <div id="rosmap_menu_hiddencontents" style="display: none;">
 <div id="rosmapheader">
 <a class="blackbg" href= "javascript: popupmenu('rosmap', 'close');">
-<span class="cancelbox"><b>X</b></span> CLOSE</a>
-&nbsp; &nbsp;
-<span class="zoombutton"
+<span class="cancelbox"><b>X</b></span> CLOSE</a> 
+&nbsp; &nbsp; 
+<span class="zoombutton" 
 style="cursor: pointer" onmousedown="rosmapzoom(-1);" onmouseup="rosmapzoom(0);" onmouseout="rosmapzoom(0);"
 ><span class="cancelbox" style="padding-left: 7px; padding-right: 7px"
-><b>-</b></span> ZO</span><span class="zoombutton"
+><b>-</b></span> ZO</span><span class="zoombutton" 
 style="cursor: pointer" onmousedown="rosmapzoom(1);" onmouseup="rosmapzoom(0);" onmouseout="rosmapzoom(0);"
 >OM <span class="cancelbox" style="padding-left: 5px; padding-right: 5px"><b>+</b></span></span>
-&nbsp; &nbsp;
+&nbsp; &nbsp; 
 <a class="blackbg" href="javascript: rosmaparrow('position');">
 <span class="cancelbox" ><b>&#x2798;</b></span> POSITION</a>
-&nbsp; &nbsp;
+&nbsp; &nbsp; 
 <a class="blackbg" href="javascript: rosmaparrow('goalpose');">
 <span class="cancelbox" ><b>&#x2798;</b></span> SET GOAL</a>
-&nbsp; &nbsp;
-<a class="blackbg"
+&nbsp; &nbsp; 
+<a class="blackbg"  
 href="javascript: mainmenu('menulink'); waypointsmenu();">
-waypoints</a>
+waypoints</a> 
 
 
 <table><tr><td style="height: 6px"></td></tr></table>
@@ -528,7 +574,7 @@ onmousedown="popupmenu('error', 'move');" > &nbsp; </div>
 <a class="blackbg" href= "javascript: popupmenu('menu', 'close')">
 <span class="cancelbox"><b>X</b></span> CLOSE</a>
 <table><tr><td style="height: 10px"></td></tr></table>
-
+	
 video settings:<br>
 
 <span id="low_bull" style="visibility: hidden; color: #ffffff"> &bull; </span>
@@ -551,7 +597,7 @@ video settings:<br>
 
 <span id="custom_bull" style="visibility: hidden; color: #ffffff"> &bull; </span>
 <a class="blackbg" href="javascript: streamset('custom');">custom</a>
-<span id="custom_specs" style="font-size: 11px; color: #666666;"></span>&nbsp;<a
+<span id="custom_specs" style="font-size: 11px; color: #666666;"></span>&nbsp;<a 
 class="blackbg" href="javascript: streamset('setcustom');">change</a> &gt;
 <br>
 <a id="recordlink" class="blackbg" href="javascript: callServer('record','true');">record</a>
@@ -584,20 +630,20 @@ onmouseup="callServer('strobeflash','off')">strobeflash</a><br>
 		   href="javascript: navigationmenu(); ">
 			navigation</a> &gt;
 	</div>
-<a class="blackbg"
+<a class="blackbg" 
 href="javascript: popupmenu('menu', 'show', null, null, document.getElementById(&quot;calibration_settings&quot;).innerHTML);">
 settings/calibration</a> &gt;<br>
-<a class="blackbg"
+<a class="blackbg" 
 href="javascript: popupmenu('menu', 'show', null, null, document.getElementById(&quot;account_settings&quot;).innerHTML);">
 accounts</a> &gt;<br>
-<a class="blackbg"
+<a class="blackbg" 
 href="javascript: popupmenu('menu', 'show', null, null, document.getElementById(&quot;server_commands&quot;).innerHTML);">
 server</a> &gt;<br>
-<a class="blackbg"
+<a class="blackbg" 
 href="javascript: popupmenu('menu', 'show', null, null, document.getElementById(&quot;advanced_menu&quot;).innerHTML);">
 advanced</a> &gt;<br>
-<div id="developermenu" style="display: none">
-<a class="blackbg"
+<div id="developermenu" style="display: none"> 
+<a class="blackbg"  
 href="javascript: popupmenu('menu', 'show', null, null, document.getElementById(&quot;developer_menu&quot;).innerHTML);">
 developer</a> &gt;
 </div>
@@ -613,10 +659,10 @@ developer</a> &gt;
 <!-- main menu non-admin -->
 <div id = "main_menu_nonadmin" style="display: none;">
 
-<a class="blackbg" href="javascript: chatdivShow();">chat</a><span
+<a class="blackbg" href="javascript: chatdivShow();">chat</a><span 
 id="chatdiv" style="display: none">:<br>&nbsp;
-<input id="chatbox_input" class="inputbox" type="text" size="30"
-onfocus="keyboard('disable'); this.style.backgroundColor='#000000';"
+<input id="chatbox_input" class="inputbox" type="text" size="30" 
+onfocus="keyboard('disable'); this.style.backgroundColor='#000000';" 
 onblur="keyboard('enable'); this.style.backgroundColor='#151515'; chatdivHide();"
 onKeyPress="if (keypress(event)==13) { chat(); }">
 <a class="blackbg" href="javascript: chatdivHide();">
@@ -627,7 +673,7 @@ onKeyPress="if (keypress(event)==13) { chat(); }">
 
 <a class="blackbg" href="javascript: account('change_password');">change password</a><br>
 <a class="blackbg" href="javascript: logout();">logout</a><br>
-</div>
+</div> 
 
 <!-- custom stream settings (ROV) -->
 <div id="customstreamsettings" style="display: none; ">
@@ -638,14 +684,14 @@ onKeyPress="if (keypress(event)==13) { chat(); }">
 <table><tr><td style="height: 10px"></td></tr></table>
 Custom stream settings:<br>
 <table><tr><td style="height: 7px"></td></tr></table>
-width <input class="inputbox" onfocus="keyboard('disable'); this.style.backgroundColor='#000000';"
+width <input class="inputbox" onfocus="keyboard('disable'); this.style.backgroundColor='#000000';" 
 onblur="keyboard('enable'); this.style.backgroundColor='#151515';" id="vwidth" type="text" size="4" >
-height <input class="inputbox" onfocus="keyboard('disable'); this.style.backgroundColor='#000000';"
+height <input class="inputbox" onfocus="keyboard('disable'); this.style.backgroundColor='#000000';" 
 onblur="keyboard('enable'); this.style.backgroundColor='#151515';" id="vheight" type="text" size="4" ><br>
-fps <input class="inputbox" onfocus="keyboard('disable'); this.style.backgroundColor='#000000';"
+fps <input class="inputbox" onfocus="keyboard('disable'); this.style.backgroundColor='#000000';" 
 onblur="keyboard('enable'); this.style.backgroundColor='#151515';" id="vfps" type="text" size="4" >
-quality <span style="font-size: 11px; color: #777777">(1-100)</span>
-<input class="inputbox" onfocus="keyboard('disable'); this.style.backgroundColor='#000000';"
+quality <span style="font-size: 11px; color: #777777">(1-100)</span> 
+<input class="inputbox" onfocus="keyboard('disable'); this.style.backgroundColor='#000000';" 
 onblur="keyboard('enable'); this.style.backgroundColor='#151515';" id="vquality" type="text" size="4" >
 <div>
 <table><tr><td style="height: 7px"></td></tr></table>
@@ -655,7 +701,7 @@ onblur="keyboard('enable'); this.style.backgroundColor='#151515';" id="vquality"
 
 <!-- calibration settings -->
 <div id="calibration_settings" style="display: none">
-<a class="blackbg" href= "javascript: mainmenu()">
+<a class="blackbg" href= "javascript: mainmenu()"> 
 <span class="cancelbox"><b>&lt;</b></span> BACK</a>
 <a class="blackbg" href= "javascript: popupmenu('menu', 'close')">
 &nbsp; <span class="cancelbox"><b>X</b></span> CLOSE</a>
@@ -666,10 +712,10 @@ Settings and Calibration:
 <a class="blackbg" href="javascript: emailsettings();">email settings</a> &gt;<br>
 <a class="blackbg" href="javascript: autodock('calibrate');">calibrate auto-dock</a><br>
 <a class="blackbg" href="javascript: docklinecalibrate('start');">manual dock guide</a><br>
-login notify <a class="blackbg" href="javascript: writesetting('loginnotify true');">on</a> /
+login notify <a class="blackbg" href="javascript: writesetting('loginnotify true');">on</a> / 
 <a class="blackbg" href="javascript: writesetting('loginnotify false');">off</a><br>
 reboot every 48 hrs <span style="font-size: 11px">(requires server restart)</span>
-<a class="blackbg" href="javascript: writesetting('reboot true');">yes</a> /
+<a class="blackbg" href="javascript: writesetting('reboot true');">yes</a> / 
 <a class="blackbg" href="javascript: writesetting('reboot false');">no</a><br>
 attempt auto re-dock if required
 <a class="blackbg" href="javascript: if (confirm(&quot;this will enable unexpected robot movement\nare you sure?&quot;)) {
@@ -691,7 +737,7 @@ enable telnet on port 4444 <span style="font-size: 11px">(requires server restar
 
 <!-- driving settings -->
 <div id="drivingsettings" style="display: none;">
-<a class="blackbg"
+<a class="blackbg" 
 href="javascript: popupmenu('menu', 'show', null, null, document.getElementById(&quot;calibration_settings&quot;).innerHTML);">
 <span class="cancelbox"><b>&lt;</b></span> BACK</a>
 <a class="blackbg" href= "javascript: popupmenu('menu', 'close')">
@@ -699,47 +745,47 @@ href="javascript: popupmenu('menu', 'show', null, null, document.getElementById(
 <table><tr><td style="height: 10px"></td></tr></table>
 Wheel Motor Settings:
 <table><tr><td style="height: 7px"></td></tr></table>
-<div style="white-space: nowrap">speed &nbsp; &nbsp; slow <input class="inputbox" onfocus="keyboard('disable'); this.style.backgroundColor='#000000';"
+<div style="white-space: nowrap">speed &nbsp; &nbsp; slow <input class="inputbox" onfocus="keyboard('disable'); this.style.backgroundColor='#000000';" 
 onblur="keyboard('enable'); this.style.backgroundColor='#151515';" id="slowoffset" type="text" size="4" >
-med <input class="inputbox" onfocus="keyboard('disable'); this.style.backgroundColor='#000000';"
+med <input class="inputbox" onfocus="keyboard('disable'); this.style.backgroundColor='#000000';" 
 onblur="keyboard('enable'); this.style.backgroundColor='#151515';" id="medoffset" type="text" size="4" ></div>
 
-steering comp <input class="inputbox" onfocus="keyboard('disable'); this.style.backgroundColor='#000000';"
+steering comp <input class="inputbox" onfocus="keyboard('disable'); this.style.backgroundColor='#000000';" 
 onblur="keyboard('enable'); this.style.backgroundColor='#151515';" id="steeringcomp" type="text" size="4" >
 (format: L/R% eg. &quot;L5&quot;) <br>
 
-reverse steering comp <input class="inputbox" onfocus="keyboard('disable'); this.style.backgroundColor='#000000';"
+reverse steering comp <input class="inputbox" onfocus="keyboard('disable'); this.style.backgroundColor='#000000';" 
 onblur="keyboard('enable'); this.style.backgroundColor='#151515';" id="reversesteeringcomp" type="text" size="4" >
 (format: L/R% eg. &quot;L5&quot;) <br>
 
-nudge delay ms <input class="inputbox" onfocus="keyboard('disable'); this.style.backgroundColor='#000000';"
+nudge delay ms <input class="inputbox" onfocus="keyboard('disable'); this.style.backgroundColor='#000000';" 
 onblur="keyboard('enable'); this.style.backgroundColor='#151515';" id="nudgedelay" type="text" size="4" ><br>
 
-full rotation fast ms <input class="inputbox" onfocus="keyboard('disable'); this.style.backgroundColor='#000000';"
+full rotation fast ms <input class="inputbox" onfocus="keyboard('disable'); this.style.backgroundColor='#000000';" 
 onblur="keyboard('enable'); this.style.backgroundColor='#151515';" id="fullrotationdelay" type="text" size="4" ><br>
 
-one meter forward fast ms <input class="inputbox" onfocus="keyboard('disable'); this.style.backgroundColor='#000000';"
+one meter forward fast ms <input class="inputbox" onfocus="keyboard('disable'); this.style.backgroundColor='#000000';" 
 onblur="keyboard('enable'); this.style.backgroundColor='#151515';" id="onemeterdelay" type="text" size="4" ><br>
 
-max clicksteer horiz ms <input class="inputbox" onfocus="keyboard('disable'); this.style.backgroundColor='#000000';"
+max clicksteer horiz ms <input class="inputbox" onfocus="keyboard('disable'); this.style.backgroundColor='#000000';" 
 onblur="keyboard('enable'); this.style.backgroundColor='#151515';" id="maxclicknudgedelay" type="text" size="4" ><br>
 
 <table><tr><td style="height: 10px"></td></tr></table>
 Camera Tilt Servo Settings:
 <table><tr><td style="height: 7px"></td></tr></table>
-max clicksteer vertical angle <input class="inputbox" onfocus="keyboard('disable'); this.style.backgroundColor='#000000';"
+max clicksteer vertical angle <input class="inputbox" onfocus="keyboard('disable'); this.style.backgroundColor='#000000';" 
 onblur="keyboard('enable'); this.style.backgroundColor='#151515';" id="maxclickcam" type="text" size="4" ><br>
 
-camera tilt maximum position: <input class="inputbox" onfocus="keyboard('disable'); this.style.backgroundColor='#000000';"
+camera tilt maximum position: <input class="inputbox" onfocus="keyboard('disable'); this.style.backgroundColor='#000000';" 
 onblur="keyboard('enable'); this.style.backgroundColor='#151515';" id="cammaxpos" type="text" size="4" ><br>
 
-camera tilt horizontal position: <input class="inputbox" onfocus="keyboard('disable'); this.style.backgroundColor='#000000';"
+camera tilt horizontal position: <input class="inputbox" onfocus="keyboard('disable'); this.style.backgroundColor='#000000';" 
 onblur="keyboard('enable'); this.style.backgroundColor='#151515';" id="camhorizpos" type="text" size="4" ><br>
 
-camera tilt minimum position: <input class="inputbox" onfocus="keyboard('disable'); this.style.backgroundColor='#000000';"
+camera tilt minimum position: <input class="inputbox" onfocus="keyboard('disable'); this.style.backgroundColor='#000000';" 
 onblur="keyboard('enable'); this.style.backgroundColor='#151515';" id="camminpos" type="text" size="4" ><br>
 
-test tilt position: <input class="inputbox" onfocus="keyboard('disable'); this.style.backgroundColor='#000000';"
+test tilt position: <input class="inputbox" onfocus="keyboard('disable'); this.style.backgroundColor='#000000';" 
 onblur="keyboard('enable'); this.style.backgroundColor='#151515';" id="tilttestposition" type="text" size="4" >
 <a class="blackbg" href="javascript: tilttest();">go</a>
 
@@ -790,14 +836,14 @@ onblur="keyboard('enable'); this.style.backgroundColor='#151515';" id="email_to_
 
 <!--  account settings -->
 <div id="account_settings" style="display: none;">
-<a class="blackbg" href= "javascript: mainmenu()">
+<a class="blackbg" href= "javascript: mainmenu()"> 
 <span class="cancelbox"><b>&lt;</b></span> BACK</a>
 <a class="blackbg" href= "javascript: popupmenu('menu', 'close')">
 &nbsp; <span class="cancelbox"><b>X</b></span> CLOSE</a>
 <table><tr><td style="height: 10px"></td></tr></table>
 Account Settings:<br>
 <table><tr><td style="height: 7px"></td></tr></table>
-<a class="blackbg" href="javascript: account('change_username');">change username</a> &gt;<br>
+<a class="blackbg" href="javascript: account('change_username');">change username</a> &gt;<br> 
 <a class="blackbg" href="javascript: account('change_password');">change password</a> &gt;<br>
 <a class="blackbg" href="javascript: account('add_user');">add extra user</a> &gt;<br>
 <a class="blackbg" href="javascript: account('change_extra_pass');">change extra user password</a> &gt;<br>
@@ -807,10 +853,10 @@ Account Settings:<br>
 
 <a class="blackbg" href="javascript: disconnectOtherConnections();">eliminate any passengers</a> <br>
 
-<a class="blackbg" href="javascript: chatdivShow();">chat</a><span
+<a class="blackbg" href="javascript: chatdivShow();">chat</a><span 
 id="chatdiv" style="display: none">:<br>&nbsp;
-<input id="chatbox_input" class="inputbox" type="text" size="30"
-onfocus="keyboard('disable'); this.style.backgroundColor='#000000';"
+<input id="chatbox_input" class="inputbox" type="text" size="30" 
+onfocus="keyboard('disable'); this.style.backgroundColor='#000000';" 
 onblur="keyboard('enable'); this.style.backgroundColor='#151515'; chatdivHide();"
 onKeyPress="if (keypress(event)==13) { chat(); }">
 <a class="blackbg" href="javascript: chatdivHide();">
@@ -831,11 +877,11 @@ href="javascript: popupmenu('menu', 'show', null, null, document.getElementById(
 Change username:<br>
 <table><tr><td style="height: 7px"></td></tr></table>
 username: <span id="user_name2" style="color: #45F239; text-transform: uppercase;"></span><br>
-new name: <input id="usernamechanged" class="inputbox" type="text" size="10"
-onfocus="keyboard('disable'); this.style.backgroundColor='#000000';"
+new name: <input id="usernamechanged" class="inputbox" type="text" size="10" 
+onfocus="keyboard('disable'); this.style.backgroundColor='#000000';" 
 onblur="keyboard('enable'); this.style.backgroundColor='#151515';"><br>
-current password: <input id="usernamechangedpass" class="inputbox" type="password" name="password" size="10"
-onfocus="keyboard('disable'); this.style.backgroundColor='#000000';"
+current password: <input id="usernamechangedpass" class="inputbox" type="password" name="password" size="10" 
+onfocus="keyboard('disable'); this.style.backgroundColor='#000000';" 
 onblur="keyboard('enable'); this.style.backgroundColor='#151515';"><br>
 <table><tr><td style="height: 7px"></td></tr></table>
 <a class="blackbg" href="javascript: account('username_update');">
@@ -853,11 +899,11 @@ href="javascript: popupmenu('menu', 'show', null, null, document.getElementById(
 Change password:<br>
 <table><tr><td style="height: 7px"></td></tr></table>
 username: <span id="user_name" style="color: #45F239; text-transform: uppercase;"></span><br>
-new password: <input id="userpass" class="inputbox" type="password" name="password" size="10"
-onfocus="keyboard('disable'); this.style.backgroundColor='#000000';"
+new password: <input id="userpass" class="inputbox" type="password" name="password" size="10" 
+onfocus="keyboard('disable'); this.style.backgroundColor='#000000';" 
 onblur="keyboard('enable'); this.style.backgroundColor='#151515';"><br>
 re-enter new password: <input id="userpass_again" class="inputbox" type="password" name="password" size="10"
-onfocus="keyboard('disable'); this.style.backgroundColor='#000000';"
+onfocus="keyboard('disable'); this.style.backgroundColor='#000000';" 
 onblur="keyboard('enable'); this.style.backgroundColor='#151515';"><br>
 <a class="blackbg" href="javascript: account('password_update');">
 <table><tr><td style="height: 7px"></td></tr></table>
@@ -866,7 +912,7 @@ onblur="keyboard('enable'); this.style.backgroundColor='#151515';"><br>
 
 <!-- change password non admin-->
 <div id="changepassword_nonadmin" style="display: none;">
-<a class="blackbg" href= "javascript: mainmenu()">
+<a class="blackbg" href= "javascript: mainmenu()"> 
 <span class="cancelbox"><b>&lt;</b></span> BACK</a>
 <a class="blackbg" href= "javascript: popupmenu('menu', 'close')">
 &nbsp; <span class="cancelbox"><b>X</b></span> CLOSE</a>
@@ -874,11 +920,11 @@ onblur="keyboard('enable'); this.style.backgroundColor='#151515';"><br>
 Change password:<br>
 <table><tr><td style="height: 7px"></td></tr></table>
 username: <span id="user_name_nonadmin" style="color: #45F239; text-transform: uppercase;"></span><br>
-new password: <input id="userpass" class="inputbox" type="password" name="password" size="10"
-onfocus="keyboard('disable'); this.style.backgroundColor='#000000';"
+new password: <input id="userpass" class="inputbox" type="password" name="password" size="10" 
+onfocus="keyboard('disable'); this.style.backgroundColor='#000000';" 
 onblur="keyboard('enable'); this.style.backgroundColor='#151515';"><br>
 re-enter new password: <input id="userpass_again" class="inputbox" type="password" name="password" size="10"
-onfocus="keyboard('disable'); this.style.backgroundColor='#000000';"
+onfocus="keyboard('disable'); this.style.backgroundColor='#000000';" 
 onblur="keyboard('enable'); this.style.backgroundColor='#151515';"><br>
 <table><tr><td style="height: 7px"></td></tr></table>
 <a class="blackbg" href="javascript: account('password_update');">
@@ -895,14 +941,14 @@ href="javascript: popupmenu('menu', 'show', null, null, document.getElementById(
 <table><tr><td style="height: 10px"></td></tr></table>
 Add new user<br>
 <table><tr><td style="height: 7px"></td></tr></table>
-username: <input id="newusername" class="inputbox" type="text" size="10"
-onfocus="keyboard('disable'); this.style.backgroundColor='#000000';"
+username: <input id="newusername" class="inputbox" type="text" size="10" 
+onfocus="keyboard('disable'); this.style.backgroundColor='#000000';" 
 onblur="keyboard('enable'); this.style.backgroundColor='#151515';"><br>
-new password: <input id="newuserpass" class="inputbox" type="password" name="password" size="10"
-onfocus="keyboard('disable'); this.style.backgroundColor='#000000';"
+new password: <input id="newuserpass" class="inputbox" type="password" name="password" size="10" 
+onfocus="keyboard('disable'); this.style.backgroundColor='#000000';" 
 onblur="keyboard('enable'); this.style.backgroundColor='#151515';"><br>
 re-enter new password: <input id="newuserpass_again" class="inputbox" type="password" name="password" size="10"
-onfocus="keyboard('disable'); this.style.backgroundColor='#000000';"
+onfocus="keyboard('disable'); this.style.backgroundColor='#000000';" 
 onblur="keyboard('enable'); this.style.backgroundColor='#151515';"><br>
 <table><tr><td style="height: 7px"></td></tr></table>
 <a class="blackbg" href="javascript: account('newuser_add');">
@@ -945,14 +991,14 @@ href="javascript:  networksettings('loading...'); callServer('networksettings');
 <table><tr><td style="height: 10px"></td></tr></table>
 Login to relay server:<br>
 <table><tr><td style="height: 7px"></td></tr></table>
-address: <input id="relayserverhost" class="inputbox" type="text" size="10"
-onfocus="keyboard('disable'); this.style.backgroundColor='#000000';"
+address: <input id="relayserverhost" class="inputbox" type="text" size="10" 
+onfocus="keyboard('disable'); this.style.backgroundColor='#000000';" 
 onblur="keyboard('enable'); this.style.backgroundColor='#151515';"><br>
-user name: <input id="relayserveruser" class="inputbox" type="text" size="10"
-onfocus="keyboard('disable'); this.style.backgroundColor='#000000';"
+user name: <input id="relayserveruser" class="inputbox" type="text" size="10" 
+onfocus="keyboard('disable'); this.style.backgroundColor='#000000';" 
 onblur="keyboard('enable'); this.style.backgroundColor='#151515';"><br>
-password: <input id="relayserverpassword" class="inputbox" type="password" name="password" size="10"
-onfocus="keyboard('disable'); this.style.backgroundColor='#000000';"
+password: <input id="relayserverpassword" class="inputbox" type="password" name="password" size="10" 
+onfocus="keyboard('disable'); this.style.backgroundColor='#000000';" 
 onblur="keyboard('enable'); this.style.backgroundColor='#151515';"><br>
 <table><tr><td style="height: 7px"></td></tr></table>
 <a class="blackbg" href="javascript: relayserver('connect');">
@@ -975,7 +1021,7 @@ Network Menu:
 
 <!-- server commands -->
 <div id="server_commands" style="display: none;">
-<a class="blackbg" href= "javascript: mainmenu()">
+<a class="blackbg" href= "javascript: mainmenu()"> 
 <span class="cancelbox"><b>&lt;</b></span> BACK</a>
 <a class="blackbg" href= "javascript: popupmenu('menu', 'close')">
 &nbsp; <span class="cancelbox"><b>X</b></span> CLOSE</a>
@@ -997,7 +1043,7 @@ Server Menu:<br>
 
 <!--  advanced menu -->
 <div id="advanced_menu" style="display: none">
-<a class="blackbg" href= "javascript: mainmenu()">
+<a class="blackbg" href= "javascript: mainmenu()"> 
 <span class="cancelbox"><b>&lt;</b></span> BACK</a>
 <a class="blackbg" href= "javascript: popupmenu('menu', 'close')">
 &nbsp; <span class="cancelbox"><b>X</b></span> CLOSE</a>
@@ -1011,8 +1057,8 @@ onmouseover="document.getElementById('steering_textbox').innerHTML = 'TELNET COM
 onmouseout="document.getElementById('steering_textbox').innerHTML = '';
 			document.getElementById('steeringkeytextbox').innerHTML = '';"
 >telnet text command</a><span id="oculuscommanddiv" style="display: none">:<br>&nbsp;
-<input id="oculuscommand" class="inputbox" type="text" size="30"
-onfocus="keyboard('disable'); this.style.backgroundColor='#000000';"
+<input id="oculuscommand" class="inputbox" type="text" size="30" 
+onfocus="keyboard('disable'); this.style.backgroundColor='#000000';" 
 onblur="keyboard('enable'); this.style.backgroundColor='#151515'; oculuscommanddivHide();"
 onKeyPress="if (keypress(event)==13) { oculuscommandgo(); }">
 <a class="blackbg" href="javascript: oculuscommanddivHide();">
@@ -1024,10 +1070,10 @@ onKeyPress="if (keypress(event)==13) { oculuscommandgo(); }">
 <a class="blackbg" href="javascript: battStats();">power info</a><br>
 <a class="blackbg" href="javascript: hiddenmessageboxShow();">command log full</a><br>
 
-<a class="blackbg" href="javascript: usersyscommanddivShow();">system command</a><span
+<a class="blackbg" href="javascript: usersyscommanddivShow();">system command</a><span 
 id="usersyscommanddiv" style="display: none">:<br>&nbsp;
-<input id="usersyscommand" class="inputbox" type="text" size="30"
-onfocus="keyboard('disable'); this.style.backgroundColor='#000000';"
+<input id="usersyscommand" class="inputbox" type="text" size="30" 
+onfocus="keyboard('disable'); this.style.backgroundColor='#000000';" 
 onblur="keyboard('enable'); this.style.backgroundColor='#151515'; usersyscommanddivHide();"
 onKeyPress="if (keypress(event)==13) { systemcall('',''); }">
 <a class="blackbg" href="javascript: usersyscommanddivHide();">
@@ -1039,7 +1085,7 @@ onKeyPress="if (keypress(event)==13) { systemcall('',''); }">
 
 <a class="blackbg" href="javascript: motionenabletoggle();">motion enable/disable</a><br>
 <a class="blackbg" href="javascript: clicksteer('');">crosshairs on/off</a><br>
-<a class="blackbg" href="frameGrabHTTP" target="_blank">frame grab</a><br>
+<a class="blackbg" href="frameGrabHTTP" target="_blank">frame grab</a><br> 
 <a class="blackbg" href="rss.xml" target="_blank">rss feed</a><br>
 <a class="blackbg" href="media" target="_blank">recordings and frame grabs</a><br>
 
@@ -1058,7 +1104,7 @@ href="javascript: callServer('state', 'delete objectdetect'); imgOverVideo('off'
 
 <!-- developer menu -->
 <div id="developer_menu" style="display: none">
-<a class="blackbg" href= "javascript: mainmenu()">
+<a class="blackbg" href= "javascript: mainmenu()"> 
 <span class="cancelbox"><b>&lt;</b></span> BACK</a>
 <a class="blackbg" href= "javascript: popupmenu('menu', 'close')">
 &nbsp; <span class="cancelbox"><b>X</b></span> CLOSE</a>
@@ -1066,21 +1112,21 @@ href="javascript: callServer('state', 'delete objectdetect'); imgOverVideo('off'
 Developer Menu:<br>
 <table><tr><td style="height: 7px"></td></tr></table>
 depth camera <a class="blackbg" href="javascript: radar('init');">on</a> /
-<a class="blackbg" href="javascript: radar('shutdown');">off</a><br>
-radar view <a class="blackbg" href="javascript: radar('on');">on</a> /
-<a class="blackbg" href="javascript: radar('off');">off</a><br>
-depth view <a class="blackbg" href="javascript: depthView('depthFrame');">on</a> /
+<a class="blackbg" href="javascript: radar('shutdown');">off</a><br> 
+radar view <a class="blackbg" href="javascript: radar('on');">on</a> / 
+<a class="blackbg" href="javascript: radar('off');">off</a><br> 
+depth view <a class="blackbg" href="javascript: depthView('depthFrame');">on</a> / 
 <a class="blackbg" href="javascript: depthView('off');">off</a><br>
-floor plane view <a class="blackbg" href="javascript: depthView('floorPlane');">on</a> /
+floor plane view <a class="blackbg" href="javascript: depthView('floorPlane');">on</a> / 
 <a class="blackbg" href="javascript: depthView('off');">off</a><br>
 
 <!--
-floor plane top view <a class="blackbg" href="javascript: depthView('floorPlaneTop');">on</a> /
-<a class="blackbg" href="javascript: depthView('off');">off</a><br>
+floor plane top view <a class="blackbg" href="javascript: depthView('floorPlaneTop');">on</a> / 
+<a class="blackbg" href="javascript: depthView('off');">off</a><br>  
 <a class="blackbg" href="frameGrabHTTP?mode=map" target="_blank">map</a><br>
  <a class="blackbg" href="javascript: callServer('clearmap','');">clear map</a><br>
 
-processed image <a class="blackbg" href="javascript: processedImg('load');">load</a> /
+processed image <a class="blackbg" href="javascript: processedImg('load');">load</a> / 
 <a class="blackbg" href="javascript: processedImg('close');">off</a><br>
 
 jpg stream <a class="blackbg" href="javascript: imgOverVideo('on');">on</a> /
@@ -1102,12 +1148,12 @@ jpg stream <a class="blackbg" href="javascript: imgOverVideo('on');">on</a> /
     left camera feed <a class="blackbg" href="javascript: depthView('stereoleft');">on</a> /
     <a class="blackbg" href="javascript: depthView('off');">off</a><br>
      -->
-
+ 
 </div>
 
 <!--  navigation_menu -->
 <div id="navigation_menu" style="display: none">
-<a class="blackbg" href= "javascript: mainmenu()">
+<a class="blackbg" href= "javascript: mainmenu()"> 
 <span class="cancelbox"><b>&lt;</b></span> BACK</a>
 <a class="blackbg" href= "javascript: popupmenu('menu', 'close')">
 &nbsp; <span class="cancelbox"><b>X</b></span> CLOSE</a>
@@ -1209,23 +1255,23 @@ Route Editor:
 <table><tr><td style="height: 10px"></td></tr></table>
 Name:
 <input id="routename" type="text" size="10" onKeyPress="if (keypress(event)==13) { routesave(); }"
-class="inputbox" onfocus="keyboard('disable'); this.style.backgroundColor='#000000';"
+class="inputbox" onfocus="keyboard('disable'); this.style.backgroundColor='#000000';" 
 onblur="keyboard('enable'); this.style.backgroundColor='#151515';">
 &nbsp; &nbsp;
 Minutes between runs:
 <input id="routeminbetween" type="text" size="4" onKeyPress="if (keypress(event)==13) { routesave(); }"
-class="inputbox" onfocus="keyboard('disable'); this.style.backgroundColor='#000000';"
+class="inputbox" onfocus="keyboard('disable'); this.style.backgroundColor='#000000';" 
 onblur="keyboard('enable'); this.style.backgroundColor='#151515';">
 
 <div id="edit_route_contents" style="line-height: 23px;"></div>
 </div>
 
 <!--  overlay -->
-<div id="overlay" class="overlay"
+<div id="overlay" class="overlay" 
 style="position: fixed; z-index: 7; left: 0px; top: 0px; width: 100%; height: 100%"> </div>
 
 <!--  overlay contents -->
-<div id="overlaycontents"
+<div id="overlaycontents" 
 style="position: absolute; z-index: 8;left: 0px; top: 0px; width: 100%;">
 <table align="center" style="height: 100%"><tr valign="top">
 <td>
@@ -1245,7 +1291,7 @@ class="inputbox" onfocus="this.style.backgroundColor='#000000';" onblur="this.st
 <td>password:</td>
 <td><input id="pass" type="password" name="password" size="10" onKeyPress="if (keypress(event)==13) { loginsend(); }"
 class="inputbox" onfocus="this.style.backgroundColor='#000000';" onblur="this.style.backgroundColor='#151515';"></td>
-</tr></table>
+</tr></table> 
 
 <input type="checkbox" id="user_remember" name="user_remember" value="remember" checked="checked"> remember me<br>
 <a class="blackbg" href="javascript: loginsend();">LOGIN</a>
@@ -1263,7 +1309,7 @@ Choose action:<br>
 </td></tr></table>
 
 
-<!--  hidden message box container -->
+<!--  hidden message box container --> 
 <div id="hiddenmessageboxcontainer" style="display: none; padding-top: 20px; padding-left: 25px">
 <a class="blackbg" href= "javascript: overlay('off');">
 <span class="cancelbox"><b>X</b></span> CLOSE</a>
@@ -1282,9 +1328,9 @@ Choose action:<br>
 </div> <!--  end of overlaycontents -->
 
 <!-- logo -->
-
+ 
 <div style="position: fixed; bottom: 5px; right: 5px; z-index: -1; padding-left: 5px;">
-<img src="images/oculus_corner_logo.gif" alt="">
+<img src="images/oculus_corner_logo.gif" alt="">  
 </div>
 
 <iframe id="upload_frame" name="upload_frame" style="display: none"></iframe>

@@ -1,4 +1,7 @@
-package oculusPrime;
+package oculusPrime.servlet;
+
+import oculusPrime.BanList;
+import oculusPrime.Util;
 
 import java.io.*;
 import javax.servlet.*;

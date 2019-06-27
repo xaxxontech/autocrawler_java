@@ -1,4 +1,4 @@
-package oculusPrime;
+package oculusPrime.servlet;
 
 import java.io.File;
 import java.io.IOException;
@@ -20,6 +20,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import developer.Navigation;
 import developer.NavigationUtilities;
+import oculusPrime.*;
 import oculusPrime.State.values;
 import oculusPrime.commport.PowerHistory;
 
@@ -66,7 +67,6 @@ public class DashboardServlet extends HttpServlet implements Observer {
 	private static final int MAX_STATE_HISTORY = 40;
 	Vector<String> history = new Vector<String>();
 	Vector<String> pointslist;
-	Vector<PyScripts> pids;
 	static Application app = null;
 	String httpport = null;
 	String estimatedmeters;
@@ -294,17 +294,6 @@ public class DashboardServlet extends HttpServlet implements Observer {
 					app.driverCallServer(PlayerCommands.cancelroute, null);
 					Util.delay(3000);
 					app.driverCallServer(PlayerCommands.gotodock, null);
-				}
-
-				if(action.equalsIgnoreCase("tail")){
-					String log = PyScripts.NONE;
-					for( int i = 0 ; i < pids.size() ; i++ ) if(pids.get(i).pid.equals(pid)) log = pids.get(i).logFile;
-					if( ! log.equals(PyScripts.NONE)){
-						Util.log("[" + pid + "] " + log, "dashboardservlet");
-						Vector<String> txt = Util.tail(log, 5);
-						for( int i = 0 ; i < txt.size() ; i++)
-							Util.log("["+pids.get(i).pyFile + "] " + (String) txt.get(i), "dashboardservlet");
-					}
 				}
 
 				if(action.equalsIgnoreCase("kill")){
@@ -735,35 +724,6 @@ public class DashboardServlet extends HttpServlet implements Observer {
 		drop += "</div></div>\n";
 		str.append(drop);
 
-		// pids 
-		pids = PyScripts.getRunningPythonScripts();
-		str.append("<td><div class=\"dropdown\"><button class=\"dropbtn\">&nbsp;&nbsp;kill "+pids.size()+"</button><div class=\"dropdown-content\"> \n");
-		for(int i = 0 ; i < pids.size() ; i ++)
-			str.append("<a href=\"dashboard?action=kill&pid="+pids.get(i).pid+"\">"+pids.get(i).name+"</a>\n");
-		str.append("<a href=\"dashboard?action=kill&pid=pkill\">pkill python</a>\n");
-		str.append("</div></div>\n");
-
-		// python script files
-		File[] names = PyScripts.getScriptFiles();
-		if( names == null ) str.append("<td> none");
-		else {
-			str.append("<td><div class=\"dropdown\"><button class=\"dropbtn\">&nbsp;&nbsp;scripts " + names.length + "</button><div class=\"dropdown-content\">");
-			for(int i = 0 ; i < names.length ; i++)
-				str.append("\n<a href=\"dashboard?action=script&pid="+ names[i].getName() +"\">"+ names[i].getName() +"</a>");
-			str.append("</div></div>\n");
-		}
-
-		// --- tail on pid --- //
-		str.append("<td><div class=\"dropdown\"><button class=\"dropbtn\">&nbsp;&nbsp;logs</button><div class=\"dropdown-content\"> \n");
-		str.append("<a href=\"dashboard?action=batterylog\">battery log</a>\n");
-		// str.append("<a href=\"dashboard?action=batterylog\">battery log</a>\n");	
-		for(int i = 0 ; i < pids.size() ; i ++) {
-			if( ! pids.get(i).logFile.equals(PyScripts.NONE)) {
-				String txt = pids.get(i).logFile;
-				txt = Util.trimLength(txt, 15);
-				str.append("<a href=\"dashboard?action=tail&pid="+pids.get(i).pid+"\">"+ txt +"</a>\n");
-			}
-		}
 //		str.append("<a href=\"dashboard?action=tail&pid=stdout\">stdout</a>\n");
 //		str.append("<a href=\"dashboard?action=tail&pid=ros\">ros log</a>\n");
 //		str.append("<a href=\"dashboard?action=tail&pid=stdout\">stdout</a>\n");

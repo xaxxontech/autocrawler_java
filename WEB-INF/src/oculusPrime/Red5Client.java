@@ -3,6 +3,7 @@ package oculusPrime;
 import java.util.Collection;
 import java.util.Set;
 
+import oculusPrime.commport.Malg;
 import org.red5.client.net.rtmp.ClientExceptionHandler;
 import org.red5.client.net.rtmp.RTMPClient;
 import org.red5.io.utils.ObjectMap;
@@ -10,7 +11,6 @@ import org.red5.server.api.IConnection;
 import org.red5.server.api.service.IPendingServiceCall;
 import org.red5.server.api.service.IPendingServiceCallback;
 import org.red5.server.api.service.IServiceCapableConnection;
-import oculusPrime.commport.ArduinoPrime;
 
 public class Red5Client extends RTMPClient {
     private State state = State.getReference();
@@ -287,7 +287,7 @@ public class Red5Client extends RTMPClient {
 
                 app.driverCallServer(PlayerCommands.spotlight, "0");
                 app.driverCallServer(PlayerCommands.floodlight, "0");
-                app.driverCallServer(PlayerCommands.move, ArduinoPrime.direction.stop.toString());
+                app.driverCallServer(PlayerCommands.move, Malg.direction.stop.toString());
 
             }
 

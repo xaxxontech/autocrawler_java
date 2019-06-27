@@ -657,7 +657,8 @@ public class Util {
 						if (!addr.equals(state.get(values.localaddress)))
 							state.set(values.localaddress, addr);
 						return true;
-					} else Util.debug("Util.updateLocalIPAddress(): bad address ["+ addr + "]", null);
+					}
+//					else Util.debug("Util.updateLocalIPAddress(): bad address ["+ addr + "]", null);
 				}
 			}
 		} catch (Exception e) {

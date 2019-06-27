@@ -176,7 +176,7 @@ public class State {
 		for(int i = 0 ; i < observers.size() ; i++) observers.get(i).updated(key.trim());
 	}
 	
-	synchronized String get(final String key) {
+	public synchronized String get(final String key) {
 
 		String ans = null;
 		try {
@@ -272,7 +272,7 @@ public class State {
 		return props.containsKey(key.trim());
 	}
 	
-	synchronized void delete(String key) {
+	public synchronized void delete(String key) {
 		if(!exists(key)) return;
 		if(props.containsKey(key)) props.remove(key);
 		for(int i = 0 ; i < observers.size() ; i++) observers.get(i).updated(key);	

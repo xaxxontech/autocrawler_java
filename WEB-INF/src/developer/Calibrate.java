@@ -1,10 +1,8 @@
 package developer;
 
-import developer.depth.Stereo;
 import oculusPrime.*;
 import oculusPrime.State.values;
-import oculusPrime.commport.ArduinoPower;
-import oculusPrime.commport.ArduinoPrime;
+import oculusPrime.commport.Malg;
 
 /**
  * Created by colin on 8/3/2016.
@@ -61,9 +59,9 @@ public class Calibrate implements Observer{
                     app.driverCallServer(dir, "20");
                     Util.delay(100);
                     start = System.currentTimeMillis();
-                    while(!state.get(values.direction).equals(ArduinoPrime.direction.stop.toString())
+                    while(!state.get(values.direction).equals(Malg.direction.stop.toString())
                             && System.currentTimeMillis() - start < 5000) { Util.delay(10); } // wait
-                    Util.delay(ArduinoPrime.TURNING_STOP_DELAY);
+                    Util.delay(Malg.TURNING_STOP_DELAY);
                 }
                 rot ++;
 
@@ -94,7 +92,7 @@ public class Calibrate implements Observer{
 
             // start gyro recording
             boolean odometrywasrunning = state.getBoolean(values.odometry);
-            state.set(values.odometrybroadcast, ArduinoPrime.ODOMBROADCASTDEFAULT); // TODO: is default now, not required
+            state.set(values.odometrybroadcast, Malg.ODOMBROADCASTDEFAULT); // TODO: is default now, not required
             app.driverCallServer(PlayerCommands.odometrystart, null);
             cumulativeangle = 0; // negative because cam reversed
 
@@ -105,9 +103,9 @@ public class Calibrate implements Observer{
             app.driverCallServer(dir, Integer.toString(360*REVOLUTIONS+180)); // assume default settings are pretty good, to speed things up..?
             Util.delay((long) ((360*REVOLUTIONS+180) / state.getDouble(values.odomturndpms.toString())));
             long start = System.currentTimeMillis();
-            while(!state.get(values.direction).equals(ArduinoPrime.direction.stop.toString())
+            while(!state.get(values.direction).equals(Malg.direction.stop.toString())
                     && System.currentTimeMillis() - start < 15000) { Util.delay(10); } // wait
-            Util.delay(ArduinoPrime.TURNING_STOP_DELAY);
+            Util.delay(Malg.TURNING_STOP_DELAY);
             rot = 0;
 
             while (state.getBoolean(values.calibratingrotation)) {
@@ -117,9 +115,9 @@ public class Calibrate implements Observer{
                 else { // rotate a bit
                     app.driverCallServer(dir, "20");
                     start = System.currentTimeMillis();
-                    while(!state.get(values.direction).equals(ArduinoPrime.direction.stop.toString())
+                    while(!state.get(values.direction).equals(Malg.direction.stop.toString())
                             && System.currentTimeMillis() - start < 5000) { Util.delay(10); } // wait
-                    Util.delay(ArduinoPrime.TURNING_STOP_DELAY);
+                    Util.delay(Malg.TURNING_STOP_DELAY);
                 }
                 rot ++;
 

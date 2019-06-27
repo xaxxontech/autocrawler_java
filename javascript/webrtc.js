@@ -8,11 +8,10 @@
  */
 
 // Set this to override the automatic detection in websocketServerConnect()
-var ws_server= "webrtc.nirbheek.in";
-//  var ws_server="192.168.0.28";
+var ws_server="xaxxon.com";
 var ws_port;
 // Set this to use a specific peer id instead of a random one
-var default_peer_id;
+var default_peer_id=777;
 // Override with your own STUN servers if you want
 var rtc_configuration = {iceServers: [{urls: "stun:stun.services.mozilla.com"},
                                       {urls: "stun:stun.l.google.com:19302"}]};
@@ -24,7 +23,7 @@ var peer_connection;
 var send_channel;
 var ws_conn;
 // Promise for local stream after constraints are approved by the user
-//  var local_stream_promise;
+var local_stream_promise;
 
 function getOurId() {
     return Math.floor(Math.random() * (9000 - 10) + 10).toString();
@@ -61,12 +60,12 @@ function setError(text) {
 
 function resetVideo() {
     // Release the webcam and mic
-    //  if (local_stream_promise)
-        //  local_stream_promise.then(stream => {
-            //  if (stream) {
-                //  stream.getTracks().forEach(function (track) { track.stop(); });
-            //  }
-        //  });
+    if (local_stream_promise)
+        local_stream_promise.then(stream => {
+            if (stream) {
+                stream.getTracks().forEach(function (track) { track.stop(); });
+            }
+        });
 
     // Reset the video element and stop showing the last received frame
     var videoElement = getVideoElement();
@@ -82,14 +81,11 @@ function onIncomingSDP(sdp) {
         if (sdp.type != "offer")
             return;
         setStatus("Got SDP offer");
-        //  local_stream_promise.then((stream) => {
-            //  setStatus("Got local stream, creating answer");
-            //  peer_connection.createAnswer()
-            //  .then(onLocalDescription).catch(setError);
-        //  }).catch(setError);
-        setStatus("Ccreating answer");
+        local_stream_promise.then((stream) => {
+            setStatus("Got local stream, creating answer");
             peer_connection.createAnswer()
             .then(onLocalDescription).catch(setError);
+        }).catch(setError);
     }).catch(setError);
 }
 
@@ -223,16 +219,10 @@ function websocketServerConnect() {
     ws_conn.addEventListener('close', onServerClose);
 }
 
-function onRemoteStreamAdded(event) {
-    videoTracks = event.stream.getVideoTracks();
-    audioTracks = event.stream.getAudioTracks();
-
-    if (videoTracks.length > 0) {
-        console.log('Incoming stream: ' + videoTracks.length + ' video tracks and ' + audioTracks.length + ' audio tracks');
-        getVideoElement().srcObject = event.stream;
-        setTimeout("getVideoElement().play();", 1000); // TODO: required for chrome/unbuntu only?
-    } else {
-        handleIncomingError('Stream with unknown tracks added, resetting');
+function onRemoteTrack(event) {
+    if (getVideoElement().srcObject !== event.streams[0]) {
+        console.log('Incoming stream');
+        getVideoElement().srcObject = event.streams[0];
     }
 }
 
@@ -288,13 +278,13 @@ function createCall(msg) {
     send_channel.onerror = handleDataChannelError;
     send_channel.onclose = handleDataChannelClose;
     peer_connection.ondatachannel = onDataChannel;
-    peer_connection.onaddstream = onRemoteStreamAdded;
+    peer_connection.ontrack = onRemoteTrack;
     /* Send our video/audio to the other peer */
-    //  local_stream_promise = getLocalStream().then((stream) => {
-        //  console.log('Adding local stream');
-        //  peer_connection.addStream(stream);
-        //  return stream;
-    //  }).catch(setError);
+    local_stream_promise = getLocalStream().then((stream) => {
+        console.log('Adding local stream');
+        peer_connection.addStream(stream);
+        return stream;
+    }).catch(setError);
 
     if (!msg.sdp) {
         console.log("WARNING: First message wasn't an SDP message!?");

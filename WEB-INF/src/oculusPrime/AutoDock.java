@@ -9,10 +9,8 @@ import java.io.IOException;
 
 import javax.imageio.ImageIO;
 
-import developer.Navigation;
-import developer.Ros;
-import oculusPrime.commport.ArduinoPower;
-import oculusPrime.commport.ArduinoPrime;
+import oculusPrime.commport.Power;
+import oculusPrime.commport.Malg;
 import oculusPrime.commport.PowerLogger;
 
 public class AutoDock { 
@@ -31,7 +29,7 @@ public class AutoDock {
 	private State state = State.getReference();
 	private boolean autodockingcamctr = false;
 	private int lastcamctr = 0;
-	private ArduinoPrime comport = null;
+	private Malg comport = null;
 	private int autodockctrattempts = 0;
 	private Application app = null;
 	private OculusImage oculusImage = new OculusImage();
@@ -49,7 +47,7 @@ public class AutoDock {
 	private boolean odometrywasrunning = false;
 	public static final long DOCKGRABDELAY = 200;
 
-	public AutoDock(Application theapp, ArduinoPrime com, ArduinoPower powercom) {
+	public AutoDock(Application theapp, Malg com, Power powercom) {
 		this.app = theapp;
 		this.comport = com;
 		oculusImage.dockSettings(docktarget);
@@ -154,10 +152,10 @@ public class AutoDock {
 						else { // backup try again
 						    Util.debug("backup", this);
 						    double distance = 0.6 - baselinkdistance;
-							comport.movedistance(ArduinoPrime.direction.backward, distance);
+							comport.movedistance(Malg.direction.backward, distance);
 							Util.delay((long) (distance / state.getDouble(State.values.odomlinearmpms.toString())));
 							long start = System.currentTimeMillis();
-							while(!state.get(State.values.direction).equals(ArduinoPrime.direction.stop.toString())
+							while(!state.get(State.values.direction).equals(Malg.direction.stop.toString())
 									&& System.currentTimeMillis() - start < 10000) { Util.delay(10); } // wait
                         }
 					}
@@ -200,7 +198,7 @@ public class AutoDock {
 
 		int rot = 0;
 		while (rot < 20 && state.getBoolean(State.values.autodocking)) {
-			autoDockTurn(ArduinoPrime.direction.right, 20);
+			autoDockTurn(Malg.direction.right, 20);
 			if (state.getBoolean(State.values.dockfound)) return true;
 			rot++;
 		}
@@ -208,11 +206,11 @@ public class AutoDock {
 		return false;
 	}
 
-	private void autoDockTurn(ArduinoPrime.direction dir, double angle) { // blocking, non-progressive turn
+	private void autoDockTurn(Malg.direction dir, double angle) { // blocking, non-progressive turn
 		comport.rotate(dir, angle);
 		Util.delay(100);
-		state.block(State.values.direction, ArduinoPrime.direction.stop.toString(), 10000);
-		Util.delay(ArduinoPrime.TURNING_STOP_DELAY+DOCKGRABDELAY);
+		state.block(State.values.direction, Malg.direction.stop.toString(), 10000);
+		Util.delay(Malg.TURNING_STOP_DELAY+DOCKGRABDELAY);
 	}
 
 	private void autoDockRotate(double angle) { // blocking, progressive turn
@@ -227,9 +225,9 @@ public class AutoDock {
 
     private void autoDockForward(double distance) { // blocking
 		Util.debug("autoDockForward(): "+distance, this);
-        comport.movedistance(ArduinoPrime.direction.forward,  distance);
+        comport.movedistance(Malg.direction.forward,  distance);
         Util.delay((long) (distance / state.getDouble(State.values.odomlinearmpms.toString())));
-        state.block(State.values.direction, ArduinoPrime.direction.stop.toString(), 10000);
+        state.block(State.values.direction, Malg.direction.stop.toString(), 10000);
         Util.delay(DOCKGRABDELAY);
     }
 
@@ -273,7 +271,7 @@ public class AutoDock {
 		state.set(State.values.docking, true);
 		state.set(State.values.dockstatus, DOCKING);
 
-//		comport.speedset(ArduinoPrime.speeds.slow.toString());
+//		comport.speedset(Malg.speeds.slow.toString());
 		int s = comport.speedslow;
 		app.driverCallServer(PlayerCommands.odometrystop, null);
 
@@ -320,7 +318,7 @@ public class AutoDock {
 				if(state.get(State.values.dockstatus).equals(DOCKED)) { // dock successful
 					
 					state.set(State.values.docking, false);
-					comport.speedset(ArduinoPrime.speeds.fast.toString());
+					comport.speedset(Malg.speeds.fast.toString());
 
 					String str = "";
 
@@ -332,7 +330,7 @@ public class AutoDock {
 //							app.publish(Application.streamstate.stop);
 //						}
 //						app.driverCallServer(PlayerCommands.floodlight, "0");
-//						app.driverCallServer(PlayerCommands.cameracommand, ArduinoPrime.cameramove.horiz.toString());
+//						app.driverCallServer(PlayerCommands.cameracommand, Malg.cameramove.horiz.toString());
 //					}
 
 					app.message("docked successfully", "multiple", str);
@@ -358,14 +356,14 @@ public class AutoDock {
 							dockattempts ++;
 
 							// backup a bit
-//							comport.speedset(ArduinoPrime.speeds.med.toString());
+//							comport.speedset(Malg.speeds.med.toString());
 							comport.goBackward();
 							comport.delayWithVoltsComp(400);
 							comport.stopGoing();
-							Util.delay(ArduinoPrime.LINEAR_STOP_DELAY); // let deaccelerate
+							Util.delay(Malg.LINEAR_STOP_DELAY); // let deaccelerate
 
 							// turn slightly! // TODO: direction should be determined by last slope
-							comport.speedset(ArduinoPrime.speeds.fast.toString());
+							comport.speedset(Malg.speeds.fast.toString());
 							comport.clickNudge((imgwidth / 4) * rescomp, true); // true=firmware timed
 							comport.delayWithVoltsComp(allowforClickSteer);
 
@@ -373,7 +371,7 @@ public class AutoDock {
 							comport.goBackward();
 							comport.delayWithVoltsComp(500);
 							comport.stopGoing();
-							Util.delay(ArduinoPrime.LINEAR_STOP_DELAY); // let deaccelerate
+							Util.delay(Malg.LINEAR_STOP_DELAY); // let deaccelerate
 
 							dockGrab(dockgrabmodes.start, 0, 0);
 							state.set(State.values.autodocking, true);
@@ -388,7 +386,7 @@ public class AutoDock {
 							
 							// back away from dock to avoid sketchy contact
 							Util.log("autodock failure, disengaging from dock", this);
-							comport.speedset(ArduinoPrime.speeds.med.toString());
+							comport.speedset(Malg.speeds.med.toString());
 							comport.goBackward();
 							Util.delay(400);
 							comport.stopGoing();
@@ -464,7 +462,7 @@ public class AutoDock {
 			final int hardStopPreDelay = 400;
 			final int hardStopPostDelay = 500;
 
-			comport.speedset(ArduinoPrime.speeds.fast.toString());
+			comport.speedset(Malg.speeds.fast.toString());
 
 			SystemWatchdog.waitForCpu();
 
@@ -482,7 +480,7 @@ public class AutoDock {
 				comport.goForward(s1FWDmilliseconds);
 				Util.delay(s1FWDmilliseconds);
 				comport.stopGoing();
-//				Util.delay(ArduinoPrime.LINEAR_STOP_DELAY);
+//				Util.delay(Malg.LINEAR_STOP_DELAY);
 				Util.delay(hardStopPreDelay);
 				comport.hardStop();
 				Util.delay(hardStopPostDelay);
@@ -530,7 +528,7 @@ public class AutoDock {
 						comport.goForward(s2FWDmilliseconds);
 						Util.delay(s2FWDmilliseconds);
 						comport.stopGoing();
-//						Util.delay(ArduinoPrime.LINEAR_STOP_DELAY);
+//						Util.delay(Malg.LINEAR_STOP_DELAY);
 						Util.delay(hardStopPreDelay);
 						comport.hardStop();
 						Util.delay(hardStopPostDelay);
@@ -549,7 +547,7 @@ public class AutoDock {
 						comport.goForward(s2FWDmilliseconds);
 						Util.delay(s2FWDmilliseconds);
 						comport.stopGoing();
-//						Util.delay(ArduinoPrime.LINEAR_STOP_DELAY);
+//						Util.delay(Malg.LINEAR_STOP_DELAY);
 						Util.delay(hardStopPreDelay);
 						comport.hardStop();
 						Util.delay(hardStopPostDelay);
@@ -575,7 +573,7 @@ public class AutoDock {
 						comport.goForward(s2FWDmilliseconds);
 						Util.delay(s2FWDmilliseconds);
 						comport.stopGoing();
-//						Util.delay(ArduinoPrime.LINEAR_STOP_DELAY);
+//						Util.delay(Malg.LINEAR_STOP_DELAY);
 						Util.delay(hardStopPreDelay);
 						comport.hardStop();
 						Util.delay(hardStopPostDelay);
@@ -624,7 +622,7 @@ public class AutoDock {
 						comport.goBackward();
 						comport.delayWithVoltsComp(s1FWDmilliseconds);
 						comport.stopGoing();
-//						Util.delay(ArduinoPrime.LINEAR_STOP_DELAY); // let deaccelerate
+//						Util.delay(Malg.LINEAR_STOP_DELAY); // let deaccelerate
 						Util.delay(hardStopPreDelay);
 						comport.hardStop();
 						Util.delay(hardStopPostDelay);

@@ -4,8 +4,8 @@ import developer.Navigation;
 import developer.Ros;
 import oculusPrime.AutoDock.autodockmodes;
 import oculusPrime.State.values;
-import oculusPrime.commport.ArduinoPower;
-import oculusPrime.commport.ArduinoPrime;
+import oculusPrime.commport.Power;
+import oculusPrime.commport.Malg;
 import oculusPrime.commport.PowerLogger;
 
 import java.io.File;
@@ -114,7 +114,7 @@ public class SystemWatchdog {
 						if (System.currentTimeMillis() - lowbattredockstart > AUTODOCKTIMEOUT) {
 							Util.log("abandonded, undocked, low battery, redock failed", this);
                             if (settings.getBoolean(ManualSettings.timedshutdown) &&
-									application.powerport.boardid.equals(ArduinoPower.FIRMWARE_IDV2))
+									application.powerport.boardid.equals(Power.FIRMWARE_IDV2))
 								timedShutdown();
 							else
 								application.driverCallServer(PlayerCommands.powershutdown, null);
@@ -185,15 +185,15 @@ public class SystemWatchdog {
 		String code[] = lastpowererrornotify.split(",");
 		for (int i=0; i < code.length; i++) {
 			int c = Integer.parseInt(code[i]);
-			if (c > ArduinoPower.WARNING_ONLY_BELOW ) { 
+			if (c > Power.WARNING_ONLY_BELOW ) {
 				warningonly = false;
 				longerror += "<span style='color: red'>";
 			}
-			if (c != 0) longerror += ArduinoPower.pwrerr.get(c).replaceFirst("ERROR_", "") + "<br>";
+			if (c != 0) longerror += Power.pwrerr.get(c).replaceFirst("ERROR_", "") + "<br>";
 			if (!warningonly) longerror += "</span>";
-			if (c > ArduinoPower.RESET_REQUIRED_ABOVE && c != ArduinoPower.COMM_LOST) resetrequired = true;
-			if (c == ArduinoPower.COMM_LOST) commlost = true;
-			if (c > ArduinoPower.FORCE_UNDOCK_ABOVE) state.set(State.values.forceundock, true);
+			if (c > Power.RESET_REQUIRED_ABOVE && c != Power.COMM_LOST) resetrequired = true;
+			if (c == Power.COMM_LOST) commlost = true;
+			if (c > Power.FORCE_UNDOCK_ABOVE) state.set(State.values.forceundock, true);
 		}
 
 		// cancel any navigation routes (TODO: and other autonomous functions ??)
@@ -285,7 +285,7 @@ public class SystemWatchdog {
 			double distance = 0.3;
 			application.driverCallServer(PlayerCommands.backward, String.valueOf(distance));
 			Util.delay((long) (distance / state.getDouble(State.values.odomlinearmpms.toString())));
-			state.block(State.values.direction, ArduinoPrime.direction.stop.toString(), 10000);
+			state.block(State.values.direction, Malg.direction.stop.toString(), 10000);
 			Util.delay(AutoDock.DOCKGRABDELAY);
 
 			if (!redocking) return;
@@ -329,12 +329,12 @@ public class SystemWatchdog {
 	private void forceundock() {
 		application.driverCallServer(PlayerCommands.messageclients, "Power ERROR, Forced Un-Dock");
 		// go forward momentarily
-		application.driverCallServer(PlayerCommands.speed, ArduinoPrime.speeds.med.toString());
+		application.driverCallServer(PlayerCommands.speed, Malg.speeds.med.toString());
 		state.set(State.values.motionenabled, true);
 //		state.set(State.values.controlsinverted, false);
-		application.driverCallServer(PlayerCommands.move, ArduinoPrime.direction.forward.toString());
+		application.driverCallServer(PlayerCommands.move, Malg.direction.forward.toString());
 		Util.delay(800);
-		application.driverCallServer(PlayerCommands.move, ArduinoPrime.direction.stop.toString());
+		application.driverCallServer(PlayerCommands.move, Malg.direction.stop.toString());
 		 
 //		String subject = "Oculus Prime Power ERROR, Forced Un-Dock";
 //		String body = "Oculus Prime Power ERROR, Forced Un-Dock";
