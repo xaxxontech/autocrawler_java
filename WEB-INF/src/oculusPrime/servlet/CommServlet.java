@@ -8,15 +8,12 @@ import java.util.List;
 
 import javax.servlet.*;
 import javax.servlet.http.*;
-import org.json.simple.*;
 import org.json.simple.JSONObject;
-import org.json.simple.JSONArray;
-import org.json.simple.parser.ParseException;
 import org.json.simple.parser.JSONParser;
 
 public class CommServlet extends HttpServlet {
 
-	public enum params { logincookie, loginuser, msgfromclient, requestservermsg, loginpass, loginremember }
+	public enum params { logincookie, loginuser, msgfromclient, requestservermsg, loginpass, loginremember, clientid }
 
 	private static volatile List<String> msgFromServer = new ArrayList<>(); // list of JSON strings
 
@@ -25,8 +22,10 @@ public class CommServlet extends HttpServlet {
 	private static Application app = null;
     private static BanList ban = BanList.getRefrence();
 	private static State state = State.getReference();
-	private static volatile boolean reload = false;
 	private static String RESP = "";
+	public static String clientaddress = null;
+	volatile long clientID = 0;
+
 
 	public static void setApp(Application a) { app = a; }
 
@@ -35,10 +34,12 @@ public class CommServlet extends HttpServlet {
 	public void doPost(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
 
-//        Util.debug("doPost: "+request.getQueryString(), this);
+		if (request.getParameter(params.clientid.toString()) == null) return;
+
+		Long id = Long.valueOf(request.getParameter(params.clientid.toString()));
 
         if (request.getParameter(params.logincookie.toString()) != null) {
-			reload();
+			reset(request);
 
             String cookie = getPostData(request);
 			Util.debug("logincookie: "+cookie, this);
@@ -49,46 +50,56 @@ public class CommServlet extends HttpServlet {
             	return;
             }
 
-            ban.clearAddress(request.getRemoteAddr());
+            clientaddress = request.getRemoteAddr();
+            ban.clearAddress(clientaddress);
+			clientID = id;
             app.driverSignIn(username);
 //            msgFromServer.add(RESP);
 		}
 
 		else if (request.getParameter(params.loginuser.toString()) != null) {
-			reload();
+			reset(request);
 
 		    Util.debug("loginpass: "+request.getParameter("loginpass"), this);
             String username = app.logintest(request.getParameter(params.loginuser.toString()),
 					request.getParameter(params.loginpass.toString()), request.getParameter(params.loginremember.toString()));
             if(username == null) {
-				Util.debug("loginuser: sending SC_FORBIDDEN", this);
+				Util.debug("username=null, loginuser: sending SC_FORBIDDEN", this);
             	response.sendError(HttpServletResponse.SC_FORBIDDEN);
             	return;
             }
 
-            ban.clearAddress(request.getRemoteAddr());
-            app.driverSignIn(username);
+			clientaddress = request.getRemoteAddr();
+			ban.clearAddress(clientaddress);
+			clientID = id;
+			app.driverSignIn(username);
 //            msgFromServer.add(RESP);
         }
 
 		// logins must be above this
         if( ! ban.knownAddress(request.getRemoteAddr())) {
-            Util.log("unknown address, blocked, from: "+request.getRemoteAddr()+", str: "+request.toString(), this);
-			Util.debug("sending SC_FORBIDDEN", this);
+            Util.log("unknown address, blocked, from: "+request.getRemoteAddr(), this);
             response.sendError(HttpServletResponse.SC_FORBIDDEN);
             return;
         }
 
-        if (!state.exists(State.values.driver)) {
-			Util.debug("signed out, sending SC_FORBIDDEN", this);
+        if (clientID != id) {
+			Util.debug("clientID != id", this);
 			response.sendError(HttpServletResponse.SC_FORBIDDEN);
 			return;
 		}
 
+
+//		if (!state.exists(State.values.driver)) {
+//			Util.debug("signed out, sending SC_FORBIDDEN", this);
+//			response.sendError(HttpServletResponse.SC_FORBIDDEN);
+//			return;
+//		}
+
 		// incoming msg from client
 		if (request.getParameter(params.msgfromclient.toString()) != null) {
 			String msg = getPostData(request);
-			Util.debug(msg, this);
+//			Util.debug(msg, this);
 
 			JSONParser parser = new JSONParser();
 			try {
@@ -100,7 +111,9 @@ public class CommServlet extends HttpServlet {
 				Util.debug("msgfromclient: "+fn+" "+str, this);
 
 	            app.driverCallServer(PlayerCommands.valueOf(fn), str);
-                msgFromServer.add(RESP);
+
+	            if (!fn.equals(PlayerCommands.statuscheck.toString()))
+	                msgFromServer.add(RESP);
 
 			} catch(Exception e) { e.printStackTrace(); }
 		}
@@ -117,26 +130,28 @@ public class CommServlet extends HttpServlet {
 
 	void sendServerMessage(HttpServletResponse response) {
 
-		long id = newID();
-		clientRequestID = id;
-		String msg = RESP;
+		long msgid = newID();
+		clientRequestID = msgid ;
+		long clID = clientID;
+		String msg = null;
 
-		Util.debug("sendServerMessage, queue size: "+msgFromServer.size()+", id: "+id, this);
+		Util.debug("sendServerMessage, queue size: "+msgFromServer.size()+", msgid: "+msgid , this);
 
 		long timeout = System.currentTimeMillis() + TIMEOUT;
 
 		// wait for msgFromServer
-		while (System.currentTimeMillis() < timeout && msgFromServer.isEmpty() && !reload &&  id == clientRequestID)
+		while (System.currentTimeMillis() < timeout && msgFromServer.isEmpty() &&  msgid  == clientRequestID && clID == clientID) //  && !reload
 			Util.delay(1);
 
-		if (reload) {
+		if (clID != clientID) {
             Util.debug("RELOAD", this);
             return;
         }
 
-		if (System.currentTimeMillis() >= timeout && id == clientRequestID) {
+		if (System.currentTimeMillis() >= timeout && msgid == clientRequestID) {
 		    // TODO: logout code here
 			Util.debug("TIMED OUT", this);
+            app.driverSignOut();
 			return;
         }
 
@@ -149,9 +164,10 @@ public class CommServlet extends HttpServlet {
 		try {
 			response.setContentType("text/html");
 			PrintWriter out = response.getWriter();
-			out.print(msg);
+			if (msg != null)
+			    out.print(msg);
+                Util.debug("msgid="+msgid+", sendServerMessage: "+msg, this);
 			out.close();
-			Util.debug("id="+id+", sendServerMessage: "+msg, this);
 		} catch (Exception e) { e.printStackTrace(); }
 
 	}
@@ -186,12 +202,18 @@ public class CommServlet extends HttpServlet {
 		return jb.toString();
 	}
 
-	private void reload() {
-	    reload = true;
+	private void reset(HttpServletRequest request) {
+
+		Util.debug("RESET", this);
+
+		ban.removeAddress(request.getRemoteAddr());
+
+		if (clientaddress != null) ban.removeAddress(clientaddress);
+	    clientaddress = null;
+
 	    msgFromServer.clear();
         clientRequestID=newID();
-	    Util.delay(10);
-	    reload = false;
+
     }
 
 }

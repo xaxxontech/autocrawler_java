@@ -53,7 +53,7 @@ public class Application extends MultiThreadedApplicationAdapter {
 	protected boolean initialstatuscalled = false;
 	private boolean pendingplayerisnull = true;
 	public IConnection grabber = null;   // flash client on robot, camera capture (optional)
-	private IConnection player = null;   // client, typically remote flash plugin or air app
+	protected IConnection player = null;   // client, typically remote flash plugin or air app
 	private String authtoken = null;
 	private String salt = null;
 	
@@ -88,7 +88,7 @@ public class Application extends MultiThreadedApplicationAdapter {
 		super();
 
 		PowerLogger.append("==============Oculus Prime Java Start===============\n", this); // extra newline on end
-		Util.log ("==============Oculus Prime Java Start===============\n", this); // extra newline on end
+		Util.log ("==============Oculus Prime Java Start 2===============\n", this); // extra newline on end
 		Util.log("Linux Version:"+Util.getUbuntuVersion()
 				+", Java Model:"+System.getProperty("sun.arch.data.model")
 				+", Java Arch:"+state.get(values.osarch), this);
@@ -559,6 +559,47 @@ public class Application extends MultiThreadedApplicationAdapter {
         watchdog.lastpowererrornotify = null; // new driver not notified of any errors yet
     }
 
+    // nonflash xmlhttp clients only
+    public void driverSignOut() {
+
+        String str = state.get(State.values.driver) + " disconnected";
+
+        Util.log("driverSignOut(): " + str,this);
+
+        loginRecords.signoutDriver();
+
+        if (CommServlet.clientaddress != null) banlist.removeAddress(CommServlet.clientaddress);
+
+        //if autodocking, keep autodocking
+        if (!state.getBoolean(State.values.autodocking) &&
+                !(state.exists(values.navigationroute) && !state.exists(values.nextroutetime)) ) {
+
+            if (!state.get(State.values.driverstream).equals(driverstreamstate.pending.toString())) {
+
+                if (state.get(State.values.stream) != null) {
+                    if (!state.get(State.values.stream).equals(streamstate.stop.toString())) {
+                        publish(streamstate.stop);
+                    }
+                }
+
+                if (comport.isConnected()) {
+                    comport.setSpotLightBrightness(0);
+                    comport.floodLight(0);
+                    comport.stopGoing();
+                }
+
+                if (!state.get(State.values.driverstream).equals(driverstreamstate.stop.toString())
+                        && !state.get(values.driverstream).equals(driverstreamstate.disabled.toString())) {
+                    state.set(State.values.driverstream, driverstreamstate.stop.toString());
+                    grabberPlayPlayer(0);
+                    messageGrabber("playerbroadcast", "0");
+                }
+
+            }
+        }
+
+    }
+
 	public void driverCallServer(PlayerCommands fn, String str) {
 		playerCallServer(fn, str, true);
 	}
@@ -662,13 +703,16 @@ public class Application extends MultiThreadedApplicationAdapter {
 		case clicksteer:clickSteer(str);break;
 		case streamsettingscustom: streamSettingsCustom(str);break;
 		case streamsettingsset:streamSettingsSet(str);break;
-		case driverexit: appDisconnect(player); break;
+		case driverexit: if (player == null) driverSignOut();
+		        else appDisconnect(player);
+		        break;
 		case logout:
 			Util.log("browser user logout", this);
 			if (player != null) {
 				banlist.removeAddress(player.getRemoteAddress());
+                appDisconnect(player);
 			}
-			appDisconnect(player);
+			else driverSignOut();
 			break;
 		case playerbroadcast: playerBroadCast(str); break;
 		case password_update: account("password_update", str); break;
@@ -1277,7 +1321,7 @@ public class Application extends MultiThreadedApplicationAdapter {
 		int fps = Integer.parseInt(vals[2]);
 		int quality = Integer.parseInt(vals[3]);
 
-		if (!settings.getBoolean(ManualSettings.useflash)) {
+        if (!settings.getBoolean(ManualSettings.useflash)) {
 			video.publish(mode, width, height, fps);
 			return;
 		}

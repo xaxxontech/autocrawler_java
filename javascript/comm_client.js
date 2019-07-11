@@ -3,44 +3,49 @@ var msgssent = 0;
 var msgsrcvd = 0;
 var msgPollTimeout = null;
 var initiallogin = false;
+var commclientid = null;
+var webrtcinit = false;
 
-// TODO: nuke below 2 lines:
-// getxmlhttp("/oculusPrime/webRTCServlet?clearvars");
-// msgPollTimeout = setTimeout("checkForMsg();", MSGPOLLINTERVAL);
 
 function commClientLoaded() {
-	console.log("commClientLoaded 2"); 
+	commclientid = Date.now();
+	comm_client_log("commClientLoaded, id: "+commclientid); 
+
 	if (/auth=/.test(document.cookie)) { commLoginFromCookie(); }
 	else { 
 		login(); 
 	}
+	
+	// websocketServerConnect(); // TODO: wait until after successful login
 }
 
 function callServerComm(fn, s) {
-	console.log("callServerComm fn: "+fn+", str: "+s);
+	// comm_client_log("callServerComm fn: "+fn+", str: "+s);
 
 	var obj = { command: fn, str: s };
 	var msg = JSON.stringify(obj);
-	postxmlhttp("comm?msgfromclient="+msg, msg);
+	// postxmlhttp("comm?msgfromclient="+msg, msg);
+	postxmlhttp("comm?msgfromclient", msg);
 }
 
 function commLogin(user, pass, remember) {
-	console.log("commLogin");
+	// comm_client_log("commLogin");
 	initiallogin = true;
-	postxmlhttp("comm?loginuser="+user+"&loginpass="+pass+"&loginremember="+remember);
-	// logintimer = setTimeout("window.location.reload()", logintimeout);
+	// postxmlhttp("comm?loginuser="+user+"&loginpass="+pass+"&loginremember="+remember);
+	getxmlhttp("comm?loginuser="+user+"&loginpass="+pass+"&loginremember="+remember);
+	logintimer = setTimeout("window.location.reload()", logintimeout);
 }
 
 function commLoginFromCookie() {
 	var str = ""; 
 	str = readCookie("auth");
-	console.log("commLoginFromCookie: "+str);
+	// comm_client_log("commLoginFromCookie: "+str);
 	
 	initiallogin = true;
-	postxmlhttp("comm?logincookie="+str, str);
-	// logintimer = setTimeout("eraseCookie('auth'); window.location.reload()", logintimeout);
+	// postxmlhttp("comm?logincookie="+str, str);
+	postxmlhttp("comm?logincookie", str);
+	logintimer = setTimeout("eraseCookie('auth'); window.location.reload()", logintimeout);
 }
-
 
 function msgReceived(xhr) { 
 
@@ -54,13 +59,18 @@ function msgReceived(xhr) {
 
 			// msg recevied
 			msgsrcvd ++;
-			console.log ("messages sent/received: "+msgssent+", "+msgsrcvd);
-			console.log("serverResponse:\n"+xhr.responseText);
+			// comm_client_log ("messages sent/received: "+msgssent+", "+msgsrcvd);
+			comm_client_log("serverResponse:\n"+xhr.responseText);
 			
 			if (xhr.responseText == "") { // no msg
-				console.log("blank message");
+				comm_client_log("blank message");
 				// checkForMsg();
 				return;
+			}
+
+			if (!webrtcinit) {
+				webrtcinit = true;
+				websocketServerConnect(); // webrtc.js
 			}
 
 			var msg = JSON.parse(xhr.responseText);
@@ -70,7 +80,17 @@ function msgReceived(xhr) {
 			checkForMsg();
 
 		}
+		
+		else if (xhr.status==403) { // forbidden
+			commclientclose();
+		}
 	}
+}
+
+function commclientclose() {
+	websocketServerDisconnect();
+	initiallogin = false;
+	connectionlost();
 }
 
 function checkForMsg() {
@@ -87,11 +107,14 @@ function getxmlhttp(theurl) {
 	
 	// if (msgcheckpending) { 
 		// setTimeout(function() { getxmlhttp(theurl) }, 100);
-		// console.log("getxmlhttp delayed");
+		// comm_client_log("getxmlhttp delayed");
 		// return; 
 	// } 
+	if (commclientid == null) return;
 	
-	console.log("getxmlhttp("+theurl+")");
+	theurl += "&clientid="+commclientid;
+	
+	comm_client_log("getxmlhttp("+theurl+")");
 	
 	msgcheckpending = true;
 	
@@ -106,16 +129,20 @@ function postxmlhttp(theurl, data) {
 	
 	// if (msgcheckpending) { 
 		// setTimeout(function() { postxmlhttp(theurl, data) }, 100);
-		// console.log("postxmlhttp delayed");
+		// comm_client_log("postxmlhttp delayed");
 		// return; 
 	// } 
 	
+	if (commclientid == null) return;
+	
+	theurl += "&clientid="+commclientid;
+	
 	if (!initiallogin) {
-		console.log("postxmlhttp dropped: "+data);
+		comm_client_log("postxmlhttp dropped: "+data);
 		return;
 	}
 	
-	console.log("postxmlhttp("+theurl+", "+data+")");
+	comm_client_log("postxmlhttp("+theurl+", "+data+")");
 	
 	msgcheckpending = true;
 
@@ -126,6 +153,10 @@ function postxmlhttp(theurl, data) {
 	pxh.send(data);
 	
 	msgssent ++;
-	console.log ("messages sent/received: "+msgssent+", "+msgsrcvd);
+	// comm_client_log ("messages sent/received: "+msgssent+", "+msgsrcvd);
 
+}
+
+function comm_client_log(str) {
+	console.log(str);
 }

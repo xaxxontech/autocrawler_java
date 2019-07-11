@@ -239,9 +239,21 @@ function connectionlost() {
 	setstatusunknown();
 	videologo("on");
 	message("reload page", "green");
+	clearTimeout(pinginterval);
+	clearTimeout(pingcountdown);
 }
 
 function callServer(fn, str) {
+	
+	if (oculusPrimeplayerSWF == null) {
+		callServerComm(fn, str);
+		sendcommandtimelast = new Date().getTime();
+		lastcommandsent = fn+str;
+		return;
+	}
+	
+	// client flash code below
+	
 	if (pingcountdownaftercheck != null) {
 		message("command delayed 10ms", sentcmdcolor);
 		setTimeout("callServer('"+fn+"','"+str+"');",10);
@@ -257,8 +269,7 @@ function callServer(fn, str) {
 		
 		var nowtime = new Date().getTime();
 		if (!(lastcommandsent == fn+str && nowtime - sendcommandtimelast < 200)) {
-			if (oculusPrimeplayerSWF == null) callServerComm(fn, str);
-			else  oculusPrimeplayerSWF.flashCallServer(fn,str);  // client flash (legacy)
+			oculusPrimeplayerSWF.flashCallServer(fn,str); 
 		}
 		else message("rapid succession command dropped",sentcmdcolor);
 		sendcommandtimelast = nowtime;
@@ -272,7 +283,8 @@ function play(str) { // called by javascript only?
 	var s = str.split("_");
 	if (s[1]=="2") { num = 2; streammode = s[0] } // separate audio stream with avconv
 	if (streammode == "stop") { num =0 ; } 
-	oculusPrimeplayerSWF.flashplay(num, videoscale);
+	if (oculusPrimeplayerSWF != null)
+		oculusPrimeplayerSWF.flashplay(num, videoscale);
 }
 
 function getFlashMovie(movieName) {
@@ -302,7 +314,7 @@ function publish(str) {
 
 function message(message, colour, status, value) {
 	
-	console.log("message("+message+", "+colour+", "+status+", "+value+")");
+	// console.log("message("+message+", "+colour+", "+status+", "+value+")");
 	
 	if (message != null) {
 		var tempmessage = message;

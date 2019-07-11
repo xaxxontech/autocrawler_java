@@ -3,6 +3,7 @@ package oculusPrime;
 
 import developer.Ros;
 import org.red5.server.api.IConnection;
+import org.red5.server.api.service.IServiceCapableConnection;
 import org.red5.server.stream.ClientBroadcastStream;
 
 import oculusPrime.State.values;
@@ -146,7 +147,11 @@ public class Video {
 
             switch (mode) {
                 case camera:
-                    Ros.launch("rgbpublish");
+                    if (app.player instanceof IServiceCapableConnection) // flash client
+                        Ros.launch("rgbpublish");
+                    else
+                        Ros.launch("rgbwebrtc");
+
                     Util.delay(STREAM_CONNECT_DELAY);
                     app.driverCallServer(PlayerCommands.streammode, mode.toString());
                     break;

@@ -24,6 +24,7 @@ var send_channel;
 var ws_conn;
 // Promise for local stream after constraints are approved by the user
 var local_stream_promise;
+var wsserverconnecttimeout;
 
 function getOurId() {
     return Math.floor(Math.random() * (9000 - 10) + 10).toString();
@@ -43,19 +44,23 @@ function getVideoElement() {
     return document.getElementById("stream");
 }
 
-function setStatus(text) {
+function webrtcStatus(text) {
     console.log(text);
+
+    /*
     var span = document.getElementById("status")
     // Don't set the status if it already contains an error
     if (!span.classList.contains('error'))
         span.textContent = text;
+	*/
 }
 
 function setError(text) {
     console.error(text);
-    var span = document.getElementById("status")
-    span.textContent = text;
-    span.classList.add('error');
+    
+    // var span = document.getElementById("status")
+    // span.textContent = text;
+    // span.classList.add('error');
 }
 
 function resetVideo() {
@@ -77,12 +82,12 @@ function resetVideo() {
 // SDP offer received from peer, set remote description and create an answer
 function onIncomingSDP(sdp) {
     peer_connection.setRemoteDescription(sdp).then(() => {
-        setStatus("Remote SDP set");
+        webrtcStatus("Remote SDP set");
         if (sdp.type != "offer")
             return;
-        setStatus("Got SDP offer");
+        webrtcStatus("Got SDP offer");
         local_stream_promise.then((stream) => {
-            setStatus("Got local stream, creating answer");
+            webrtcStatus("Got local stream, creating answer");
             peer_connection.createAnswer()
             .then(onLocalDescription).catch(setError);
         }).catch(setError);
@@ -93,7 +98,7 @@ function onIncomingSDP(sdp) {
 function onLocalDescription(desc) {
     console.log("Got local description: " + JSON.stringify(desc));
     peer_connection.setLocalDescription(desc).then(function() {
-        setStatus("Sending SDP answer");
+        webrtcStatus("Sending SDP answer");
         sdp = {'sdp': peer_connection.localDescription}
         ws_conn.send(JSON.stringify(sdp));
     });
@@ -109,7 +114,7 @@ function onServerMessage(event) {
     console.log("Received " + event.data);
     switch (event.data) {
         case "HELLO":
-            setStatus("Registered with server, waiting for call");
+            webrtcStatus("Registered with server, waiting for call");
             return;
         default:
             if (event.data.startsWith("ERROR")) {
@@ -143,7 +148,7 @@ function onServerMessage(event) {
 }
 
 function onServerClose(event) {
-    setStatus('Disconnected from server');
+    webrtcStatus('Disconnected from server');
     resetVideo();
 
     if (peer_connection) {
@@ -152,27 +157,28 @@ function onServerClose(event) {
     }
 
     // Reset after a second
-    window.setTimeout(websocketServerConnect, 1000);
+    wsserverconnecttimeout = window.setTimeout(websocketServerConnect, 1000);
 }
 
 function onServerError(event) {
     setError("Unable to connect to server, did you add an exception for the certificate?")
     // Retry after 3 seconds
-    window.setTimeout(websocketServerConnect, 3000);
+    wsserverconnecttimeout = window.setTimeout(websocketServerConnect, 3000);
 }
 
 function getLocalStream() {
-    var constraints;
-    var textarea = document.getElementById('constraints');
-    try {
-        constraints = JSON.parse(textarea.value);
-    } catch (e) {
-        console.error(e);
-        setError('ERROR parsing constraints: ' + e.message + ', using default constraints');
-        constraints = default_constraints;
-    }
-    console.log(JSON.stringify(constraints));
+    // var constraints;
+    // var textarea = document.getElementById('constraints');
+    // try {
+        // constraints = JSON.parse(textarea.value);
+    // } catch (e) {
+        // console.error(e);
+        // setError('ERROR parsing constraints: ' + e.message + ', using default constraints');
+        // constraints = default_constraints;
+    // }
+    // console.log(JSON.stringify(constraints));
 
+	constraints = default_constraints;
     // Add local stream
     if (navigator.mediaDevices.getUserMedia) {
         return navigator.mediaDevices.getUserMedia(constraints);
@@ -187,14 +193,14 @@ function websocketServerConnect() {
         setError("Too many connection attempts, aborting. Refresh page to try again");
         return;
     }
-    // Clear errors in the status span
-    var span = document.getElementById("status");
-    span.classList.remove('error');
-    span.textContent = '';
-    // Populate constraints
-    var textarea = document.getElementById('constraints');
-    if (textarea.value == '')
-        textarea.value = JSON.stringify(default_constraints);
+    /* Clear errors in the status span */
+    // var span = document.getElementById("status");
+    // span.classList.remove('error');
+    // span.textContent = '';
+    /* Populate constraints */
+    // var textarea = document.getElementById('constraints');
+    // if (textarea.value == '')
+        // textarea.value = JSON.stringify(default_constraints);
     // Fetch the peer id to use
     peer_id = default_peer_id || getOurId();
     ws_port = ws_port || '8443';
@@ -206,17 +212,22 @@ function websocketServerConnect() {
         throw new Error ("Don't know how to connect to the signalling server with uri" + window.location);
     }
     var ws_url = 'wss://' + ws_server + ':' + ws_port
-    setStatus("Connecting to server " + ws_url);
+    webrtcStatus("Connecting to server " + ws_url);
     ws_conn = new WebSocket(ws_url);
     /* When connected, immediately register with the server */
     ws_conn.addEventListener('open', (event) => {
-        document.getElementById("peer-id").textContent = peer_id;
+        // document.getElementById("peer-id").textContent = peer_id;
         ws_conn.send('HELLO ' + peer_id);
-        setStatus("Registering with server");
+        webrtcStatus("Registering with server");
     });
     ws_conn.addEventListener('error', onServerError);
     ws_conn.addEventListener('message', onServerMessage);
     ws_conn.addEventListener('close', onServerClose);
+}
+
+function websocketServerDisconnect() {
+	clearTimeout(wsserverconnecttimeout);
+	ws_conn.close();
 }
 
 function onRemoteTrack(event) {
@@ -234,36 +245,36 @@ const handleDataChannelOpen = (event) =>{
     console.log("dataChannel.OnOpen", event);
 };
 
-const handleDataChannelMessageReceived = (event) =>{
-    console.log("dataChannel.OnMessage:", event, event.data.type);
+// const handleDataChannelMessageReceived = (event) =>{
+    // console.log("dataChannel.OnMessage:", event, event.data.type);
 
-    setStatus("Received data channel message");
-    if (typeof event.data === 'string' || event.data instanceof String) {
-        console.log('Incoming string message: ' + event.data);
-        textarea = document.getElementById("text")
-        textarea.value = textarea.value + '\n' + event.data
-    } else {
-        console.log('Incoming data message');
-    }
-    send_channel.send("Hi! (from browser)");
-};
+    // webrtcStatus("Received data channel message");
+    // if (typeof event.data === 'string' || event.data instanceof String) {
+        // console.log('Incoming string message: ' + event.data);
+        // textarea = document.getElementById("text")
+        // textarea.value = textarea.value + '\n' + event.data
+    // } else {
+        // console.log('Incoming data message');
+    // }
+    // send_channel.send("Hi! (from browser)");
+// };
 
-const handleDataChannelError = (error) =>{
-    console.log("dataChannel.OnError:", error);
-};
+// const handleDataChannelError = (error) =>{
+    // console.log("dataChannel.OnError:", error);
+// };
 
-const handleDataChannelClose = (event) =>{
-    console.log("dataChannel.OnClose", event);
-};
+// const handleDataChannelClose = (event) =>{
+    // console.log("dataChannel.OnClose", event);
+// };
 
-function onDataChannel(event) {
-    setStatus("Data channel created");
-    let receiveChannel = event.channel;
-    receiveChannel.onopen = handleDataChannelOpen;
-    receiveChannel.onmessage = handleDataChannelMessageReceived;
-    receiveChannel.onerror = handleDataChannelError;
-    receiveChannel.onclose = handleDataChannelClose;
-}
+// function onDataChannel(event) {
+    // webrtcStatus("Data channel created");
+    // let receiveChannel = event.channel;
+    // receiveChannel.onopen = handleDataChannelOpen;
+    // receiveChannel.onmessage = handleDataChannelMessageReceived;
+    // receiveChannel.onerror = handleDataChannelError;
+    // receiveChannel.onclose = handleDataChannelClose;
+// }
 
 function createCall(msg) {
     // Reset connection attempts because we connected successfully
@@ -272,12 +283,12 @@ function createCall(msg) {
     console.log('Creating RTCPeerConnection');
 
     peer_connection = new RTCPeerConnection(rtc_configuration);
-    send_channel = peer_connection.createDataChannel('label', null);
-    send_channel.onopen = handleDataChannelOpen;
-    send_channel.onmessage = handleDataChannelMessageReceived;
-    send_channel.onerror = handleDataChannelError;
-    send_channel.onclose = handleDataChannelClose;
-    peer_connection.ondatachannel = onDataChannel;
+    // send_channel = peer_connection.createDataChannel('label', null);
+    // send_channel.onopen = handleDataChannelOpen;
+    // send_channel.onmessage = handleDataChannelMessageReceived;
+    // send_channel.onerror = handleDataChannelError;
+    // send_channel.onclose = handleDataChannelClose;
+    // peer_connection.ondatachannel = onDataChannel;
     peer_connection.ontrack = onRemoteTrack;
     /* Send our video/audio to the other peer */
     local_stream_promise = getLocalStream().then((stream) => {
@@ -300,5 +311,5 @@ function createCall(msg) {
 	ws_conn.send(JSON.stringify({'ice': event.candidate}));
     };
 
-    setStatus("Created peer connection for call, waiting for SDP");
+    webrtcStatus("Created peer connection for call, waiting for SDP");
 }

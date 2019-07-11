@@ -51,12 +51,17 @@ public class Scratch {
         return n;
     }
 
+    public static long newID() {
+        return System.nanoTime();
+    }
+
     public static void main(String[] args) {
 //        new Scratch().regexp();
 
-        String zork = String.valueOf(9-3);
+        Long zork = newID();
+        Long blork = newID();
 
-        System.out.println(zork);
+        System.out.println(zork+"\n"+blork);
 
 
     }
