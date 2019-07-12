@@ -88,7 +88,7 @@ public class Application extends MultiThreadedApplicationAdapter {
 		super();
 
 		PowerLogger.append("==============Oculus Prime Java Start===============\n", this); // extra newline on end
-		Util.log ("==============Oculus Prime Java Start 2===============\n", this); // extra newline on end
+		Util.log ("==============Oculus Prime Java Start 3===============\n", this); // extra newline on end
 		Util.log("Linux Version:"+Util.getUbuntuVersion()
 				+", Java Model:"+System.getProperty("sun.arch.data.model")
 				+", Java Arch:"+state.get(values.osarch), this);
@@ -605,7 +605,7 @@ public class Application extends MultiThreadedApplicationAdapter {
 	}
 
 	/**
-	 * called by remote flash
+	 * called by remote flash or commservlet
 	 * */
 	public void playerCallServer(String fn, String str) {
 		
@@ -620,6 +620,7 @@ public class Application extends MultiThreadedApplicationAdapter {
 			messageplayer("error: unknown command, "+fn,null,null);
 			return;
 		}
+
 		if (cmd != null) playerCallServer(cmd, str, false);	
 	}
 	
@@ -989,8 +990,8 @@ public class Application extends MultiThreadedApplicationAdapter {
 			break;
 		
 		case roslaunch:
-			if (Ros.launch(str)) messageplayer("roslaunch "+str+".launch", null, null);
-			else messageplayer("roslaunch already running", null, null);
+			Ros.launch(str);
+			messageplayer("roslaunch "+str+".launch", null, null);
 			break;
 		
 		case savewaypoints:
@@ -1236,6 +1237,11 @@ public class Application extends MultiThreadedApplicationAdapter {
 
 		messageGrabber("streaming " + stream, "stream " + stream);
 		Util.log("streaming " + stream, this);
+
+		// message driver, incl flash and non flash clients
+		messageplayer("streaming " + stream, "stream", stream);
+
+		// message passengers
 		new Thread(new Runnable() {
 			public void run() {
 				try {
@@ -1247,6 +1253,7 @@ public class Application extends MultiThreadedApplicationAdapter {
 						for (IConnection con : cc) {
 							if (con instanceof IServiceCapableConnection
 									&& con != grabber
+									&& con != player
 									&& !(con == pendingplayer && !pendingplayerisnull)) {
 								IServiceCapableConnection n = (IServiceCapableConnection) con; // all CLIENTS
 								n.invoke("message", new Object[] { "streaming " + stream, "green", "stream", stream });

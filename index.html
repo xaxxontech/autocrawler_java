@@ -102,8 +102,9 @@ style="width: 28px; height: 32px; background-image: url(images/wrench.png);">
 
 <table><tr valign="top"><td style="text-align: right">
 
+<!-- VIDEO -->
 <div id="video" style="position: relative; z-index: 0; width: 640px; height: 480px;">
-	<video id="stream" autoplay playsinline>Your browser doesn't support video</video>
+	<video id="stream" autoplay playsinline controls muted>Your browser doesn't support video</video>
 </div>
 </td>
 
@@ -364,7 +365,8 @@ style="padding-left: 3px; padding-right: 3px">
 <td  class="cambutton" style="padding-left: 10px">self mic OFF</td>
 </tr></table>
 </div>
-</div> <!-- end of div selfstream_controls -->
+</div>
+<!-- end of div selfstream_controls -->
 
 <div id="speakchatlinks" class="cambutton" onmouseover="camiconbutton('over',this.id);"
 onmouseout="camiconbutton('out',this.id);" onclick="speakchat('show','speechbox');"

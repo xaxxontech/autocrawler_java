@@ -42,10 +42,10 @@ public class CommServlet extends HttpServlet {
 			reset(request);
 
             String cookie = getPostData(request);
-			Util.debug("logincookie: "+cookie, this);
+			logdebug("logincookie: "+cookie, this);
 		    String username = app.logintest("", cookie);
             if(username == null) {
-            	Util.debug("logincookie: sending SC_FORBIDDEN", this);
+            	logdebug("logincookie: sending SC_FORBIDDEN", this);
             	response.sendError(HttpServletResponse.SC_FORBIDDEN);
             	return;
             }
@@ -60,11 +60,11 @@ public class CommServlet extends HttpServlet {
 		else if (request.getParameter(params.loginuser.toString()) != null) {
 			reset(request);
 
-		    Util.debug("loginpass: "+request.getParameter("loginpass"), this);
+		    logdebug("loginpass: "+request.getParameter("loginpass"), this);
             String username = app.logintest(request.getParameter(params.loginuser.toString()),
 					request.getParameter(params.loginpass.toString()), request.getParameter(params.loginremember.toString()));
             if(username == null) {
-				Util.debug("username=null, loginuser: sending SC_FORBIDDEN", this);
+				logdebug("username=null, loginuser: sending SC_FORBIDDEN", this);
             	response.sendError(HttpServletResponse.SC_FORBIDDEN);
             	return;
             }
@@ -84,14 +84,14 @@ public class CommServlet extends HttpServlet {
         }
 
         if (clientID != id) {
-			Util.debug("clientID != id", this);
+			logdebug("clientID != id", this);
 			response.sendError(HttpServletResponse.SC_FORBIDDEN);
 			return;
 		}
 
 
 //		if (!state.exists(State.values.driver)) {
-//			Util.debug("signed out, sending SC_FORBIDDEN", this);
+//			logdebug("signed out, sending SC_FORBIDDEN", this);
 //			response.sendError(HttpServletResponse.SC_FORBIDDEN);
 //			return;
 //		}
@@ -99,7 +99,7 @@ public class CommServlet extends HttpServlet {
 		// incoming msg from client
 		if (request.getParameter(params.msgfromclient.toString()) != null) {
 			String msg = getPostData(request);
-//			Util.debug(msg, this);
+//			logdebug(msg, this);
 
 			JSONParser parser = new JSONParser();
 			try {
@@ -108,9 +108,9 @@ public class CommServlet extends HttpServlet {
 				String fn = (String) obj.get("command");
 				String str = (String) obj.get("str");
 
-				Util.debug("msgfromclient: "+fn+" "+str, this);
+				logdebug("msgfromclient: "+fn+" "+str, this);
 
-	            app.driverCallServer(PlayerCommands.valueOf(fn), str);
+	            app.playerCallServer(fn, str);
 
 	            if (!fn.equals(PlayerCommands.statuscheck.toString()))
 	                msgFromServer.add(RESP);
@@ -135,7 +135,7 @@ public class CommServlet extends HttpServlet {
 		long clID = clientID;
 		String msg = null;
 
-		Util.debug("sendServerMessage, queue size: "+msgFromServer.size()+", msgid: "+msgid , this);
+		logdebug("sendServerMessage, queue size: "+msgFromServer.size()+", msgid: "+msgid , this);
 
 		long timeout = System.currentTimeMillis() + TIMEOUT;
 
@@ -144,13 +144,13 @@ public class CommServlet extends HttpServlet {
 			Util.delay(1);
 
 		if (clID != clientID) {
-            Util.debug("RELOAD", this);
+            logdebug("RELOAD", this);
             return;
         }
 
 		if (System.currentTimeMillis() >= timeout && msgid == clientRequestID) {
 		    // TODO: logout code here
-			Util.debug("TIMED OUT", this);
+			logdebug("TIMED OUT", this);
             app.driverSignOut();
 			return;
         }
@@ -158,7 +158,7 @@ public class CommServlet extends HttpServlet {
 		if (!msgFromServer.isEmpty()) {
 			msg = msgFromServer.get(0);
 			msgFromServer.remove(0);
-			Util.debug("msgFromServer read, size: "+msgFromServer.size(), this);
+			logdebug("msgFromServer read, size: "+msgFromServer.size(), this);
 		}
 
 		try {
@@ -166,7 +166,7 @@ public class CommServlet extends HttpServlet {
 			PrintWriter out = response.getWriter();
 			if (msg != null)
 			    out.print(msg);
-                Util.debug("msgid="+msgid+", sendServerMessage: "+msg, this);
+                logdebug("msgid="+msgid+", sendServerMessage: "+msg, this);
 			out.close();
 		} catch (Exception e) { e.printStackTrace(); }
 
@@ -187,7 +187,7 @@ public class CommServlet extends HttpServlet {
 		String msg = obj.toJSONString();
         msgFromServer.add(msg);
 
-//        Util.debug("sendToClient: "+msg, "CommServlet.sendToClient()");
+//        logdebug("sendToClient: "+msg, "CommServlet.sendToClient()");
     }
 
     private String getPostData(HttpServletRequest request) {
@@ -204,7 +204,7 @@ public class CommServlet extends HttpServlet {
 
 	private void reset(HttpServletRequest request) {
 
-		Util.debug("RESET", this);
+		logdebug("RESET", this);
 
 		ban.removeAddress(request.getRemoteAddr());
 
@@ -216,4 +216,8 @@ public class CommServlet extends HttpServlet {
 
     }
 
+    private void logdebug(String str, Object obj) {
+//		Util.debug(str, this);
+	}
+    
 }

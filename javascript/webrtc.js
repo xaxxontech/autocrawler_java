@@ -13,10 +13,15 @@ var ws_port;
 // Set this to use a specific peer id instead of a random one
 var default_peer_id=777;
 // Override with your own STUN servers if you want
-var rtc_configuration = {iceServers: [{urls: "stun:stun.services.mozilla.com"},
-                                      {urls: "stun:stun.l.google.com:19302"}]};
+// var rtc_configuration = {iceServers: [{urls: "stun:stun.services.mozilla.com"},
+                                      // {urls: "stun:stun.l.google.com:19302"}]};
+var rtc_configuration = {iceServers: [{urls: "stun:stun.l.google.com:19302"},
+                                      {urls: "turn:"+window.location.hostname+":3478",
+										  username: "oculus",
+										  credential: "robot"
+										  }]};
 // The default constraints that will be attempted. Can be overriden by the user.
-var default_constraints = {video: false, audio: false};
+// var default_constraints = {video: false, audio: false};
 
 var connect_attempts = 0;
 var peer_connection;
@@ -24,7 +29,7 @@ var send_channel;
 var ws_conn;
 // Promise for local stream after constraints are approved by the user
 var local_stream_promise;
-var wsserverconnecttimeout;
+var ws_conn_close_forever = false;
 
 function getOurId() {
     return Math.floor(Math.random() * (9000 - 10) + 10).toString();
@@ -85,12 +90,8 @@ function onIncomingSDP(sdp) {
         webrtcStatus("Remote SDP set");
         if (sdp.type != "offer")
             return;
-        webrtcStatus("Got SDP offer");
-        local_stream_promise.then((stream) => {
-            webrtcStatus("Got local stream, creating answer");
-            peer_connection.createAnswer()
-            .then(onLocalDescription).catch(setError);
-        }).catch(setError);
+        webrtcStatus("Got SDP offer, creating answer");
+		peer_connection.createAnswer().then(onLocalDescription).catch(setError);
     }).catch(setError);
 }
 
@@ -157,15 +158,16 @@ function onServerClose(event) {
     }
 
     // Reset after a second
-    wsserverconnecttimeout = window.setTimeout(websocketServerConnect, 1000);
+    window.setTimeout(websocketServerConnect, 1000);
 }
 
 function onServerError(event) {
     setError("Unable to connect to server, did you add an exception for the certificate?")
     // Retry after 3 seconds
-    wsserverconnecttimeout = window.setTimeout(websocketServerConnect, 3000);
+    window.setTimeout(websocketServerConnect, 3000);
 }
 
+/*
 function getLocalStream() {
     // var constraints;
     // var textarea = document.getElementById('constraints');
@@ -186,11 +188,16 @@ function getLocalStream() {
         errorUserMediaHandler();
     }
 }
+*/
 
 function websocketServerConnect() {
+	if (ws_conn_close_forever) return;
+	
     connect_attempts++;
     if (connect_attempts > 3) {
         setError("Too many connection attempts, aborting. Refresh page to try again");
+        message("No connection to signalling server at "+ws_server, "red");
+        ws_conn_close_forever = true;
         return;
     }
     /* Clear errors in the status span */
@@ -226,8 +233,8 @@ function websocketServerConnect() {
 }
 
 function websocketServerDisconnect() {
-	clearTimeout(wsserverconnecttimeout);
 	ws_conn.close();
+	ws_conn_close_forever = true;
 }
 
 function onRemoteTrack(event) {
@@ -291,11 +298,11 @@ function createCall(msg) {
     // peer_connection.ondatachannel = onDataChannel;
     peer_connection.ontrack = onRemoteTrack;
     /* Send our video/audio to the other peer */
-    local_stream_promise = getLocalStream().then((stream) => {
-        console.log('Adding local stream');
-        peer_connection.addStream(stream);
-        return stream;
-    }).catch(setError);
+    // local_stream_promise = getLocalStream().then((stream) => {
+        // console.log('Adding local stream');
+        // peer_connection.addStream(stream);
+        // return stream;
+    // }).catch(setError);
 
     if (!msg.sdp) {
         console.log("WARNING: First message wasn't an SDP message!?");
@@ -313,3 +320,4 @@ function createCall(msg) {
 
     webrtcStatus("Created peer connection for call, waiting for SDP");
 }
+

@@ -74,6 +74,9 @@ public class AutoDock {
 			return;
 		}
 
+		if (!state.getBoolean(State.values.dockcamon))
+			app.driverCallServer(PlayerCommands.dockcam, Settings.ON);
+
 		state.set(State.values.autodocking, true);
 
 		app.message("auto-dock in progress", "motion", "moving");
@@ -87,10 +90,7 @@ public class AutoDock {
 
 		new Thread(new Runnable() { public void run() {
 
-			if (!state.getBoolean(State.values.dockcamon))
-				app.driverCallServer(PlayerCommands.dockcam, Settings.ON);
-
-            state.block(State.values.dockcamready, Settings.TRUE, 15000);
+            state.block(State.values.dockcamready, Settings.TRUE, 20000);
 
             // the loop
 			while (state.getBoolean(State.values.autodocking)) {

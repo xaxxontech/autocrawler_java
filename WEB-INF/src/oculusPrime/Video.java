@@ -13,6 +13,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 
 @SuppressWarnings("MagicConstant")
@@ -48,6 +50,7 @@ public class Video {
     private static final String STREAM1 = "stream1";
     private static final String STREAM2 = "stream2";
     private static String ubuntuVersion;
+    private long campid = -1;
 
     public Video(Application a) {
         app = a;
@@ -148,9 +151,9 @@ public class Video {
             switch (mode) {
                 case camera:
                     if (app.player instanceof IServiceCapableConnection) // flash client
-                        Ros.launch("rgbpublish");
+                        campid = Ros.launch("rgbpublish");
                     else
-                        Ros.launch("rgbwebrtc");
+                        campid = Ros.launch("rgbwebrtc");
 
                     Util.delay(STREAM_CONNECT_DELAY);
                     app.driverCallServer(PlayerCommands.streammode, mode.toString());
@@ -194,11 +197,8 @@ public class Video {
                     }
 
                     forceShutdownFrameGrabs();
-//                    Util.systemCall("pkill "+avprog);
-                    Ros.roscommand("rosnode kill /camera/realsense2_camera_manager");
-//                    Ros.roscommand("rosnode kill /camera/realsense2_camera /gst_video_server");
-//                    Ros.roscommand("rosnode kill /realsense2_camera");
-//                    Ros.roscommand("rosnode kill /gst_video_server");
+
+                    killcambypid();
 
                     app.driverCallServer(PlayerCommands.streammode, mode.toString());
                     break;
@@ -586,7 +586,8 @@ public class Video {
     }
 
     public void dockcam(String str) {
-        if ((str.equalsIgnoreCase(Settings.ON) || str.equalsIgnoreCase(Settings.ENABLED)) && !state.getBoolean(values.dockcamon)) { // turn on
+        if ((str.equalsIgnoreCase(Settings.ON) || str.equalsIgnoreCase(Settings.ENABLED))
+                && !state.getBoolean(values.dockcamon)) { // turn on
 
             state.delete(values.dockcamready); // this is set to true when ready by ros node
 
@@ -594,29 +595,57 @@ public class Video {
 
                 // nuke currently running ros cam if any
                 if (!state.get(State.values.stream).equals(Application.streamstate.stop.toString())) {
-                    app.driverCallServer(PlayerCommands.publish,Application.streamstate.stop.toString() );
+                    Util.log("stream running: "+state.get(values.stream), this);
+                    killcambypid();
                     Util.delay(STREAM_CONNECT_DELAY);
+                }
+
+                long start = System.currentTimeMillis();
+                while (campid != -1 && System.currentTimeMillis() - start < 2000) Util.delay(1);
+
+                if (campid != -1) { // TODO: shouldn't be required
+                    Util.log("campid != -1 !!, aborting dockcam", this); return;
+                }
+
+                if (app.player instanceof IServiceCapableConnection) {// flash client
+//                    Ros.roscommand("roslaunch df dockcam.launch dockdevice:=/dev/video" + dockcamdevicenum);
+                    campid = Ros.launch(new ArrayList<String>(Arrays.asList("dockcam",
+                            "dockdevice:=/dev/video" + dockcamdevicenum)));
+                }
+                else { // webrtc
+                    campid = Ros.launch(new ArrayList<String>(Arrays.asList("dockwebrtc",
+                            "dockdevice:=/dev/video" + dockcamdevicenum)));
                 }
 
                 state.set(values.dockcamon, true);
                 state.set(State.values.controlsinverted, true);
 
-                Ros.roscommand("roslaunch df dockcam.launch dockdevice:=/dev/video"+dockcamdevicenum);
                 Util.delay(STREAM_CONNECT_DELAY);
                 app.driverCallServer(PlayerCommands.streammode, Application.streamstate.camera.toString());
 
             } }).start();
 
         }
-        else if ((str.equalsIgnoreCase(Settings.OFF) || str.equalsIgnoreCase(Settings.DISABLED)) && state.getBoolean(values.dockcamon)) { // turn off
+        else if ((str.equalsIgnoreCase(Settings.OFF) ||
+                str.equalsIgnoreCase(Settings.DISABLED)) && state.getBoolean(values.dockcamon)) { // turn off
 
             state.set(values.dockcamon, false);
             state.delete(values.dockcamready);
 
             state.set(State.values.controlsinverted, false);
 //            Ros.roscommand("rosnode kill /gst_video_server /usb_cam");
-            Ros.roscommand("rosnode kill /usb_cam");
+//            Ros.roscommand("rosnode kill /usb_cam");
+            killcambypid();
+
             app.driverCallServer(PlayerCommands.streammode, Application.streamstate.stop.toString());
+        }
+    }
+
+    private void killcambypid() {
+        if (campid != -1) {
+            Util.debug("destroying cam process #"+campid, this);
+            Util.systemCall("kill "+campid);
+            campid = -1;
         }
     }
 

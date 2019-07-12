@@ -129,10 +129,11 @@ public class Navigation implements Observer {
 			return;
 		}
 
-		if (!Ros.launch(Ros.MAKE_MAP)) {
-			app.driverCallServer(PlayerCommands.messageclients, "roslaunch already running, aborting mapping start");
-			return;
-		}
+		Ros.launch(Ros.MAKE_MAP); // TODO: do something with returned Process
+//		if (!Ros.launch(Ros.MAKE_MAP)) {
+//			app.driverCallServer(PlayerCommands.messageclients, "roslaunch already running, aborting mapping start");
+//			return;
+//		}
 
 		app.driverCallServer(PlayerCommands.messageclients, "starting mapping, please wait");
 		state.set(State.values.navsystemstatus, Ros.navsystemstate.starting.toString()); // set running by ROS node when ready
@@ -145,10 +146,11 @@ public class Navigation implements Observer {
 
 		new Thread(new Runnable() { public void run() {
 			app.driverCallServer(PlayerCommands.messageclients, "starting navigation, please wait");
-			if (!Ros.launch(Ros.REMOTE_NAV)) {
-				app.driverCallServer(PlayerCommands.messageclients, "roslaunch already running, abort");
-				return;
-			}
+			Ros.launch(Ros.REMOTE_NAV); // TODO: do something with returned process
+//			if (!Ros.launch(Ros.REMOTE_NAV)) {
+//				app.driverCallServer(PlayerCommands.messageclients, "roslaunch already running, abort");
+//				return;
+//			}
 			state.set(State.values.navsystemstatus, Ros.navsystemstate.starting.toString()); // set running by ROS node when ready
 
 			// wait
@@ -175,10 +177,11 @@ public class Navigation implements Observer {
 			stopNavigation();
 			while (!state.equals(State.values.navsystemstatus, Ros.navsystemstate.stopped)) Util.delay(10);
 
-			if (!Ros.launch(Ros.REMOTE_NAV)) {
-				app.driverCallServer(PlayerCommands.messageclients, "roslaunch already running, abort");
-				return;
-			}
+			Ros.launch(Ros.REMOTE_NAV); // TODO: do something with returned process
+//			if (!Ros.launch(Ros.REMOTE_NAV)) {
+//				app.driverCallServer(PlayerCommands.messageclients, "roslaunch already running, abort");
+//				return;
+//			}
 
 			start = System.currentTimeMillis(); // wait
 			while (!state.equals(State.values.navsystemstatus, Ros.navsystemstate.running)

@@ -8,6 +8,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
+import java.util.List;
 
 import oculusPrime.*;
 
@@ -41,6 +43,7 @@ public class Ros {
 
 	static final int OCCUPIEDTHRESHOLD = 60;
 	static final int FREETHRESHOLD = 25;
+//	public static List<Process> proclist = new ArrayList<Process>();
 
 	public static BufferedImage rosmapImg() {
 		if (!state.exists(State.values.rosmapinfo)) return null;
@@ -183,18 +186,50 @@ public class Ros {
 		return str;
 	}
 
-	/**
-	 * @param launch
-	 * @return false if roslauch already running
-	 */
-	public static boolean launch(String launch) {
-//		if (checkIfRoslaunchRunning()) return false;
+//	public static boolean launch(String launch) {
+////		if (checkIfRoslaunchRunning()) return false;
+//
+//		String cmd = Settings.redhome + Util.sep + "ros.sh"; // setup ros environment
+//		cmd += " roslaunch df " + launch + ".launch";
+//		Util.systemCall(cmd);
+//		return true;
+//	}
 
-		String cmd = Settings.redhome + Util.sep + "ros.sh"; // setup ros environment
-		cmd += " roslaunch df " + launch + ".launch";
-		Util.systemCall(cmd);
-		return true;
+	public static long launch(String arg) {
+		ArrayList <String> str = new ArrayList<>();
+		str.add(arg);
+		return launch(str);
 	}
+
+	public static long launch(List <String> args) {
+		ProcessBuilder processBuilder = new ProcessBuilder();
+		args.set(0, args.get(0)+".launch");
+		args.add(0, "df"); // 3rd
+		args.add(0, "roslaunch"); // 2nd
+		args.add(0, Settings.redhome + Util.sep + "ros.sh"); // 1st
+//		processBuilder.command(Settings.redhome + Util.sep + "ros.sh", "roslaunch", "df", file+".launch");
+		processBuilder.command(args);
+
+		long pid = -1;
+
+		try {
+			Process proc = processBuilder.start();
+
+			BufferedReader procReader = new BufferedReader(new InputStreamReader(proc.getInputStream()));
+
+			String line = null;
+			while ((line = procReader.readLine()) != null) {
+				if (line.startsWith("PID:")) {
+					pid = Long.parseLong(line.replaceAll("\\D+", ""));
+					break;
+				}
+			}
+
+		} catch (Exception e) { e.printStackTrace(); }
+
+		return pid;
+	}
+
 
 	public static void roscommand(String str) {
 		String cmd = Settings.redhome + Util.sep + "ros.sh"; // setup ros environment

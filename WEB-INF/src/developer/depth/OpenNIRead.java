@@ -34,31 +34,31 @@ public class OpenNIRead  {
 
 		lockfile.delete();
 		
-//		new Thread(new Runnable() { 
+//		new Thread(new Runnable() {
 //			public void run() {
 //				try {
-//					
+//
 //					String sep = System.getProperty("file.separator");
 //					String dir = System.getenv("RED5_HOME")+sep+"xtionread";
 //					String javadir = System.getProperty("java.home");
-//					String cmd = javadir+sep+"bin"+sep+"java"; 
+//					String cmd = javadir+sep+"bin"+sep+"java";
 //					String arg = dir+sep+"xtion.jar";
 //					ProcessBuilder pb = new ProcessBuilder(cmd, "-jar", arg);
 //					Map<String, String> env = pb.environment();
 //					env.put("LD_LIBRARY_PATH", dir);
 //					camproc = pb.start();
-//					
+//
 //				} catch (Exception e) {
 //					e.printStackTrace();
-//				}		
-//			} 	
+//				}
+//			}
 //		}).start();
 		
 //		String cmd = Application.RED5_HOME+Util.sep+"ros.sh"; // setup ros environment
 //		cmd += " roslaunch oculusprime depthcam_to_java.launch";
 //		Util.systemCall(cmd);
 
-		if (!Ros.launch("depthcam_to_java")) return false;
+		Ros.launch("depthcam_to_java");
 
 		depthCamGenerating = true;
 		depthCamInit = true;

@@ -1,6 +1,7 @@
 package developer;
 
 
+import oculusPrime.Settings;
 import oculusPrime.Util;
 
 import java.io.File;
@@ -17,7 +18,7 @@ import oculusPrime.State;
 public class Scratch {
 
     protected static State state = State.getReference();
-
+    static Process proc;
 
     public void regexp() {
         Pattern quality = Pattern.compile("^\\s*asdf asdf");
@@ -36,20 +37,7 @@ public class Scratch {
         System.out.println("192.168.0.107".replaceFirst("\\.\\d+\\.\\d+$", ""));
     }
 
-    public double voltsComp(double n) {
-        double volts = 12.0; // default
-        final double nominalvolts = 12.0;
-        final double exponent = 1.6;
 
-        if (state.exists(State.values.batteryvolts.toString())) {
-            if (Math.abs(state.getDouble(State.values.batteryvolts.toString()) - volts) > 2.5) // sanity check
-                Util.log("error state:battvolts beyond expected range! "+state.get(State.values.batteryvolts), this);
-            else  volts = Double.parseDouble(state.get(State.values.batteryvolts));
-        }
-
-        n = n * Math.pow(nominalvolts/volts, exponent);
-        return n;
-    }
 
     public static long newID() {
         return System.nanoTime();
@@ -58,10 +46,11 @@ public class Scratch {
     public static void main(String[] args) {
 //        new Scratch().regexp();
 
-        Long zork = newID();
-        Long blork = newID();
 
-        System.out.println(zork+"\n"+blork);
+        ArrayList <String> str = new ArrayList<>();
+        str.add("asdf");
+
+        System.out.println(str.get(0));
 
 
     }

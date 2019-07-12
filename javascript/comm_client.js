@@ -12,11 +12,9 @@ function commClientLoaded() {
 	comm_client_log("commClientLoaded, id: "+commclientid); 
 
 	if (/auth=/.test(document.cookie)) { commLoginFromCookie(); }
-	else { 
-		login(); 
-	}
+	else login(); 
 	
-	// websocketServerConnect(); // TODO: wait until after successful login
+	videologo("on");
 }
 
 function callServerComm(fn, s) {
@@ -24,14 +22,12 @@ function callServerComm(fn, s) {
 
 	var obj = { command: fn, str: s };
 	var msg = JSON.stringify(obj);
-	// postxmlhttp("comm?msgfromclient="+msg, msg);
 	postxmlhttp("comm?msgfromclient", msg);
 }
 
 function commLogin(user, pass, remember) {
 	// comm_client_log("commLogin");
 	initiallogin = true;
-	// postxmlhttp("comm?loginuser="+user+"&loginpass="+pass+"&loginremember="+remember);
 	getxmlhttp("comm?loginuser="+user+"&loginpass="+pass+"&loginremember="+remember);
 	logintimer = setTimeout("window.location.reload()", logintimeout);
 }
@@ -82,6 +78,7 @@ function msgReceived(xhr) {
 		}
 		
 		else if (xhr.status==403) { // forbidden
+			comm_client_log("received 403"); 
 			commclientclose();
 		}
 	}
@@ -110,9 +107,15 @@ function getxmlhttp(theurl) {
 		// comm_client_log("getxmlhttp delayed");
 		// return; 
 	// } 
-	if (commclientid == null) return;
 	
+	if (commclientid == null) return;
+
 	theurl += "&clientid="+commclientid;
+	
+	if (!initiallogin) {
+		comm_client_log("getxmlhttp dropped: "+theurl);
+		return;
+	}
 	
 	comm_client_log("getxmlhttp("+theurl+")");
 	
@@ -134,13 +137,13 @@ function postxmlhttp(theurl, data) {
 	// } 
 	
 	if (commclientid == null) return;
-	
-	theurl += "&clientid="+commclientid;
-	
+
 	if (!initiallogin) {
 		comm_client_log("postxmlhttp dropped: "+data);
 		return;
 	}
+
+	theurl += "&clientid="+commclientid;
 	
 	comm_client_log("postxmlhttp("+theurl+", "+data+")");
 	

@@ -366,8 +366,8 @@ function message(message, colour, status, value) {
 			datetime +="</span>";
 			b.innerHTML = message + hiddenmessageboxping + " &nbsp; " + datetime + "<br>" + str + " ";
 		}
-		if (tempmessage == "playing stream") { videologo("off"); } 
-		if (tempmessage == "stream stopped") { videologo("on"); docklinetoggle("off"); }
+		// if (tempmessage == "playing stream") { videologo("off"); } 
+		// if (tempmessage == "stream stopped") { videologo("on"); docklinetoggle("off"); }
 		lagtimer = 0;
 	}
 	if (status != null) {  //(!/\S/.test(d.value))
@@ -387,6 +387,8 @@ function setstatus(status, value) {
 			var s = value.split("_");
 			if (s[0] != streammode) { play(value); }
 			value = s[0];
+			if (value == "camera" || value == "camandmic") videologo("off");
+			else if (value == "stop" || value == "mic") { videologo("on"); docklinetoggle("off"); }
 		}
 
 		a.innerHTML = value;
