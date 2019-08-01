@@ -39,7 +39,6 @@ public class Video {
     private int lastfps=0;
     private int lastquality = 0;
     private Application.streamstate lastmode = Application.streamstate.stop;
-    private long publishid = 0;
     private String avprog = "avconv"; // avconv or ffmpeg
     public static long STREAM_CONNECT_DELAY = 4000;
     private static int dumpfps = 15;
@@ -123,7 +122,6 @@ public class Video {
         lastfps = fps;
         lastmode = mode;
         final long id = System.currentTimeMillis();
-        publishid = id;
 
         lastquality = defaultquality;
         if (w > defaultwidth) lastquality = quality720p;
@@ -150,10 +148,34 @@ public class Video {
 
             switch (mode) {
                 case camera:
+
+                    if (campid != -1) {
+                        Util.log("camera already running, dropped", this);
+                        return;
+                    }
+
                     if (app.player instanceof IServiceCapableConnection) // flash client
                         campid = Ros.launch("rgbpublish");
                     else
                         campid = Ros.launch("rgbwebrtc");
+
+                    Util.delay(STREAM_CONNECT_DELAY);
+                    app.driverCallServer(PlayerCommands.streammode, mode.toString());
+                    break;
+
+                case camandmic:
+
+                    if (campid != -1) {
+                        Util.log("camera already running, dropped", this);
+                        return;
+                    }
+
+                    if (app.player instanceof IServiceCapableConnection) // flash client
+                        return;
+                    else {
+                        campid = Ros.launch(new ArrayList<String>(Arrays.asList("rgbwebrtc",
+                                "audiodevice:=--audio-device=" + adevicenum)));
+                    }
 
                     Util.delay(STREAM_CONNECT_DELAY);
                     app.driverCallServer(PlayerCommands.streammode, mode.toString());
@@ -170,6 +192,7 @@ public class Video {
                     // avconv -re -f alsa -ac 1 -ar 22050 -i hw:1 -f flv rtmp://127.0.0.1:1935/oculusPrime/stream1
                     app.driverCallServer(PlayerCommands.streammode, mode.toString());
                     break;
+
                 case camandmic:
                     try {
                         new ProcessBuilder("sh", "-c",

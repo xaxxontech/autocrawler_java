@@ -17,12 +17,12 @@ public class CommServlet extends HttpServlet {
 
 	private static volatile List<String> msgFromServer = new ArrayList<>(); // list of JSON strings
 
-	static final long TIMEOUT = 10000; // must be longer than js ping interval (5 seconds)
+	static final long TIMEOUT = 10000; // must be substantially longer than js ping interval (5 seconds)
 	volatile long clientRequestID = 0;
 	private static Application app = null;
     private static BanList ban = BanList.getRefrence();
 	private static State state = State.getReference();
-	private static String RESP = "";
+	private static final String RESP = "ok";
 	public static String clientaddress = null;
 	volatile long clientID = 0;
 
@@ -53,9 +53,11 @@ public class CommServlet extends HttpServlet {
             clientaddress = request.getRemoteAddr();
             ban.clearAddress(clientaddress);
 			clientID = id;
+            msgFromServer.add(RESP);
+            sendServerMessage(response);
             app.driverSignIn(username);
-//            msgFromServer.add(RESP);
-		}
+            return;
+        }
 
 		else if (request.getParameter(params.loginuser.toString()) != null) {
 			reset(request);
@@ -72,8 +74,10 @@ public class CommServlet extends HttpServlet {
 			clientaddress = request.getRemoteAddr();
 			ban.clearAddress(clientaddress);
 			clientID = id;
+            msgFromServer.add(RESP);
+            sendServerMessage(response);
 			app.driverSignIn(username);
-//            msgFromServer.add(RESP);
+            return;
         }
 
 		// logins must be above this
@@ -99,7 +103,7 @@ public class CommServlet extends HttpServlet {
 		// incoming msg from client
 		if (request.getParameter(params.msgfromclient.toString()) != null) {
 			String msg = getPostData(request);
-//			logdebug(msg, this);
+			logdebug(msg, this);
 
 			JSONParser parser = new JSONParser();
 			try {
@@ -112,18 +116,17 @@ public class CommServlet extends HttpServlet {
 
 	            app.playerCallServer(fn, str);
 
-	            if (!fn.equals(PlayerCommands.statuscheck.toString()))
-	                msgFromServer.add(RESP);
+//	            if (!fn.equals(PlayerCommands.statuscheck.toString()))
+                msgFromServer.add(RESP);
+                sendServerMessage(response);
 
-			} catch(Exception e) { e.printStackTrace(); }
+            } catch(Exception e) { e.printStackTrace(); }
 		}
 
 		// client requesting server msg, wait for response
 		else if (request.getParameter(params.requestservermsg.toString()) != null) {
-
+            sendServerMessage(response);
 		}
-
-		sendServerMessage(response);
 
 	}
 
@@ -139,17 +142,29 @@ public class CommServlet extends HttpServlet {
 
 		long timeout = System.currentTimeMillis() + TIMEOUT;
 
-		// wait for msgFromServer
-		while (System.currentTimeMillis() < timeout && msgFromServer.isEmpty() &&  msgid  == clientRequestID && clID == clientID) //  && !reload
-			Util.delay(1);
+//		while (System.currentTimeMillis() < timeout && msgFromServer.isEmpty() && clID == clientID) //  &&  msgid  == clientRequestID
+//			Util.delay(1);
+
+        // wait for msgFromServer
+        while (msgFromServer.isEmpty() && clID == clientID &&  msgid == clientRequestID && System.currentTimeMillis() < timeout)
+            Util.delay(1);
 
 		if (clID != clientID) {
             logdebug("RELOAD", this);
             return;
         }
 
+		if (msgid != clientRequestID) {
+            logdebug("msgid != clientRequestID", this);
+            try {
+                response.sendError(HttpServletResponse.SC_NO_CONTENT);
+                return;
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
 		if (System.currentTimeMillis() >= timeout && msgid == clientRequestID) {
-		    // TODO: logout code here
 			logdebug("TIMED OUT", this);
             app.driverSignOut();
 			return;
@@ -160,13 +175,19 @@ public class CommServlet extends HttpServlet {
 			msgFromServer.remove(0);
 			logdebug("msgFromServer read, size: "+msgFromServer.size(), this);
 		}
+		else {
+		    Util.debug("msgFromServer EMPTY", this);
+		    try {
+                response.sendError(HttpServletResponse.SC_NO_CONTENT);
+                return;
+            } catch (Exception e) { e.printStackTrace(); }
+        }
 
 		try {
 			response.setContentType("text/html");
 			PrintWriter out = response.getWriter();
-			if (msg != null)
-			    out.print(msg);
-                logdebug("msgid="+msgid+", sendServerMessage: "+msg, this);
+            out.print(msg);
+            logdebug("msgid="+msgid+", sendServerMessage: "+msg, this);
 			out.close();
 		} catch (Exception e) { e.printStackTrace(); }
 
@@ -178,17 +199,42 @@ public class CommServlet extends HttpServlet {
 
 	public static void sendToClient(String str, String colour, String status, String value) {
 
-		JSONObject obj = new JSONObject();
+        JSONObject obj = new JSONObject();
 		obj.put("str", str);
 		obj.put("colour", colour);
 		obj.put("status", status);
 		obj.put("value", value);
 
 		String msg = obj.toJSONString();
+
+        if (!state.exists(State.values.driver)) {
+            logdebug("no driver, dropped: sendToClient: " + msg, "CommServlet.sendToClient()");
+            return;
+        }
+
         msgFromServer.add(msg);
 
-//        logdebug("sendToClient: "+msg, "CommServlet.sendToClient()");
+        logdebug("sendToClient: "+msg, "CommServlet.sendToClient()");
     }
+
+    public static void sendToClientFunction(String fn, String params) {
+
+		Util.debug(params, "sendToClientFunction");
+
+		JSONObject obj = new JSONObject();
+		obj.put("fn", fn);
+		obj.put("params", params);
+		String msg = obj.toJSONString();
+
+		if (!state.exists(State.values.driver)) {
+			logdebug("no driver, dropped: sendToClientFunction: " + msg, "CommServlet.sendToClientFunction()");
+			return;
+		}
+
+		msgFromServer.add(msg);
+		logdebug("sendToClientFunction: "+msg, "CommServlet.sendToClientFunction()");
+
+	}
 
     private String getPostData(HttpServletRequest request) {
 		StringBuffer jb = new StringBuffer();
@@ -216,8 +262,8 @@ public class CommServlet extends HttpServlet {
 
     }
 
-    private void logdebug(String str, Object obj) {
-//		Util.debug(str, this);
+    private static void logdebug(String str, Object obj) {
+		 Util.debug(str, "CommServlet");
 	}
     
 }

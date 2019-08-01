@@ -88,7 +88,7 @@ public class Application extends MultiThreadedApplicationAdapter {
 		super();
 
 		PowerLogger.append("==============Oculus Prime Java Start===============\n", this); // extra newline on end
-		Util.log ("==============Oculus Prime Java Start 3===============\n", this); // extra newline on end
+		Util.log ("==============Oculus Prime Java Start 4===============\n", this); // extra newline on end
 		Util.log("Linux Version:"+Util.getUbuntuVersion()
 				+", Java Model:"+System.getProperty("sun.arch.data.model")
 				+", Java Arch:"+state.get(values.osarch), this);
@@ -566,6 +566,9 @@ public class Application extends MultiThreadedApplicationAdapter {
 
         Util.log("driverSignOut(): " + str,this);
 
+        sendplayerfunction("commclientclose", null); // calls javascript: commclientclose()
+        Util.delay(100);
+
         loginRecords.signoutDriver();
 
         if (CommServlet.clientaddress != null) banlist.removeAddress(CommServlet.clientaddress);
@@ -588,6 +591,7 @@ public class Application extends MultiThreadedApplicationAdapter {
                     comport.stopGoing();
                 }
 
+                // Todo: unused
                 if (!state.get(State.values.driverstream).equals(driverstreamstate.stop.toString())
                         && !state.get(values.driverstream).equals(driverstreamstate.disabled.toString())) {
                     state.set(State.values.driverstream, driverstreamstate.stop.toString());
@@ -626,6 +630,8 @@ public class Application extends MultiThreadedApplicationAdapter {
 	
 	@SuppressWarnings("incomplete-switch")
 	private void playerCallServer(PlayerCommands fn, String str, boolean passengerOverride) {
+
+	    Util.debug("playerCallServer "+fn.toString()+" "+str, this);
 
 		if (PlayerCommands.requiresAdmin(fn) && !passengerOverride) {
 			if ( ! loginRecords.isAdmin()){ 
@@ -1524,10 +1530,13 @@ public class Application extends MultiThreadedApplicationAdapter {
 	}
 
 	public void sendplayerfunction(String fn, String params) {
-		if (player instanceof IServiceCapableConnection) {
+		if (player instanceof IServiceCapableConnection) { // flash
 			IServiceCapableConnection sc = (IServiceCapableConnection) player;
 			sc.invoke("playerfunction", new Object[] { fn, params });
 		}
+		else { // webrtc
+		    CommServlet.sendToClientFunction(fn, params);
+        }
 
 		if (state.exists(values.relayserver)) {
 			red5client.sendToRelay("sendplayerfunction", new Object[]{fn, params});
@@ -1647,6 +1656,7 @@ public class Application extends MultiThreadedApplicationAdapter {
 	}
 
 	private void statusCheck(String s) {
+
 		if (initialstatuscalled == false || s.equals("intial")) {
 			initialstatuscalled = true; 
 			
@@ -1815,8 +1825,15 @@ public class Application extends MultiThreadedApplicationAdapter {
 			}
 		}
 
-		if(! settings.getBoolean(ManualSettings.debugenabled)) killGrabber();
+		if(! settings.getBoolean(ManualSettings.debugenabled)) killGrabber(); // TODO: nuke
+
+        if (state.exists(values.driver)) {
+            driverCallServer(PlayerCommands.driverexit, null);
+            Util.delay(1000);
+        }
+
 		Util.systemCall(Settings.redhome + Util.sep + "red5-shutdown.sh");
+
 	}
 
 	private void move(final String str) {

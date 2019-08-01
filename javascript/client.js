@@ -796,7 +796,7 @@ function rovvolumepopulate() {
 	}
 	str += "</tr></table>";
 	document.getElementById("rovvolumecontrol").innerHTML = str;
-	var b=document.getElementById("rvoltd"+parseInt(rovvolume/10));
+	var b=document.getElementById("rvoltd"+(rovvolume/10).toString());
 	b.style.backgroundColor = "#aaaaaa";
 	b.style.color = "#111111";
 }
@@ -813,7 +813,7 @@ function rovvolumeout(i) {
 
 function rovvolumeclick(vol) {
 	// unset old
-	var b = document.getElementById("rvoltd"+parseInt(rovvolume/10));
+	var b = document.getElementById("rvoltd"+(rovvolume/10).toString());
 	b.style.color = "#cccccc";
 	b.style.backgroundColor = "#111111";
 	
@@ -822,8 +822,8 @@ function rovvolumeclick(vol) {
 	a.style.color = "#111111";
 	a.style.backgroundColor = "#aaaaaa";
 
-	message("sending system volume: "+ parseInt(vol*10)+"%", sentcmdcolor);
-	callServer("setsystemvolume", parseInt(vol*10));
+	message("sending system volume: "+ (vol*10).toString()+"%", sentcmdcolor);
+	callServer("setsystemvolume", (vol*10).toString());
 	lagtimer = new Date().getTime();
 	rovvolume = vol*10;
 }
@@ -842,7 +842,7 @@ function lightpopulate() {
 	str += "</tr></table>";
 	a.style.display = "";
 	a.innerHTML = str;
-	var b=document.getElementById("lighttd"+parseInt(spotlightlevel/10));
+	var b=document.getElementById("lighttd"+(spotlightlevel/10).toString());
 	b.style.backgroundColor = "#aaaaaa";
 	b.style.color = "#111111";
 	
@@ -860,7 +860,7 @@ function lightpopulate() {
 	str += "</tr></table>";
 	c.style.display = "";
 	c.innerHTML = str;
-	var d=document.getElementById("floodlighttd"+parseInt(floodlightlevel/10));
+	var d=document.getElementById("floodlighttd"+(floodlightlevel/10).toString());
 	d.style.backgroundColor = "#aaaaaa";
 	d.style.color = "#111111";
 }
@@ -877,7 +877,7 @@ function lightout(i) {
 
 function lightclick(level) {
 	// unset old
-	var b = document.getElementById("lighttd"+parseInt(spotlightlevel/10));
+	var b = document.getElementById("lighttd"+(spotlightlevel/10).toString());
 	b.style.color = "#cccccc";
 	b.style.backgroundColor = "#111111";
 	
@@ -886,8 +886,8 @@ function lightclick(level) {
 	a.style.color = "#111111";
 	a.style.backgroundColor = "#aaaaaa";
 	
-	message("sending spotlight brightness: "+ parseInt(level*10)+"%", sentcmdcolor);
-	callServer("spotlight", parseInt(level*10));
+	message("sending spotlight brightness: "+ (level*10).toString()+"%", sentcmdcolor);
+	callServer("spotlight", (level*10).toString());
 	lagtimer = new Date().getTime();
 }
 
@@ -903,7 +903,7 @@ function floodlightout(i) {
 
 function floodlightclick(level) {
 	// unset old
-	var b = document.getElementById("floodlighttd"+parseInt(floodlightlevel/10));
+	var b = document.getElementById("floodlighttd"+(floodlightlevel/10).toString());
 	b.style.color = "#cccccc";
 	b.style.backgroundColor = "#111111";
 	
@@ -912,8 +912,8 @@ function floodlightclick(level) {
 	a.style.color = "#111111";
 	a.style.backgroundColor = "#aaaaaa";
 	
-	message("sending floodlight: "+ parseInt(level*10)+"%", sentcmdcolor);
-	callServer("floodlight", parseInt(level*10));
+	message("sending floodlight: "+ (level*10).toString()+"%", sentcmdcolor);
+	callServer("floodlight", (level*10).toString());
 	lagtimer = new Date().getTime();
 }
 

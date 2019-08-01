@@ -50,7 +50,7 @@ function getVideoElement() {
 }
 
 function webrtcStatus(text) {
-    console.log(text);
+    webrtc_log(text);
 
     /*
     var span = document.getElementById("status")
@@ -97,7 +97,7 @@ function onIncomingSDP(sdp) {
 
 // Local description was set, send it to peer
 function onLocalDescription(desc) {
-    console.log("Got local description: " + JSON.stringify(desc));
+    webrtc_log("Got local description: " + JSON.stringify(desc));
     peer_connection.setLocalDescription(desc).then(function() {
         webrtcStatus("Sending SDP answer");
         sdp = {'sdp': peer_connection.localDescription}
@@ -112,7 +112,7 @@ function onIncomingICE(ice) {
 }
 
 function onServerMessage(event) {
-    console.log("Received " + event.data);
+    webrtc_log("Received " + event.data);
     switch (event.data) {
         case "HELLO":
             webrtcStatus("Registered with server, waiting for call");
@@ -178,7 +178,7 @@ function getLocalStream() {
         // setError('ERROR parsing constraints: ' + e.message + ', using default constraints');
         // constraints = default_constraints;
     // }
-    // console.log(JSON.stringify(constraints));
+    // webrtc_log(JSON.stringify(constraints));
 
 	constraints = default_constraints;
     // Add local stream
@@ -239,7 +239,7 @@ function websocketServerDisconnect() {
 
 function onRemoteTrack(event) {
     if (getVideoElement().srcObject !== event.streams[0]) {
-        console.log('Incoming stream');
+        webrtc_log('Incoming stream');
         getVideoElement().srcObject = event.streams[0];
     }
 }
@@ -249,19 +249,19 @@ function errorUserMediaHandler() {
 }
 
 const handleDataChannelOpen = (event) =>{
-    console.log("dataChannel.OnOpen", event);
+    webrtc_log("dataChannel.OnOpen", event);
 };
 
 // const handleDataChannelMessageReceived = (event) =>{
-    // console.log("dataChannel.OnMessage:", event, event.data.type);
+    // webrtc_log("dataChannel.OnMessage:", event, event.data.type);
 
     // webrtcStatus("Received data channel message");
     // if (typeof event.data === 'string' || event.data instanceof String) {
-        // console.log('Incoming string message: ' + event.data);
+        // webrtc_log('Incoming string message: ' + event.data);
         // textarea = document.getElementById("text")
         // textarea.value = textarea.value + '\n' + event.data
     // } else {
-        // console.log('Incoming data message');
+        // webrtc_log('Incoming data message');
     // }
     // send_channel.send("Hi! (from browser)");
 // };
@@ -271,7 +271,7 @@ const handleDataChannelOpen = (event) =>{
 // };
 
 // const handleDataChannelClose = (event) =>{
-    // console.log("dataChannel.OnClose", event);
+    // webrtc_log("dataChannel.OnClose", event);
 // };
 
 // function onDataChannel(event) {
@@ -287,7 +287,7 @@ function createCall(msg) {
     // Reset connection attempts because we connected successfully
     connect_attempts = 0;
 
-    console.log('Creating RTCPeerConnection');
+    webrtc_log('Creating RTCPeerConnection');
 
     peer_connection = new RTCPeerConnection(rtc_configuration);
     // send_channel = peer_connection.createDataChannel('label', null);
@@ -299,7 +299,7 @@ function createCall(msg) {
     peer_connection.ontrack = onRemoteTrack;
     /* Send our video/audio to the other peer */
     // local_stream_promise = getLocalStream().then((stream) => {
-        // console.log('Adding local stream');
+        // webrtc_log('Adding local stream');
         // peer_connection.addStream(stream);
         // return stream;
     // }).catch(setError);
@@ -312,7 +312,7 @@ function createCall(msg) {
 	// We have a candidate, send it to the remote party with the
 	// same uuid
 	if (event.candidate == null) {
-            console.log("ICE Candidate was null, done");
+            webrtc_log("ICE Candidate was null, done");
             return;
 	}
 	ws_conn.send(JSON.stringify({'ice': event.candidate}));
@@ -321,3 +321,6 @@ function createCall(msg) {
     webrtcStatus("Created peer connection for call, waiting for SDP");
 }
 
+function webrtc_log(str) {
+	// console.log(str);
+}

@@ -480,7 +480,7 @@ public class Power implements SerialPortEventListener  {
 				if (!state.exists(State.values.telnetusers.toString())) state.set(State.values.telnetusers, 0);
 				if (!state.exists(State.values.driver.toString()) && state.getInteger(State.values.telnetusers) == 0 &&
 						settings.getBoolean(GUISettings.redock) && state.get(State.values.dockstatus).equals(AutoDock.DOCKED) &&
-						 !state.getBoolean(State.values.forceundock) && !settings.getBoolean(ManualSettings.debugenabled) ) {
+						 !state.getBoolean(State.values.forceundock)  ) { // && !settings.getBoolean(ManualSettings.debugenabled)
 					Util.log("unplanned undock, trying redock",this);
 					PowerLogger.append("unplanned undock, trying redock",this);
 					application.driverCallServer(PlayerCommands.redock, null);

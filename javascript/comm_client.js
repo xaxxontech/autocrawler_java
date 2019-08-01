@@ -12,21 +12,18 @@ function commClientLoaded() {
 	comm_client_log("commClientLoaded, id: "+commclientid); 
 
 	if (/auth=/.test(document.cookie)) { commLoginFromCookie(); }
-	else login(); 
+	else login(); // user input goes out thru commLogin() below
 	
 	videologo("on");
 }
 
 function callServerComm(fn, s) {
-	// comm_client_log("callServerComm fn: "+fn+", str: "+s);
-
 	var obj = { command: fn, str: s };
 	var msg = JSON.stringify(obj);
 	postxmlhttp("comm?msgfromclient", msg);
 }
 
 function commLogin(user, pass, remember) {
-	// comm_client_log("commLogin");
 	initiallogin = true;
 	getxmlhttp("comm?loginuser="+user+"&loginpass="+pass+"&loginremember="+remember);
 	logintimer = setTimeout("window.location.reload()", logintimeout);
@@ -35,10 +32,8 @@ function commLogin(user, pass, remember) {
 function commLoginFromCookie() {
 	var str = ""; 
 	str = readCookie("auth");
-	// comm_client_log("commLoginFromCookie: "+str);
 	
 	initiallogin = true;
-	// postxmlhttp("comm?logincookie="+str, str);
 	postxmlhttp("comm?logincookie", str);
 	logintimer = setTimeout("eraseCookie('auth'); window.location.reload()", logintimeout);
 }
@@ -55,15 +50,23 @@ function msgReceived(xhr) {
 
 			// msg recevied
 			msgsrcvd ++;
-			// comm_client_log ("messages sent/received: "+msgssent+", "+msgsrcvd);
 			comm_client_log("serverResponse:\n"+xhr.responseText);
-			
+	
 			if (xhr.responseText == "") { // no msg
 				comm_client_log("blank message");
-				// checkForMsg();
 				return;
 			}
-
+			
+			// if (xhr.responseText == "TIMEOUT") { // no msg
+				// comm_client_log("TIMEOUT");
+				// return;
+			// }	
+					
+			if (xhr.responseText == "ok") { 
+				checkForMsg();
+				return;
+			}
+			
 			if (!webrtcinit) {
 				webrtcinit = true;
 				websocketServerConnect(); // webrtc.js
@@ -71,28 +74,38 @@ function msgReceived(xhr) {
 
 			var msg = JSON.parse(xhr.responseText);
 			
-			message(msg.str, msg.colour, msg.status, msg.value); 
+			if (msg.str)
+				message(msg.str, msg.colour, msg.status, msg.value); 
+			
+			else if (msg.fn) {
+				console.log(msg.params);
+				var params = msg.params.replace(/"/g, "&quot;");
+				params = params.replace("\n"," ");
+				console.log(msg.fn+"(\""+params+"\")");
+				eval(msg.fn+"(\""+params+"\")");
+			}
 			
 			checkForMsg();
 
 		}
 		
 		else if (xhr.status==403) { // forbidden
+			initiallogin = false;
 			comm_client_log("received 403"); 
 			commclientclose();
 		}
+		
 	}
 }
 
 function commclientclose() {
-	websocketServerDisconnect();
-	initiallogin = false;
 	connectionlost();
+	websocketServerDisconnect();
 }
 
 function checkForMsg() {
 	
-	if (msgcheckpending || !initiallogin) return;
+	if (!initiallogin) return; // msgcheckpending || 
 	
 	msgcheckpending = true;
 
@@ -161,5 +174,5 @@ function postxmlhttp(theurl, data) {
 }
 
 function comm_client_log(str) {
-	console.log(str);
+	// console.log(str);
 }
