@@ -146,11 +146,16 @@ public class Navigation implements Observer {
 
 		new Thread(new Runnable() { public void run() {
 			app.driverCallServer(PlayerCommands.messageclients, "starting navigation, please wait");
-			Ros.launch(Ros.REMOTE_NAV); // TODO: do something with returned process
-//			if (!Ros.launch(Ros.REMOTE_NAV)) {
-//				app.driverCallServer(PlayerCommands.messageclients, "roslaunch already running, abort");
-//				return;
-//			}
+
+			// nuke any launch files using realsense, if running
+			if (app.video.realsensepid != -1) {
+                app.video.killrealsensebypid();
+                long start = System.currentTimeMillis();
+                while (app.video.realsensepid != -1 && System.currentTimeMillis() - start < 2000) Util.delay(1);
+            }
+
+            app.video.realsensepid = Ros.launch(Ros.REMOTE_NAV); // TODO: do something with returned process
+
 			state.set(State.values.navsystemstatus, Ros.navsystemstate.starting.toString()); // set running by ROS node when ready
 
 			// wait
@@ -158,66 +163,45 @@ public class Navigation implements Observer {
 			while (!state.get(State.values.navsystemstatus).equals(Ros.navsystemstate.running.toString())
 					&& System.currentTimeMillis() - start < NAVSTARTTIMEOUT) { Util.delay(50);  } // wait
 
-			if (state.equals(State.values.navsystemstatus, Ros.navsystemstate.running)){
-//				if (settings.getBoolean(ManualSettings.useflash))
-//					app.driverCallServer(PlayerCommands.streamsettingsset, Application.camquality.med.toString()); // reduce cpu
-				if (!state.get(State.values.dockstatus).equals(AutoDock.UNDOCKED))
-					state.set(State.values.rosinitialpose, "0_0_0");
-				Util.log("navigation running", this);
-				return; // success
-			}
-
-			// ========try again if needed, just once======
-
-			if (state.get(State.values.navsystemstatus).equals(Ros.navsystemstate.stopping.toString()) ||
-					state.get(State.values.navsystemstatus).equals(Ros.navsystemstate.stopped.toString()))
-				return; // in case cancelled
-
-			Util.log("navigation start attempt #2", this);
-			stopNavigation();
-			while (!state.equals(State.values.navsystemstatus, Ros.navsystemstate.stopped)) Util.delay(10);
-
-			Ros.launch(Ros.REMOTE_NAV); // TODO: do something with returned process
-//			if (!Ros.launch(Ros.REMOTE_NAV)) {
-//				app.driverCallServer(PlayerCommands.messageclients, "roslaunch already running, abort");
-//				return;
-//			}
-
-			start = System.currentTimeMillis(); // wait
-			while (!state.equals(State.values.navsystemstatus, Ros.navsystemstate.running)
-					&& System.currentTimeMillis() - start < NAVSTARTTIMEOUT) Util.delay(50);
-
-			// check if running
 			if (state.equals(State.values.navsystemstatus, Ros.navsystemstate.running)) {
-				if (settings.getBoolean(ManualSettings.useflash))
-					app.driverCallServer(PlayerCommands.streamsettingsset, Application.camquality.med.toString()); // reduce cpu
 				if (!state.get(State.values.dockstatus).equals(AutoDock.UNDOCKED))
 					state.set(State.values.rosinitialpose, "0_0_0");
 				Util.log("navigation running", this);
 				return; // success
 			}
+
 			else  {
-				stopNavigation(); // give up
-//				Util.delay(5000);
-//				Util.systemCall("pkill roscore");  // full reset
+				stopNavigation(); // failure
 			}
 
 		}  }).start();
 	}
 
 	public void stopNavigation() {
-		Util.log("stopping navigation", this);
+
+        if (state.get(State.values.navsystemstatus).equals(Ros.navsystemstate.stopped.toString()) ||
+                state.get(State.values.navsystemstatus).equals(Ros.navsystemstate.stopping.toString()) )
+            return;
+
+        state.set(State.values.navsystemstatus, Ros.navsystemstate.stopped.toString());
+        Util.log("stopping navigation", this);
+        app.driverCallServer(PlayerCommands.messageclients, "navigation stopped");
+
+        app.video.killrealsensebypid();
+
         Ros.roscommand("rosnode kill /remote_nav");
         Ros.roscommand("rosnode kill /map_remote");
 
-		if (state.get(State.values.navsystemstatus).equals(Ros.navsystemstate.stopped.toString()))
-			return;
 
-		state.set(State.values.navsystemstatus, Ros.navsystemstate.stopping.toString());
-		new Thread(new Runnable() { public void run() {
-			Util.delay(Ros.ROSSHUTDOWNDELAY);
-			state.set(State.values.navsystemstatus, Ros.navsystemstate.stopped.toString());
-		}  }).start();
+//		state.set(State.values.navsystemstatus, Ros.navsystemstate.stopping.toString());
+//		new Thread(new Runnable() { public void run() {
+//			Util.delay(Ros.ROSSHUTDOWNDELAY);
+//			state.set(State.values.navsystemstatus, Ros.navsystemstate.stopped.toString());
+//			app.video.killrealsensebypid();
+//		}  }).start();
+
+        if (!state.get(values.stream).equals(Application.streamstate.stop.toString()))
+            app.driverCallServer(PlayerCommands.publish, Application.streamstate.stop.toString());
 	}
 
 	public void dock() {

@@ -24,7 +24,7 @@ public class Ros {
 
 	;
 
-	public static final long ROSSHUTDOWNDELAY = 5000; // was 15000
+	public static final long ROSSHUTDOWNDELAY = 2000; // was 15000
 
 	public static final String REMOTE_NAV = "remote_nav"; // nav launch file 
 	public static final String ROSGOALSTATUS_SUCCEEDED = "succeeded";
@@ -218,7 +218,9 @@ public class Ros {
 			BufferedReader procReader = new BufferedReader(new InputStreamReader(proc.getInputStream()));
 
 			String line = null;
-			while ((line = procReader.readLine()) != null) {
+            // TODO: timeout likely not needed, debugging system hang on video start
+            long timeout = System.currentTimeMillis() + 10000;
+            while ((line = procReader.readLine()) != null && System.currentTimeMillis() < timeout) {
 				if (line.startsWith("PID:")) {
 					pid = Long.parseLong(line.replaceAll("\\D+", ""));
 					break;
@@ -227,6 +229,7 @@ public class Ros {
 
 		} catch (Exception e) { e.printStackTrace(); }
 
+		Util.debug("Roslaunch PID: "+pid, "Ros.launch()");
 		return pid;
 	}
 

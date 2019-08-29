@@ -250,6 +250,8 @@ public class CommServlet extends HttpServlet {
 
 	private void reset(HttpServletRequest request) {
 
+        app.driverSignOut();
+
 		logdebug("RESET", this);
 
 		ban.removeAddress(request.getRemoteAddr());
@@ -263,7 +265,7 @@ public class CommServlet extends HttpServlet {
     }
 
     private static void logdebug(String str, Object obj) {
-		 Util.debug(str, "CommServlet");
+//		 Util.debug(str, "CommServlet");
 	}
     
 }

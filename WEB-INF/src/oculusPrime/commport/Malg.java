@@ -812,31 +812,29 @@ public class Malg implements jssc.SerialPortEventListener {
 		if (delay != 0) if (timeddelay <= COMP_DELAY) return;
 
 		// apply comp only when up to full speed
-		if (steeringcomp != 0) {  
-			new Thread(new Runnable() {
-				public void run() {
-					Util.delay(COMP_DELAY);
+        new Thread(new Runnable() {
+            public void run() {
+                Util.delay(COMP_DELAY);
 
-					int s = spd;
+                int s = spd;
 
-					int[] comp = applyComp(s); // actual speed, comped
-					int L,R;
-					L = comp[0];
-					R = comp[1];
-					if (currentMoveID != moveID)  return;
-					if (delay==0)
-						sendCommand(new byte[] { FORWARD, (byte) R, (byte) L});
-					else {
-						int d = timeddelay-ACCEL_DELAY;
-						byte d1 = (byte) ((d >> 8) & 0xff);
-						byte d2 = (byte) (d & 0xff);
-						sendCommand(new byte[]{ FORWARDTIMED, (byte) s, (byte) s, d1, d2});
-					}
-					
-				} 
-			}).start();
-		}
-		
+                int[] comp = applyComp(s); // actual speed, comped
+                int L,R;
+                L = comp[0];
+                R = comp[1];
+                if (currentMoveID != moveID)  return;
+                if (delay==0)
+                    sendCommand(new byte[] { FORWARD, (byte) R, (byte) L});
+                else {
+                    int d = timeddelay-ACCEL_DELAY;
+                    byte d1 = (byte) ((d >> 8) & 0xff);
+                    byte d2 = (byte) (d & 0xff);
+                    sendCommand(new byte[]{ FORWARDTIMED, (byte) s, (byte) s, d1, d2});
+                }
+
+            }
+        }).start();
+
 	}
 
 	private int[] applyComp(int spd) {
@@ -846,12 +844,12 @@ public class Malg implements jssc.SerialPortEventListener {
 		int reversecomp = (int) ((double) reversesteeringcomp * Math.pow((double) spd/(double) speedfast, 2.0));
 
 		if (state.getBoolean(State.values.controlsinverted)) {
-			if (reversesteeringcomp < 0) B += reversecomp; // right motor
-			else if (reversesteeringcomp > 0) A -= reversecomp; // left motor
+			if (reversesteeringcomp < 0)  B += reversecomp; // right motor
+			else { if (reversesteeringcomp > 0)  A -= reversecomp; }// left motor
 		}
 		else {
 			if (steeringcomp < 0) B += comp; // right motor
-			else if (steeringcomp > 0) A -= comp; // left motor
+			else { if (steeringcomp > 0) A -= comp; } // left motor
 		}
 
 		if (A<0) A=0;
@@ -869,12 +867,12 @@ public class Malg implements jssc.SerialPortEventListener {
 		int reversecomp = (int) ((double) reversesteeringcomp * Math.pow((double) spd/(double) speedfast, 2.0));
 
 		if (state.getBoolean(State.values.controlsinverted)) {
-			if (steeringcomp < 0) B += comp; // right motor
-			else if (steeringcomp > 0) A -= comp; // left motor
+			if (steeringcomp < 0)  B += comp; // right motor
+			else { if (steeringcomp > 0) A -= comp; } // left motor
 		}
 		else {
 			if (reversesteeringcomp < 0) B += reversecomp; // right motor reduced
-			else if (reversesteeringcomp > 0) A -= reversecomp; // left motor reduced
+			else { if (reversesteeringcomp > 0) A -= reversecomp; } // left motor reduced
 		}
 
 		if (A<0) A=0;
@@ -977,22 +975,23 @@ public class Malg implements jssc.SerialPortEventListener {
                 }
 			}).start();
 		}
-		
-		if (reversesteeringcomp != 0) {
-			new Thread(new Runnable() {
-				public void run() {
-					Util.delay(COMP_DELAY);
 
-					int[] comp = applyReverseComp(spd); // apply comp now that up to speed
-					int L = comp[0];
-					int R = comp[1];
-					if (currentMoveID != moveID)  return;
-					sendCommand(new byte[] { BACKWARD, (byte) R, (byte) L});
-					
-				} 
-			}).start();
-		}
-	}
+
+        // apply steering comp when up to speed
+        new Thread(new Runnable() {
+            public void run() {
+                Util.delay(COMP_DELAY);
+
+                int[] comp = applyReverseComp(spd);
+                int L = comp[0];
+                int R = comp[1];
+                if (currentMoveID != moveID)  return;
+                sendCommand(new byte[] { BACKWARD, (byte) R, (byte) L});
+
+            }
+        }).start();
+
+    }
 
 	public void turnRight() {
 		turnRight(0);
@@ -2292,6 +2291,7 @@ public class Malg implements jssc.SerialPortEventListener {
 		}
 		else { steeringcomp = Integer.parseInt(str.replaceAll("\\D", "")); }
 		steeringcomp = (int) ((double) steeringcomp * 255/100);
+		Util.debug("steeringcomp: "+steeringcomp, this);
 	}
 
     public void setReverseSteeringComp(String str) {
@@ -2300,6 +2300,7 @@ public class Malg implements jssc.SerialPortEventListener {
         }
         else { reversesteeringcomp = Integer.parseInt(str.replaceAll("\\D", "")); }
         reversesteeringcomp = (int) ((double) reversesteeringcomp * 255/100);
+        Util.debug("reversesteeringcomp: "+reversesteeringcomp, this);
     }
 
 	public void odometryStart() {

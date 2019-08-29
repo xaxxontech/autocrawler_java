@@ -9,7 +9,7 @@ var webrtcinit = false;
 
 function commClientLoaded() {
 	commclientid = Date.now();
-	comm_client_log("commClientLoaded, id: "+commclientid); 
+	// comm_client_log("commClientLoaded, id: "+commclientid); 
 
 	if (/auth=/.test(document.cookie)) { commLoginFromCookie(); }
 	else login(); // user input goes out thru commLogin() below
@@ -74,14 +74,17 @@ function msgReceived(xhr) {
 
 			var msg = JSON.parse(xhr.responseText);
 			
-			if (msg.str)
+			if (msg.hasOwnProperty('str'))
 				message(msg.str, msg.colour, msg.status, msg.value); 
 			
-			else if (msg.fn) {
-				console.log(msg.params);
-				var params = msg.params.replace(/"/g, "&quot;");
+			else if (msg.hasOwnProperty('fn')) {
+				comm_client_log(msg.params);
+				// var params = msg.params.replace(/"/g, "&quot;");
+				var params = msg.params.replace(/"/g, "'");
 				params = params.replace("\n"," ");
-				console.log(msg.fn+"(\""+params+"\")");
+				// var params = msg.params.replace("\n"," ");
+
+				comm_client_log(msg.fn+"(\""+params+"\")");
 				eval(msg.fn+"(\""+params+"\")");
 			}
 			
@@ -130,7 +133,7 @@ function getxmlhttp(theurl) {
 		return;
 	}
 	
-	comm_client_log("getxmlhttp("+theurl+")");
+	// comm_client_log("getxmlhttp("+theurl+")");
 	
 	msgcheckpending = true;
 	
@@ -158,7 +161,7 @@ function postxmlhttp(theurl, data) {
 
 	theurl += "&clientid="+commclientid;
 	
-	comm_client_log("postxmlhttp("+theurl+", "+data+")");
+	// comm_client_log("postxmlhttp("+theurl+", "+data+")");
 	
 	msgcheckpending = true;
 

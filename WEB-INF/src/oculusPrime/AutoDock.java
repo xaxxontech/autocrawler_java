@@ -36,7 +36,7 @@ public class AutoDock {
 	private int rescomp; // (multiplier - javascript sends clicksteer based on 640x480, autodock uses 320x240 images)
 	private int allowforClickSteer = 500;
 	private int dockattempts = 0;
-	private static final int MAXDOCKATTEMPTS = 5;
+	private static final int MAXDOCKATTEMPTS = 3;
 	private int imgwidth;
 	private int imgheight;
 	public boolean lowres = true; // TODO: nuke
@@ -342,6 +342,8 @@ public class AutoDock {
                     if (state.getBoolean(State.values.dockcamon))
                         app.driverCallServer(PlayerCommands.dockcam, Settings.OFF);
 
+                    dockattempts = 0;
+
                 } else { // dock fail
 					
 					if (state.getBoolean(State.values.docking)) {
@@ -373,9 +375,9 @@ public class AutoDock {
 							comport.stopGoing();
 							Util.delay(Malg.LINEAR_STOP_DELAY); // let deaccelerate
 
-							dockGrab(dockgrabmodes.start, 0, 0);
-							state.set(State.values.autodocking, true);
-							autodockingcamctr = false;
+                            autoDockCancel();
+                            app.message("trying autodock again", null, null);
+                            autoDock(autodockmodes.go.toString());
 						}
 						else { // give up
 							state.set(State.values.autodocking, false);

@@ -562,6 +562,9 @@ public class Application extends MultiThreadedApplicationAdapter {
     // nonflash xmlhttp clients only
     public void driverSignOut() {
 
+	    if (!state.exists(values.driver)) return;
+
+
         String str = state.get(State.values.driver) + " disconnected";
 
         Util.log("driverSignOut(): " + str,this);
@@ -631,7 +634,7 @@ public class Application extends MultiThreadedApplicationAdapter {
 	@SuppressWarnings("incomplete-switch")
 	private void playerCallServer(PlayerCommands fn, String str, boolean passengerOverride) {
 
-	    Util.debug("playerCallServer "+fn.toString()+" "+str, this);
+//	    Util.debug("playerCallServer "+fn.toString()+" "+str, this);
 
 		if (PlayerCommands.requiresAdmin(fn) && !passengerOverride) {
 			if ( ! loginRecords.isAdmin()){ 
@@ -1858,12 +1861,14 @@ public class Application extends MultiThreadedApplicationAdapter {
 		
 		if (str.equals(Malg.direction.forward.toString())) {
 			if (!state.getBoolean(State.values.motionenabled)) state.set(State.values.motionenabled, true);
+            messageplayer("command received: " + str, "motion", "MOVING");
 			comport.goForward();
 			return;
 		}
 
 		if (str.equals(Malg.direction.backward.toString()) && state.getBoolean(values.controlsinverted)) {
 			if (!state.getBoolean(State.values.motionenabled)) state.set(State.values.motionenabled, true);
+            messageplayer("command received: " + str, "motion", "MOVING");
 			comport.goBackward();
 			return;
 		}
@@ -1959,7 +1964,7 @@ public class Application extends MultiThreadedApplicationAdapter {
     }
 
 	public String logintest(String user, String encryptedpass) {
-	    Util.debug("logintest user: "+user+", encryptedpass: "+encryptedpass, this);
+//	    Util.debug("logintest user: "+user+", encryptedpass: "+encryptedpass, this);
 		int i;
 		String value = "";
 		String returnvalue = null;
