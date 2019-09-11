@@ -49,8 +49,8 @@ public class Video {
     private static final String STREAM1 = "stream1";
     private static final String STREAM2 = "stream2";
     private static String ubuntuVersion;
-    public long realsensepid = -1;
-    private long webrtcpid = -1;
+    public String realsensepstring = "";
+    private String webrtcpstring = "";
 
     public Video(Application a) {
         app = a;
@@ -142,23 +142,17 @@ public class Video {
             switch (mode) {
                 case camera:
 
-                    if (realsensepid != -1 && state.equals(State.values.navsystemstatus, Ros.navsystemstate.stopped)) {
+                    if (!realsensepstring.equals("") && state.equals(State.values.navsystemstatus, Ros.navsystemstate.stopped)) {
                         Util.log("camera already running, dropped", this);
                         return;
                     }
 
-//                    if (webrtcpid != -1) {
-//                        killwebrtcbypid();
-//                        long start = System.currentTimeMillis();
-//                        while (webrtcpid != -1 && System.currentTimeMillis() - start < 2000) Util.delay(1);
-//                    }
-
-                    if (app.player instanceof IServiceCapableConnection && realsensepid == -1) // flash client
-                        realsensepid = Ros.launch("rgbpublish");
+                    if (app.player instanceof IServiceCapableConnection && realsensepstring.equals("")) // flash client
+                        realsensepstring = Ros.launch("rgbpublish");
                     else  {                                                                     // webrtc client
-                            if (realsensepid==-1) realsensepid = Ros.launch("realsensergb");
-                            webrtcpid = Ros.launch("rgbwebrtc");
-                        }
+                        if (realsensepstring.equals("")) realsensepstring = Ros.launch("realsensergb");
+                        webrtcpstring = Ros.launch("rgbwebrtc");
+                    }
 
                     Util.delay(STREAM_CONNECT_DELAY);
                     app.driverCallServer(PlayerCommands.streammode, mode.toString());
@@ -166,25 +160,20 @@ public class Video {
 
                 case camandmic:
 
-                    if (realsensepid != -1 && state.equals(State.values.navsystemstatus, Ros.navsystemstate.stopped)) {
+                    if (!realsensepstring.equals("") && state.equals(State.values.navsystemstatus, Ros.navsystemstate.stopped)) {
                         Util.log("camera already running, dropped", this);
                         return;
                     }
 
-//                    if (webrtcpid != -1) {
-//                        killwebrtcbypid();
-//                        long start = System.currentTimeMillis();
-//                        while (webrtcpid != -1 && System.currentTimeMillis() - start < 2000) Util.delay(1);
-//                    }
 
-                    if (app.player instanceof IServiceCapableConnection && realsensepid == -1) // flash client
+                    if (app.player instanceof IServiceCapableConnection && realsensepstring.equals("")) // flash client
                         return;
                     else {                                               // webrtc client
-                        if (realsensepid==-1) {
-                            webrtcpid = Ros.launch(new ArrayList<String>(Arrays.asList("rgbwebrtc",
+                        if (realsensepstring.equals("")) {
+                            webrtcpstring = Ros.launch(new ArrayList<String>(Arrays.asList("rgbwebrtc",
                                     "audiodevice:=--audio-device=" + adevicenum)));
                         }
-                        realsensepid = Ros.launch("realsensergb");
+                        realsensepstring = Ros.launch("realsensergb");
                     }
 
                     Util.delay(STREAM_CONNECT_DELAY);
@@ -212,8 +201,8 @@ public class Video {
 
                     forceShutdownFrameGrabs();
 
-                    killrealsensebypid();
-                    killwebrtcbypid();
+                    killrealsense();
+                    killwebrtc();
 
 //                    Ros.roscommand("rosnode kill /camera/realsense2_camera_manager");
 
@@ -618,22 +607,18 @@ public class Video {
 
 //                    Util.delay(STREAM_CONNECT_DELAY);
 
-                    app.driverCallServer(PlayerCommands.publish, Application.streamstate.stop.toString());
-
-                    Util.delay(1000);
-
-                    long start = System.currentTimeMillis();
-                    while (webrtcpid != -1 && System.currentTimeMillis() - start < 2000) Util.delay(1);
+                    killrealsense();
+                    killwebrtc();
                 }
 
 
                 if (app.player instanceof IServiceCapableConnection) {// flash client
 //                    Ros.roscommand("roslaunch df dockcam.launch dockdevice:=/dev/video" + dockcamdevicenum);
-                    webrtcpid = Ros.launch(new ArrayList<String>(Arrays.asList("dockcam",
+                    webrtcpstring = Ros.launch(new ArrayList<String>(Arrays.asList("dockcam",
                             "dockdevice:=/dev/video" + dockcamdevicenum)));
                 }
                 else { // webrtc
-                    webrtcpid = Ros.launch(new ArrayList<String>(Arrays.asList("dockwebrtc",
+                    webrtcpstring = Ros.launch(new ArrayList<String>(Arrays.asList("dockwebrtc",
                             "dockdevice:=/dev/video" + dockcamdevicenum)));
                 }
 
@@ -655,26 +640,24 @@ public class Video {
             state.set(State.values.controlsinverted, false);
 //            Ros.roscommand("rosnode kill /gst_video_server /usb_cam");
 //            Ros.roscommand("rosnode kill /usb_cam");
-            killwebrtcbypid();
+            killwebrtc();
 //            killrealsensebypid();
 
             app.driverCallServer(PlayerCommands.streammode, Application.streamstate.stop.toString());
         }
     }
 
-    public void killrealsensebypid() {
-        if (realsensepid != -1 && !state.get(State.values.navsystemstatus).equals(Ros.navsystemstate.running.toString())) {
-            Util.debug("destroying realsense process #"+realsensepid, this);
-            Util.systemCall("kill "+realsensepid);
-            realsensepid = -1;
+    public void killrealsense() {
+        if (!realsensepstring.equals("") && !state.get(State.values.navsystemstatus).equals(Ros.navsystemstate.running.toString())) {
+            Ros.killlaunch(realsensepstring);
+            realsensepstring = "";
         }
     }
 
-    private void killwebrtcbypid() {
-        if (webrtcpid != -1) {
-            Util.debug("destroying webrtc process #"+webrtcpid, this);
-            Util.systemCall("kill "+webrtcpid);
-            webrtcpid = -1;
+    private void killwebrtc() {
+        if (!webrtcpstring.equals("")) {
+            Ros.killlaunch(webrtcpstring);
+            webrtcpstring = "";
         }
     }
 

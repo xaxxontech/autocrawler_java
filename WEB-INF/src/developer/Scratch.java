@@ -47,10 +47,9 @@ public class Scratch {
 //        new Scratch().regexp();
 
 
-        ArrayList <String> str = new ArrayList<>();
-        str.add("asdf");
-
-        System.out.println(str.get(0));
+        String asdf = "fdsa";
+        if (asdf.isEmpty())
+            System.out.println("true");
 
 
     }

@@ -9,6 +9,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import oculusPrime.*;
@@ -195,44 +196,71 @@ public class Ros {
 //		return true;
 //	}
 
-	public static long launch(String arg) {
+	public static String launch(String arg) {
 		ArrayList <String> str = new ArrayList<>();
 		str.add(arg);
 		return launch(str);
 	}
 
-	public static long launch(List <String> args) {
-		ProcessBuilder processBuilder = new ProcessBuilder();
+	public static String launch(List <String> args) {
+
+        ProcessBuilder processBuilder = new ProcessBuilder();
+
 		args.set(0, args.get(0)+".launch");
+
+		// return string should be file.launch + args
+        String pstring = "";
+        int i = 0; // skip 0: 'ros.sh'
+        while (i < args.size()) {
+            pstring += args.get(i)+" ";
+            i++;
+        }
+        pstring = pstring.trim();
+
 		args.add(0, "df"); // 3rd
 		args.add(0, "roslaunch"); // 2nd
 		args.add(0, Settings.redhome + Util.sep + "ros.sh"); // 1st
-//		processBuilder.command(Settings.redhome + Util.sep + "ros.sh", "roslaunch", "df", file+".launch");
 		processBuilder.command(args);
+//        processBuilder.command(Settings.redhome + Util.sep + "ros.sh", "roslaunch", "df", file+".launch");
 
-		long pid = -1;
 
-		try {
+
+        try {
 			Process proc = processBuilder.start();
 
-			BufferedReader procReader = new BufferedReader(new InputStreamReader(proc.getInputStream()));
-
-			String line = null;
-            // TODO: timeout likely not needed, debugging system hang on video start
-            long timeout = System.currentTimeMillis() + 10000;
-            while ((line = procReader.readLine()) != null && System.currentTimeMillis() < timeout) {
-				if (line.startsWith("PID:")) {
-					pid = Long.parseLong(line.replaceAll("\\D+", ""));
-					break;
-				}
-			}
+//			BufferedReader procReader = new BufferedReader(new InputStreamReader(proc.getInputStream()));
+//
+//			String line = null;
+//            long timeout = System.currentTimeMillis() + 10000;
+//            while ((line = procReader.readLine()) != null && System.currentTimeMillis() < timeout) {
+//				if (line.startsWith("PID:")) {
+//					long pid = Long.parseLong(line.replaceAll("\\D+", ""));
+//					break;
+//				}
+//			}
 
 		} catch (Exception e) { e.printStackTrace(); }
 
-		Util.debug("Roslaunch PID: "+pid, "Ros.launch()");
-		return pid;
+		Util.debug("Roslaunch PString: "+pstring, "Ros.launch()");
+		return pstring;
+
 	}
 
+	public static void killlaunch(String str) {
+
+        List<String> items = new ArrayList<>();
+
+        items.add("pkill");
+        items.add("-f");
+        items.add("roslaunch df "+str);
+        Util.debug(items.get(2), "Ros.killlaunch()");
+
+        ProcessBuilder processBuilder = new ProcessBuilder();
+        processBuilder.command(items);
+        try { processBuilder.start(); }
+        catch (Exception e) { e.printStackTrace(); }
+
+    }
 
 	public static void roscommand(String str) {
 		String cmd = Settings.redhome + Util.sep + "ros.sh"; // setup ros environment

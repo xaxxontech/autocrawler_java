@@ -696,14 +696,7 @@ public class Application extends MultiThreadedApplicationAdapter {
 		}
 
 		case battstats: messageplayer(state.get(State.values.batteryinfo), "battery", state.get(State.values.batterylife)); break; 
-		case cameracommand: 
-			if (state.getBoolean(State.values.autodocking)) {
-				messageplayer("command dropped, autodocking", null, null);
-				return;
-			}
-			comport.camCommand(Malg.cameramove.valueOf(str));
-			break;
-//		case camtiltfast: comport.cameraToPosition(Integer.parseInt(str)); break;
+		case cameracommand: comport.camCommand(Malg.cameramove.valueOf(str)); break;
 		case camtilt: comport.camtilt(Integer.parseInt(str)); break;
 		case getdrivingsettings:getDrivingSettings();break;
 		case drivingsettingsupdate:drivingSettingsUpdate(str);break;
@@ -1312,7 +1305,7 @@ public class Application extends MultiThreadedApplicationAdapter {
 	public void publish(streamstate mode) {
 		
 		if (state.getBoolean(State.values.autodocking.name())) {
-			messageplayer("command dropped, autodocking", null, null);
+			messageplayer("publish command dropped, autodocking", null, null);
 			return;
 		}
 

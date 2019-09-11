@@ -148,13 +148,13 @@ public class Navigation implements Observer {
 			app.driverCallServer(PlayerCommands.messageclients, "starting navigation, please wait");
 
 			// nuke any launch files using realsense, if running
-			if (app.video.realsensepid != -1) {
-                app.video.killrealsensebypid();
-                long start = System.currentTimeMillis();
-                while (app.video.realsensepid != -1 && System.currentTimeMillis() - start < 2000) Util.delay(1);
+			if (!app.video.realsensepstring.equals("")) {
+                app.video.killrealsense();
+//                long start = System.currentTimeMillis();
+//                while (!app.video.realsensepstring.equals("") && System.currentTimeMillis() - start < 2000) Util.delay(1);
             }
 
-            app.video.realsensepid = Ros.launch(Ros.REMOTE_NAV); // TODO: do something with returned process
+            app.video.realsensepstring = Ros.launch(Ros.REMOTE_NAV);
 
 			state.set(State.values.navsystemstatus, Ros.navsystemstate.starting.toString()); // set running by ROS node when ready
 
@@ -187,7 +187,7 @@ public class Navigation implements Observer {
         Util.log("stopping navigation", this);
         app.driverCallServer(PlayerCommands.messageclients, "navigation stopped");
 
-        app.video.killrealsensebypid();
+        app.video.killrealsense();
 
         Ros.roscommand("rosnode kill /remote_nav");
         Ros.roscommand("rosnode kill /map_remote");
