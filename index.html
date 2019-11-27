@@ -82,7 +82,7 @@ onload="loaded();" onunload="playerexit();" onresize="browserwindowresized();">
 
 <!--  base_popup_menu -->
 <div id="main_menu_under" class="popupmenu_underlay" style="position: absolute; display: none; "></div>
-<div id="main_menu_over" >  <!-- main_menu_over div -->
+<div id="main_menu_over" style="position: absolute">  <!-- main_menu_over div -->
 <div id="main_menu_topbar" style="line-height: 18px; cursor: move;"
 onmouseover="maintopbar('overpending');" onmouseout="maintopbar('out');"
 onmousedown="popupmenu('main', 'move');" > &nbsp; </div>
@@ -103,8 +103,8 @@ style="width: 28px; height: 32px; background-image: url(images/wrench.png);">
 <table><tr valign="top"><td style="text-align: right">
 
 <!-- VIDEO -->
-<div id="video" style="position: relative; z-index: 0; width: 640px; height: 480px;">
-	<video id="stream" autoplay playsinline controls>Your browser doesn't support video</video>
+<div id="video" style="position: relative; z-index: 0;">
+<video id="stream" autoplay playsinline controls>Your browser doesn't support video</video>
 </div>
 </td>
 
@@ -428,7 +428,7 @@ position: absolute; "> </div>
 filter:alpha(opacity=0); opacity: 0.0; -moz-opacity:0.0; line-height: 0px"></div>
 
 <!-- video overlay logo -->
-<img id="videologo" src="images/eye.gif" width="640" height="480"
+<img id="videologo" src="images/eye.gif"
 style="position: absolute; display: none; z-index: 4" alt="">
 
 <!-- speechbox -->
@@ -648,7 +648,7 @@ height <input class="inputbox" onfocus="keyboard('disable'); this.style.backgrou
 onblur="keyboard('enable'); this.style.backgroundColor='#151515';" id="vheight" type="text" size="4" ><br>
 fps <input class="inputbox" onfocus="keyboard('disable'); this.style.backgroundColor='#000000';"
 onblur="keyboard('enable'); this.style.backgroundColor='#151515';" id="vfps" type="text" size="4" >
-quality <span style="font-size: 11px; color: #777777">(1-100)</span>
+bitrate <span style="font-size: 11px; color: #777777">(1-100)</span>
 <input class="inputbox" onfocus="keyboard('disable'); this.style.backgroundColor='#000000';"
 onblur="keyboard('enable'); this.style.backgroundColor='#151515';" id="vquality" type="text" size="4" >
 <div>

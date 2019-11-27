@@ -88,7 +88,7 @@ public class Application extends MultiThreadedApplicationAdapter {
 		super();
 
 		PowerLogger.append("==============Oculus Prime Java Start===============\n", this); // extra newline on end
-		Util.log ("==============Oculus Prime Java Start 4===============\n", this); // extra newline on end
+		Util.log ("==============Oculus Prime Java Start 3===============\n", this); // extra newline on end
 		Util.log("Linux Version:"+Util.getUbuntuVersion()
 				+", Java Model:"+System.getProperty("sun.arch.data.model")
 				+", Java Arch:"+state.get(values.osarch), this);
@@ -322,13 +322,8 @@ public class Application extends MultiThreadedApplicationAdapter {
 		salt = settings.readSetting("salt");
 		Util.getLinuxUptime();
 
-		if (settings.readSetting("user0") == null) {
+		if (settings.readSetting("user0") == null)
 			driverCallServer(PlayerCommands.new_user_add, "oculus robot");
-//			String p = "oculus" + salt + "robot"; // default
-//			String encryptedPassword = passwordEncryptor.encryptPassword(p);
-//			settings.newSetting("user0", "oculus");
-//			settings.newSetting("pass0", encryptedPassword);
-		}
 
 		comport = new Malg(this);   // note: blocking
 		powerport = new Power(this); // note: blocking
@@ -509,6 +504,10 @@ public class Application extends MultiThreadedApplicationAdapter {
 				authtoken = null;
 			}
 			str += " streamsettings " + streamSettings();
+
+            String vals[] = settings.readSetting(settings.readSetting(GUISettings.vset)).split("_");
+            str += " videowidth "+vals[0]+ " videoheight "+vals[1];
+
 			messageplayer(state.get(State.values.driver) + " connected to OCULUS PRIME", "multiple", str);
 			initialstatuscalled = false;
 			
@@ -543,6 +542,10 @@ public class Application extends MultiThreadedApplicationAdapter {
 
         String str = "connection connected user " + username;
         str += " streamsettings " + streamSettings();
+
+        String vals[] = settings.readSetting(settings.readSetting(GUISettings.vset)).split("_");
+        str += " videowidth "+vals[0]+ " videoheight "+vals[1];
+
         if (authtoken != null) {
             str += " storecookie " + authtoken;
             authtoken = null;
@@ -1072,9 +1075,11 @@ public class Application extends MultiThreadedApplicationAdapter {
 		
 		// dev tool only
 		case test:
-			try {
-				Util.log("testing", this.getClass().getEnclosingMethod().toString());
-			} catch (Exception e)  { Util.printError(e); }
+//            try {
+//                ProcessBuilder p = new ProcessBuilder(Settings.redhome + Util.sep + "ros.sh",
+//                        "rosrun", Ros.ROSPACKAGE, "image_to_shm.py");
+//                p.start();
+//            } catch (Exception e) {}
 			break;
 
 		case jpgstream:
@@ -1241,7 +1246,10 @@ public class Application extends MultiThreadedApplicationAdapter {
 		Util.log("streaming " + stream, this);
 
 		// message driver, incl flash and non flash clients
-		messageplayer("streaming " + stream, "stream", stream);
+        if (stream.equals(streamstate.camera.toString()) || stream.equals(streamstate.camandmic.toString()))
+            messageplayer("streaming " + stream, "multiple",
+                    "stream "+stream+" videowidth "+video.lastwidth+" videoheight "+video.lastheight);
+        else  messageplayer("streaming " + stream, "stream", stream);
 
 		// message passengers
 		new Thread(new Runnable() {
@@ -1309,10 +1317,11 @@ public class Application extends MultiThreadedApplicationAdapter {
 			return;
 		}
 
-		if (state.get(State.values.stream)  == null) {
-			messageplayer("stream control unavailable, server may be in setup mode", null, null);
-			return;
-		}
+		// TODO: not required
+//		if (state.get(State.values.stream)  == null) {
+//			messageplayer("stream control unavailable, server may be in setup mode", null, null);
+//			return;
+//		}
 
 		if (state.get(State.values.record) == null)
 			state.set(State.values.record, Application.streamstate.stop.toString());
@@ -1323,19 +1332,22 @@ public class Application extends MultiThreadedApplicationAdapter {
 				video.record(Settings.FALSE);
 		}
 
+		if (!state.get(values.navsystemstatus).equals(Ros.navsystemstate.stopped.toString()))
+            driverCallServer(PlayerCommands.streamsettingsset, camquality.med.toString());
+
 		String current = settings.readSetting(GUISettings.vset);
 		String vals[] = (settings.readSetting(current)).split("_");
 		int width = Integer.parseInt(vals[0]);
 		int height = Integer.parseInt(vals[1]);
 		int fps = Integer.parseInt(vals[2]);
-		int quality = Integer.parseInt(vals[3]);
+		long quality = Long.parseLong(vals[3]);
 
         if (!settings.getBoolean(ManualSettings.useflash)) {
-			video.publish(mode, width, height, fps);
+			video.publish(mode, width, height, fps, quality);
 			return;
 		}
 
-		// flash
+		// flash TODO: nuke
 		try {
 			// commands: camandmic camera mic stop
 
@@ -1677,8 +1689,7 @@ public class Application extends MultiThreadedApplicationAdapter {
 			str += " stream " + state.get(State.values.stream);
 			if (!state.get(values.driverstream).equals(driverstreamstate.disabled.toString()))
 				str += " selfstream " + state.get(State.values.driverstream);
-//			str += " pushtotalk " + settings.readSetting("pushtotalk");
-			
+
 			if (loginRecords.isAdmin()) str += " admin true";
 			
 			if (state.get(State.values.dockstatus) != null) str += " dock "+ state.get(State.values.dockstatus);
@@ -1686,9 +1697,6 @@ public class Application extends MultiThreadedApplicationAdapter {
 			
 			if (settings.getBoolean(ManualSettings.developer)) str += " developer true";
 			if (settings.getBoolean(GUISettings.navigation)) str += " navigation "+state.get(values.navsystemstatus);
-
-			String videoScale = settings.readSetting("videoscale");
-			if (videoScale != null) str += " videoscale " + videoScale;
 
 			str += " battery " + state.get(State.values.batterylife);
 
@@ -1705,7 +1713,8 @@ public class Application extends MultiThreadedApplicationAdapter {
 		}
 	}
 
-	private void streamSettingsCustom(String str) {
+	private void
+    streamSettingsCustom(String str) {
 		settings.writeSettings(GUISettings.vset, "vcustom");
 		settings.writeSettings(GUISettings.vcustom, str);
 		String s = "custom stream set to: " + str;
@@ -1719,18 +1728,14 @@ public class Application extends MultiThreadedApplicationAdapter {
 	}
 
 	private void streamSettingsSet(String str) {
-		settings.writeSettings(GUISettings.vset, "v" + str);
+		settings.writeSettings(GUISettings.vset, "v" + camquality.valueOf(str).toString());
 		String s = "stream set to: " + str;
-		if (!state.get(State.values.stream).equals(Application.streamstate.stop.toString()) &&
-				!state.getBoolean(State.values.autodocking)) {
-			publish(streamstate.valueOf(state.get(State.values.stream).toString()));
-			s += "<br>restarting stream";
-		}
+
 		messageplayer(s, null, null);
-		Util.log("stream changed to " + str, this);
+		Util.log(s, this);
 	}
 
-	private String streamSettings() {
+	public String streamSettings() {
 		String result = "";
 		result += settings.readSetting("vset") + "_";
 		result += settings.readSetting("vlow") + "_" + settings.readSetting("vmed") + "_";

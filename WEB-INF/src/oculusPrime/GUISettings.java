@@ -20,11 +20,11 @@ public enum GUISettings {
 		config.setProperty(speedmed.name() , "150");
 		config.setProperty(docktarget.name() , "1.6666666_0.27447918_0.22083333_0.28177083_125_115_80_48_-0.041666668");
 		config.setProperty(vidctroffset.name() , "0");
-		config.setProperty(vlow.name() , "320_240_4_85");
-		config.setProperty(vmed.name() , "320_240_8_95");
-		config.setProperty(vhigh.name() , "640_480_8_85");
-		config.setProperty(vfull.name() , "640_480_8_95");
-		config.setProperty(vcustom.name() , "1280_720_8_85");
+		config.setProperty(vlow.name() , "320_240_30_64");
+		config.setProperty(vmed.name() , "640_480_15_256");
+		config.setProperty(vhigh.name() , "1280_720_15_512");
+		config.setProperty(vfull.name() , "1920_1080_15_1024");  // TODO: unused
+		config.setProperty(vcustom.name() , "1920_1080_15_1024");
 		config.setProperty(vset.name() , "vmed");
 		config.setProperty(maxclicknudgedelay.name() , "180");
 		config.setProperty(nudgedelay.name() , "80");

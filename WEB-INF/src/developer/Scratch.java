@@ -47,9 +47,13 @@ public class Scratch {
 //        new Scratch().regexp();
 
 
-        String asdf = "fdsa";
-        if (asdf.isEmpty())
-            System.out.println("true");
+        try {
+            ProcessBuilder p = new ProcessBuilder("xcalc");
+            p.start();
+        } catch (Exception e) {}
+
+
+        System.out.println("true");
 
 
     }

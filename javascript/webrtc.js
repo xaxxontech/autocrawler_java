@@ -241,6 +241,7 @@ function onRemoteTrack(event) {
     if (getVideoElement().srcObject !== event.streams[0]) {
         webrtc_log('Incoming stream');
         getVideoElement().srcObject = event.streams[0];
+        videologo("off");
     }
 }
 

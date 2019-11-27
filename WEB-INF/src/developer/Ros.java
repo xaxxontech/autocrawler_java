@@ -217,13 +217,11 @@ public class Ros {
         }
         pstring = pstring.trim();
 
-		args.add(0, "df"); // 3rd
+		args.add(0, ROSPACKAGE); // 3rd
 		args.add(0, "roslaunch"); // 2nd
 		args.add(0, Settings.redhome + Util.sep + "ros.sh"); // 1st
 		processBuilder.command(args);
 //        processBuilder.command(Settings.redhome + Util.sep + "ros.sh", "roslaunch", "df", file+".launch");
-
-
 
         try {
 			Process proc = processBuilder.start();

@@ -6,28 +6,21 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 
+import oculusPrime.*;
 import oculusPrime.commport.Malg;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
 import developer.image.OpenCVObjectDetect;
-import oculusPrime.Application;
-import oculusPrime.AutoDock;
 import oculusPrime.AutoDock.autodockmodes;
 import oculusPrime.State.values;
 import oculusPrime.servlet.FrameGrabHTTP;
-import oculusPrime.GUISettings;
-import oculusPrime.ManualSettings;
-import oculusPrime.Observer;
-import oculusPrime.PlayerCommands;
-import oculusPrime.Settings;
-import oculusPrime.State;
-import oculusPrime.SystemWatchdog;
-import oculusPrime.Util;
 
 public class Navigation implements Observer {
 	
@@ -129,17 +122,29 @@ public class Navigation implements Observer {
 			return;
 		}
 
-		Ros.launch(Ros.MAKE_MAP); // TODO: do something with returned Process
-//		if (!Ros.launch(Ros.MAKE_MAP)) {
-//			app.driverCallServer(PlayerCommands.messageclients, "roslaunch already running, aborting mapping start");
-//			return;
-//		}
+        new Thread(new Runnable() { public void run() {
 
-		app.driverCallServer(PlayerCommands.messageclients, "starting mapping, please wait");
-		state.set(State.values.navsystemstatus, Ros.navsystemstate.starting.toString()); // set running by ROS node when ready
-//		app.driverCallServer(PlayerCommands.streamsettingsset, Application.camquality.med.toString());
+//            app.driverCallServer(PlayerCommands.cameracommand, Malg.cameramove.horiz.toString());
+//
+//            app.driverCallServer(PlayerCommands.streamsettingsset, Application.camquality.med.toString());
+//
+//            String currentstream = videoRestartRequiredBlocking();
+//
+//            String vals[] = settings.readSetting(settings.readSetting(GUISettings.vset)).split("_");
+//            app.video.realsensepstring = Ros.launch(new ArrayList<String>(Arrays.asList(Ros.MAKE_MAP,
+//                    "color_width:="+vals[0], "color_height:="+vals[1], "color_fps:="+vals[2])));
+//
+//            if (currentstream != null)  app.driverCallServer(PlayerCommands.publish, currentstream);
+
+            Ros.launch(Ros.MAKE_MAP);
+
+            app.driverCallServer(PlayerCommands.messageclients, "starting mapping, please wait");
+            state.set(State.values.navsystemstatus, Ros.navsystemstate.starting.toString()); // set running by ROS node when ready
+
+        }  }).start();
 
 	}
+
 
 	public void startNavigation() {
 		if (!state.equals(State.values.navsystemstatus, Ros.navsystemstate.stopped)) return;
@@ -148,15 +153,25 @@ public class Navigation implements Observer {
 			app.driverCallServer(PlayerCommands.messageclients, "starting navigation, please wait");
 
 			// nuke any launch files using realsense, if running
-			if (!app.video.realsensepstring.equals("")) {
+			if (app.video.realsensepstring != null) {
                 app.video.killrealsense();
 //                long start = System.currentTimeMillis();
 //                while (!app.video.realsensepstring.equals("") && System.currentTimeMillis() - start < 2000) Util.delay(1);
             }
 
-            app.video.realsensepstring = Ros.launch(Ros.REMOTE_NAV);
+            app.driverCallServer(PlayerCommands.cameracommand, Malg.cameramove.horiz.toString());
 
-			state.set(State.values.navsystemstatus, Ros.navsystemstate.starting.toString()); // set running by ROS node when ready
+            app.driverCallServer(PlayerCommands.streamsettingsset, Application.camquality.med.toString());
+
+            String currentstream = videoRestartRequiredBlocking();
+
+            String vals[] = settings.readSetting(settings.readSetting(GUISettings.vset)).split("_");
+            app.video.realsensepstring = Ros.launch(new ArrayList<String>(Arrays.asList(Ros.REMOTE_NAV,
+                    "color_width:="+vals[0], "color_height:="+vals[1], "color_fps:="+vals[2])));
+
+            if (currentstream != null)  app.driverCallServer(PlayerCommands.publish, currentstream);
+
+            state.set(State.values.navsystemstatus, Ros.navsystemstate.starting.toString()); // set running by ROS node when ready
 
 			// wait
 			long start = System.currentTimeMillis();
@@ -177,21 +192,23 @@ public class Navigation implements Observer {
 		}  }).start();
 	}
 
+
 	public void stopNavigation() {
 
         if (state.get(State.values.navsystemstatus).equals(Ros.navsystemstate.stopped.toString()) ||
                 state.get(State.values.navsystemstatus).equals(Ros.navsystemstate.stopping.toString()) )
             return;
 
+
         state.set(State.values.navsystemstatus, Ros.navsystemstate.stopped.toString());
         Util.log("stopping navigation", this);
         app.driverCallServer(PlayerCommands.messageclients, "navigation stopped");
 
-        app.video.killrealsense();
+        if (!state.get(values.navsystemstatus).equals(Ros.navsystemstate.mapping.toString()))
+            app.video.killrealsense();
 
         Ros.roscommand("rosnode kill /remote_nav");
         Ros.roscommand("rosnode kill /map_remote");
-
 
 //		state.set(State.values.navsystemstatus, Ros.navsystemstate.stopping.toString());
 //		new Thread(new Runnable() { public void run() {
@@ -203,6 +220,27 @@ public class Navigation implements Observer {
         if (!state.get(values.stream).equals(Application.streamstate.stop.toString()))
             app.driverCallServer(PlayerCommands.publish, Application.streamstate.stop.toString());
 	}
+
+
+    // restart stream if necessary
+    private String videoRestartRequiredBlocking() {
+
+
+        if (state.equals(values.stream, Application.streamstate.camera.toString()) ||
+                state.equals(values.stream, Application.streamstate.camandmic.toString())) {
+
+            String currentstream = state.get(values.stream);
+
+            app.driverCallServer(PlayerCommands.publish, Application.streamstate.stop.toString());
+            Util.delay(Video.STREAM_CONNECT_DELAY);
+            app.driverCallServer(PlayerCommands.messageclients, "restarting video");
+
+            return currentstream;
+        }
+
+        return null;
+    }
+
 
 	public void dock() {
 		if (state.getBoolean(State.values.autodocking)  ) {

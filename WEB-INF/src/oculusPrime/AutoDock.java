@@ -9,6 +9,7 @@ import java.io.IOException;
 
 import javax.imageio.ImageIO;
 
+import developer.Ros;
 import oculusPrime.commport.Power;
 import oculusPrime.commport.Malg;
 import oculusPrime.commport.PowerLogger;
@@ -73,6 +74,9 @@ public class AutoDock {
 			app.message("auto-dock already in progress", null, null);
 			return;
 		}
+
+        if (!state.get(State.values.navsystemstatus).equals(Ros.navsystemstate.stopped.toString()))
+            app.driverCallServer(PlayerCommands.stopnav, null);
 
 		if (!state.getBoolean(State.values.dockcamon))
 			app.driverCallServer(PlayerCommands.dockcam, Settings.ON);
@@ -448,7 +452,7 @@ public class AutoDock {
 			int dockw = (int) (Integer.parseInt(s[6])/(rescomp/2f));
 			int dockh = (int) (Integer.parseInt(s[7])/(rescomp/2f));
 			int dockx = (int) (Integer.parseInt(s[4])/(rescomp/2f)) + dockw / 2;
-			float dockslope = new Float(s[8]);
+			float dockslope = Float.valueOf(s[8]);
 			float slopedeg = (float) ((180 / Math.PI) * Math.atan(slope));
 			float dockslopedeg = (float) ((180 / Math.PI) * Math.atan(dockslope));
 

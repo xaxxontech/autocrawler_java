@@ -1,4 +1,4 @@
-//TODO: clean out unused 'overlay off' and 'extended settings box' references (in html too) 
+7//TODO: clean out unused 'overlay off' and 'extended settings box' references (in html too) 
 
 var sentcmdcolor = "#777777";
 var enablekeyboard = false;
@@ -76,24 +76,46 @@ var subwindows = ["aux", "context", "menu", "main", "rosmap", "radar"];  // purp
 var windowpos = [null, null, null, null]; // needs same length as above
 var oculusPrimeplayerSWF = null;
 var recordmode = streammode;
+var firstresize = true;
+
 
 function loaded() {
 	loadwindowpositions();
 	loadrosmapwindowpos();
+		
+	if (clicksteeron) { clicksteer("on"); }
+    overlay("on");
+    browserwindowresized();
+    // main_window_resize();
+
+	try {	oculusPrimeplayerSWF = document.getElementById("oculusPrime_player"); } 
+	catch { console.log("non flash client"); } 	
 	
-	// main window init:
+	if (oculusPrimeplayerSWF == null) commClientLoaded();
+}
+
+function main_window_resize() {
 	var mm = document.getElementById("main_menu_over");
 	var mt = document.getElementById("maintable");
 	var x = mt.offsetLeft;
 	var y = mt.offsetTop - mm.style.paddingTop;
-	mm.style.position = "absolute";
-	var i = subwindows.indexOf("main");
-	if (windowpos[i] != null) {
-		x = windowpos[i][0];
-		y = windowpos[i][1]+22;
+
+	if (firstresize) {
+		firstresize = false;
+		var i = subwindows.indexOf("main");
+		if (windowpos[i] != null) {
+			x = windowpos[i][0];
+			y = windowpos[i][1]+22;
+		}
+		else { // centered default
+			x += document.body.clientWidth/2 - mm.offsetWidth/2; 
+			if (x<4) x=4;
+		}
+
+		mm.style.left = x + "px";
+		mm.style.top = y -22 + "px"; 
 	}
-	mm.style.left = x + "px";
-	mm.style.top = y -22 + "px"; 
+
 	var under = document.getElementById("main_menu_under");
 	under.style.display = "";
 	under.style.width = null; //ie fix
@@ -104,16 +126,6 @@ function loaded() {
 	under.style.width = (mm.offsetWidth + margin*2) + "px";
 	under.style.height = (mm.offsetHeight + margin*2) + "px";
 	under.style.display = "none";
-		
-	if (clicksteeron) { clicksteer("on"); }
-    overlay("on");
-    browserwindowresized();
-	bworig= document.body.clientWidth;
-	
-	try {	oculusPrimeplayerSWF = document.getElementById("oculusPrime_player"); } 
-	catch { console.log("non flash client"); } 	
-	
-	if (oculusPrimeplayerSWF == null) commClientLoaded();
 }
 
 function flashloaded() {
@@ -156,6 +168,7 @@ function resized() {
 		document.body.style.paddingLeft = (bworig-bw)+"px";
 	}
 	else { document.body.style.paddingLeft = "0px"; }
+	
 	docklineposition();
 	videooverlayposition();
 	overlay("");
@@ -387,8 +400,9 @@ function setstatus(status, value) {
 			var s = value.split("_");
 			if (s[0] != streammode) { play(value); }
 			value = s[0];
-			if (value == "camera" || value == "camandmic") videologo("off");
-			else if (value == "stop" || value == "mic") { videologo("on"); docklinetoggle("off"); }
+			// if (value == "camera" || value == "camandmic") videologo("off");
+			// else if (value == "stop" || value == "mic") { videologo("on"); docklinetoggle("off"); }
+			if (value == "stop" || value == "mic") { videologo("on"); docklinetoggle("off"); }
 		}
 
 		a.innerHTML = value;
@@ -418,6 +432,7 @@ function setstatus(status, value) {
 			setTimeout(str1+"statusflashingarray['"+status+"']=null;", 250);
 		}
 	}
+	
 	if (status=="vidctroffset") { ctroffset = parseInt(value); }
 	else if (status=="connection" && (value == "connected" || value == "relay") && !connected) { // initialize
 		overlay("off");
@@ -506,7 +521,15 @@ function setstatus(status, value) {
 			b.href="javascript: callServer('record','true');";
 		}
 	}
- 
+	else if (status=="videowidth") {
+		document.getElementById("video").style.width = value+"px";
+	}
+	else if (status=="videoheight") {
+		document.getElementById("video").style.height = value+"px";
+		browserwindowresized();
+		main_window_resize();
+	}
+		 
 }
 
 function setstatusmultiple(value) {
@@ -923,19 +946,19 @@ function streamdetailspopulate() {
 		s = streamdetails;
 		var i = 1;
 		var a= document.getElementById("low_specs");
-		a.innerHTML = "size:"+s[i]+"x"+s[i+1]+" fps:"+s[i+2]+" quality:"+s[i+3];
+		a.innerHTML = "size:"+s[i]+"x"+s[i+1]+" fps:"+s[i+2]+" kbps:"+s[i+3];
 		i = 5;
 		a= document.getElementById("med_specs");
-		a.innerHTML = "size:"+s[i]+"x"+s[i+1]+" fps:"+s[i+2]+" quality:"+s[i+3];
+		a.innerHTML = "size:"+s[i]+"x"+s[i+1]+" fps:"+s[i+2]+" kbps:"+s[i+3];
 		i = 9;
 		a= document.getElementById("high_specs");
-		a.innerHTML = "size:"+s[i]+"x"+s[i+1]+" fps:"+s[i+2]+" quality:"+s[i+3];
+		a.innerHTML = "size:"+s[i]+"x"+s[i+1]+" fps:"+s[i+2]+" kbps:"+s[i+3];
 		i = 13;
 		a= document.getElementById("full_specs");
-		a.innerHTML = "size:"+s[i]+"x"+s[i+1]+" fps:"+s[i+2]+" quality:"+s[i+3];
+		a.innerHTML = "size:"+s[i]+"x"+s[i+1]+" fps:"+s[i+2]+" kbps:"+s[i+3];
 		i = 17;
 		a= document.getElementById("custom_specs");
-		a.innerHTML = "size:"+s[i]+"x"+s[i+1]+" fps:"+s[i+2]+" quality:"+s[i+3];
+		a.innerHTML = "size:"+s[i]+"x"+s[i+1]+" fps:"+s[i+2]+" kbps:"+s[i+3];
 //		a = document.getElementById(streamdetails[0].slice(1)+"_bull");
 //		a.style.visibility="visible";
 		streamSettingsBullSet(streamdetails[0].slice(1));
@@ -2050,15 +2073,27 @@ function steeringmouseup(id) {
 
 function videologo(state) {
 	// pass "" as state to reposition only
+	
 	var i = document.getElementById("videologo");
+
+	if (state != "on" && state != "off") {
+		state = (i.style.display == "none") ? "off" : "on";
+	}
+	
     var video = document.getElementById("video");
     var xy = findpos(video);
-	if (state=="on") { i.style.display = ""; }
-	if (state=="off") { i.style.display = "none"; }
+    var s = document.getElementById("stream");
+	if (state=="on") { i.style.display = ""; s.style.display="none"; }
+	if (state=="off") { i.style.display = "none"; s.style.display="";}
+	
+	i.width = video.offsetWidth;
+	i.height = video.offsetHeight;
+	
     var x = xy[0] + (video.offsetWidth/2) - (i.width/2);
     var y = xy[1] + (video.offsetHeight/2) - (i.height/2);
     i.style.left = x + "px";
     i.style.top = y + "px";
+    
 }
 
 function docklinecalibrate(str) {
@@ -2481,7 +2516,7 @@ function streamset(str) {
 		streamdetails[18] = document.getElementById('vheight').value;
 		streamdetails[19] = document.getElementById('vfps').value;
 		streamdetails[20] = document.getElementById('vquality').value;
-		if (parseInt(streamdetails[20]) > 100) { streamdetails[20] = "100"; }
+		// if (parseInt(streamdetails[20]) > 100) { streamdetails[20] = "100"; }
 		if (parseInt(streamdetails[20]) < 0) { streamdetails[20] = "0"; }
 		if (parseInt(streamdetails[19]) < 1) { streamdetails[19] = "1"; }
 		if (parseInt(streamdetails[18]) < 1) { streamdetails[18] = "1"; }
@@ -2763,8 +2798,9 @@ function depthViewImgReload(mode) {
 function imgOverVideo(mode) {
 	var img = document.getElementById("videologo");
 	if (mode == "on") {
-		play("stop"); // will stop playing stream, and turn videologo on
+		// play("stop"); // will stop playing stream, and turn videologo on
 		// <img id="videologo" src="images/eye.gif" width="640" height="480"
+		videologo("on");
 		img.src = "frameGrabHTTP?mode=videoOverlayImg&date=" + new Date().getTime();
 		img.onload = function() { imgOverVideoRepeat(); }
 	}

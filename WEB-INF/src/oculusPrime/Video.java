@@ -9,10 +9,8 @@ import org.red5.server.stream.ClientBroadcastStream;
 import oculusPrime.State.values;
 
 import javax.imageio.ImageIO;
-import java.io.File;
-import java.io.IOException;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
+import java.awt.image.BufferedImage;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -25,22 +23,20 @@ public class Video {
     private String port;
     private int dockcamdevicenum = 3;
     private int adevicenum = 1;
-    private static final int defaultquality = 5;
-    private static final int quality720p = 7;
     public static final int defaultwidth=640;
     private static final int defaultheight=480;
     public static final int lowreswidth=320;
     private static final int lowresheight=240;
-    private static final String PATH="/dev/shm/avconvframes/";
+    private static final String PATH="/dev/shm/rosimgframes/";
     private static final String EXT=".bmp";
     private volatile long lastframegrab = 0;
-    private int lastwidth=0;
-    private int lastheight=0;
-    private int lastfps=0;
-    private int lastquality = 0;
+    public int lastwidth=0;
+    public int lastheight=0;
+    public int lastfps=0;
+    public long lastbitrate = 0;
     private Application.streamstate lastmode = Application.streamstate.stop;
     private String avprog = "avconv"; // avconv or ffmpeg
-    public static long STREAM_CONNECT_DELAY = 4000;
+    public static long STREAM_CONNECT_DELAY = 2000;
     private static int dumpfps = 15;
     private static final String STREAMSPATH="/oculusPrime/streams/";
     public static final String FMTEXT = ".flv";
@@ -49,8 +45,9 @@ public class Video {
     private static final String STREAM1 = "stream1";
     private static final String STREAM2 = "stream2";
     private static String ubuntuVersion;
-    public String realsensepstring = "";
-    private String webrtcpstring = "";
+    public String realsensepstring = null;
+    private String webrtcpstring = null;
+    private volatile long lastvideocommand = 0;
 
     public Video(Application a) {
         app = a;
@@ -58,6 +55,13 @@ public class Video {
         ubuntuVersion = Util.getUbuntuVersion();
         setAudioDevice();
         setDockCamVideoDevice();
+
+        Settings settings = Settings.getReference();
+        String vals[] = settings.readSetting(settings.readSetting(GUISettings.vset)).split("_");
+        lastwidth = Integer.parseInt(vals[0]);
+        lastheight = Integer.parseInt(vals[1]);
+        lastfps = Integer.parseInt(vals[2]);
+        lastbitrate = Long.parseLong(vals[3]);
     }
 
     public void initAvconv() {
@@ -67,8 +71,6 @@ public class Video {
 //            dumpfps = 8;
 //            STREAM_CONNECT_DELAY=3000;
         }
-        File dir=new File(PATH);
-        dir.mkdirs(); // setup shared mem folder
     }
 
     private void setAudioDevice() {
@@ -109,75 +111,78 @@ public class Video {
         } catch (Exception e) { Util.printError(e);}
     }
 
-    public void publish (final Application.streamstate mode, final int w, final int h, final int fps) {
-        // todo: determine video device (in constructor)
+    public void publish (final Application.streamstate mode, final int w, final int h, final int fps, final long bitrate) {
         // todo: disallow unsafe custom values (device can be corrupted?)
 
-//        if (w==lastwidth && h==lastheight && fps==lastfps && mode.equals(lastmode)) {
-//            Util.log("identical stream already running, dropped", this);
-//            return;
-//        }
+        if (System.currentTimeMillis() < lastvideocommand + STREAM_CONNECT_DELAY)
+            return;
+
+        lastvideocommand = System.currentTimeMillis();
+
+        if ( (mode.equals(Application.streamstate.camera) || mode.equals(Application.streamstate.camandmic)) &&
+                (state.get(values.stream).equals(Application.streamstate.camera.toString()) ||
+                state.get(values.stream).equals(Application.streamstate.camandmic.toString())) &&
+                !state.getBoolean(values.dockcamon) ) {
+            app.driverCallServer(PlayerCommands.messageclients, "camera already running, stream: "+mode.toString()+" command dropped");
+            return;
+        }
 
         lastwidth = w;
         lastheight = h;
         lastfps = fps;
+        lastbitrate = bitrate;
         lastmode = mode;
         final long id = System.currentTimeMillis();
 
-        lastquality = defaultquality;
-        if (w > defaultwidth) lastquality = quality720p;
-        final int q = lastquality;
+        app.driverCallServer(PlayerCommands.streammode, mode.toString());
 
         new Thread(new Runnable() { public void run() {
 
-            String host = "127.0.0.1";
-            if (state.exists(State.values.relayserver))
-                host = state.get(State.values.relayserver);
-
-            if (state.getBoolean(values.dockcamon) && !mode.equals(Application.streamstate.stop.toString())) {
+            // TODO: ????
+            if (state.getBoolean(values.dockcamon) &&
+                    (mode.equals(Application.streamstate.camera) || mode.equals(Application.streamstate.camandmic)) ) {
+                lastvideocommand = 0; // so next command not ignored
                 app.driverCallServer(PlayerCommands.dockcam, Settings.OFF);
+                app.driverCallServer(PlayerCommands.streammode, mode.toString());
                 Util.delay(STREAM_CONNECT_DELAY);
             }
 
             switch (mode) {
                 case camera:
 
-                    if (!realsensepstring.equals("") && state.equals(State.values.navsystemstatus, Ros.navsystemstate.stopped)) {
-                        Util.log("camera already running, dropped", this);
-                        return;
-                    }
-
-                    if (app.player instanceof IServiceCapableConnection && realsensepstring.equals("")) // flash client
+                    if (app.player instanceof IServiceCapableConnection && realsensepstring == null) // flash client
                         realsensepstring = Ros.launch("rgbpublish");
+
                     else  {                                                                     // webrtc client
-                        if (realsensepstring.equals("")) realsensepstring = Ros.launch("realsensergb");
-                        webrtcpstring = Ros.launch("rgbwebrtc");
+                        if (realsensepstring == null) {
+                            realsensepstring = Ros.launch(new ArrayList<String>(Arrays.asList("realsensergb",
+                                "color_width:="+lastwidth, "color_height:="+lastheight, "color_fps:="+lastfps)));
+                        }
+
+                        webrtcpstring = Ros.launch(new ArrayList<String>(Arrays.asList("rgbwebrtc",
+                            "videowidth:="+lastwidth, "videoheight:="+lastheight, "videobitrate:="+lastbitrate)));
                     }
 
-                    Util.delay(STREAM_CONNECT_DELAY);
-                    app.driverCallServer(PlayerCommands.streammode, mode.toString());
+
                     break;
 
                 case camandmic:
 
-                    if (!realsensepstring.equals("") && state.equals(State.values.navsystemstatus, Ros.navsystemstate.stopped)) {
-                        Util.log("camera already running, dropped", this);
+                    if (app.player instanceof IServiceCapableConnection && realsensepstring == null) // flash client
                         return;
-                    }
 
-
-                    if (app.player instanceof IServiceCapableConnection && realsensepstring.equals("")) // flash client
-                        return;
                     else {                                               // webrtc client
-                        if (realsensepstring.equals("")) {
-                            webrtcpstring = Ros.launch(new ArrayList<String>(Arrays.asList("rgbwebrtc",
-                                    "audiodevice:=--audio-device=" + adevicenum)));
+                        if (realsensepstring == null) {
+                            realsensepstring = Ros.launch(new ArrayList<String>(Arrays.asList("realsensergb",
+                                    "color_width:="+lastwidth, "color_height:="+lastheight, "color_fps:="+lastfps)));
                         }
-                        realsensepstring = Ros.launch("realsensergb");
+
+                        webrtcpstring = Ros.launch(new ArrayList<String>(Arrays.asList("rgbwebrtc",
+                            "audiodevice:=--audio-device="+ adevicenum,
+                            "videowidth:="+lastwidth, "videoheight:="+lastheight, "videobitrate:="+lastbitrate)));
                     }
 
-                    Util.delay(STREAM_CONNECT_DELAY);
-                    app.driverCallServer(PlayerCommands.streammode, mode.toString());
+//                    Util.delay(STREAM_CONNECT_DELAY);
                     break;
 
                 /*
@@ -195,6 +200,7 @@ public class Video {
 
                 case stop:
                     if (state.getBoolean(values.dockcamon)) {
+                        lastvideocommand = 0; // so next command not ignored
                         app.driverCallServer(PlayerCommands.dockcam, Settings.OFF);
                         return;
                     }
@@ -204,9 +210,6 @@ public class Video {
                     killrealsense();
                     killwebrtc();
 
-//                    Ros.roscommand("rosnode kill /camera/realsense2_camera_manager");
-
-                    app.driverCallServer(PlayerCommands.streammode, mode.toString());
                     break;
 
             }
@@ -219,7 +222,6 @@ public class Video {
     private void forceShutdownFrameGrabs() {
         if (state.exists(State.values.writingframegrabs)) {
             state.delete(State.values.writingframegrabs);
-//            Util.delay(STREAM_CONNECT_DELAY);
         }
     }
 
@@ -260,9 +262,8 @@ public class Video {
                     int highest = 0;
                     int secondhighest = 0;
                     for (File file : dir.listFiles()) {
-                        int i = Integer.parseInt(file.getName().split("\\.")[0]);
+                        int i = Integer.parseInt(file.getName());
                         if (i > highest) {
-//                            imgfile = file;
                             highest = i;
                         }
                         if (i > secondhighest && i < highest) {
@@ -273,24 +274,32 @@ public class Video {
                     Util.delay(1);
                 }
                 if (imgfile == null) {
-                    Util.log(avprog + " frame unavailable", this);
+                    Util.log("framegrab frame unavailable", this);
                     break;
                 } else {
                     try {
-                        // 640x480 = 921654 bytes (640*480*3 + 54)
-                        // 320x240 = 230454  bytes (320*240*3 + 54)
-//                        long size = imgfile.length();
-//                        if (size != 230454 && size != 921654) {  // doesn't allow for max res, or any other res
-//                       if (size <= 54) { // image must be bigger than bitmap header size!
-//                       if (size != imgsizebytes) { // image must be correct size
-//                            Util.log("wrong size ("+size+" bytes) image file, trying again, attempt "+(attempts+1), this);
-//                            attempts++;
-//                            continue;
-//                        }
-                        app.processedImage = ImageIO.read(imgfile);
+
+                        FileInputStream fis = null;
+                        byte[] bArray = new byte[(int) imgfile.length()];
+                        fis = new FileInputStream(imgfile);
+                        fis.read(bArray);
+                        fis.close();
+
+                        app.processedImage = new BufferedImage(lastwidth, lastheight, BufferedImage.TYPE_INT_RGB);
+
+                        int i=0;
+                        for (int y=0; y< lastheight; y++) {
+                            for (int x=0; x<lastwidth; x++) {
+                                int argb = (bArray[i]<<16) + (bArray[i+1]<<8) + bArray[i+2];
+                                app.processedImage.setRGB(x, y, argb);
+                                i += 3;
+                            }
+                        }
+
                         break;
-                    } catch (IOException e) {
-                        Util.printError(e);
+
+                    } catch (Exception e) {
+                        e.printStackTrace();
                         attempts++;
                     }
                 }
@@ -303,13 +312,9 @@ public class Video {
 
     private void dumpframegrabs(final String res) {
 
-        File dir=new File(PATH);
-        for(File file: dir.listFiles()) file.delete(); // nuke any existing files
-
         // set to same as main stream params as default
         int width = lastwidth;
         int height = lastheight;
-        int q = lastquality;
 
         // set lower resolution if required
         if (res.equals(AutoDock.LOWRES)) {
@@ -319,45 +324,21 @@ public class Video {
 
         state.set(State.values.writingframegrabs, width);
 
-        String host = "127.0.0.1";
-        if (state.exists(State.values.relayserver))
-            host = state.get(State.values.relayserver);
+        // run ros node
+        String topic = "camera/color/image_raw";
+        if (state.getBoolean(values.dockcamon)) topic = "usb_cam/image_raw";
+        Ros.roscommand("rosrun "+Ros.ROSPACKAGE+" image_to_shm.py camera_topic:="+topic);
 
-        try {
-            if ( ! Application.UBUNTU1604.equals(ubuntuVersion) ) { // 14.04 and lower
-                Runtime.getRuntime().exec(new String[]{avprog, "-analyzeduration", "0", "-i",
-                        "rtmp://" + host + ":" + port + "/oculusPrime/" + STREAM1 + " live=1", "-s", width + "x" + height,
-                        "-r", Integer.toString(dumpfps), "-q", Integer.toString(q), PATH + "%d" + EXT});
-                // avconv -analyzeduration 0 -i "rtmp://127.0.0.1:1935/oculusPrime/stream1 live=1" -s 640x480 -r 15 -q 5 /dev/shm/avconvframes/%d.bmp
-            } else {
-                Runtime.getRuntime().exec(new String[]{avprog, "-analyzeduration", "0", "-rtmp_live", "live", "-i",
-                        "rtmp://" + host + ":" + port + "/oculusPrime/" + STREAM1, "-s", width + "x" + height,
-                        "-r", Integer.toString(dumpfps), "-q", Integer.toString(q), PATH + "%d" + EXT});
-                // avconv -analyzeduration 0 -rtmp_live live -i rtmp://127.0.0.1:1935/oculusPrime/stream1 -s 640x480 -r 15 -q 5 /dev/shm/avconvframes/%d.bmp
-            }
-        }catch (Exception e) { Util.printError(e); }
-
-        
         new Thread(new Runnable() { public void run() {
 
-            Util.delay(500); // required?
-
-            // continually clean all but the latest few files, prevent mem overload
-            int i=1;
             while(state.exists(State.values.writingframegrabs)
                     && System.currentTimeMillis() - lastframegrab < Util.ONE_MINUTE) {
-                File file = new File(PATH+i+EXT);
-                if (file.exists() && new File(PATH+(i+32)+EXT).exists()) {
-                    file.delete();
-                    i++;
-                }
-                Util.delay(50);
+                Util.delay(10);
             }
 
             state.delete(State.values.writingframegrabs);
-            Util.systemCall("pkill -n " + avprog); // kills newest only
-            File dir=new File(PATH);
-            for(File file: dir.listFiles()) file.delete(); // clean up (gets most files)
+            // kill ros node
+            Ros.roscommand("rosnode kill /image_to_shm");
 
         } }).start();
 
@@ -592,25 +573,35 @@ public class Video {
     }
 
     public void dockcam(String str) {
+
+        if (System.currentTimeMillis() < lastvideocommand + STREAM_CONNECT_DELAY)
+            return;
+
+        lastvideocommand = System.currentTimeMillis();
+
         if ((str.equalsIgnoreCase(Settings.ON) || str.equalsIgnoreCase(Settings.ENABLED))
                 && !state.getBoolean(values.dockcamon)) { // turn on
 
+            state.set(values.dockcamon, true);
             state.delete(values.dockcamready); // this is set to true when ready by ros node
+
+            lastwidth = 640;
+            lastheight = 480;
 
             new Thread(new Runnable() { public void run() {
 
                 // nuke currently running cams if any
-                if (!state.get(State.values.stream).equals(Application.streamstate.stop.toString())) {
-//                    app.driverCallServer(PlayerCommands.streammode, Application.streamstate.stop.toString());
-//                    Util.log("stopping stream: "+state.get(values.stream), this);
-//                    killwebrtcbypid();
+                if (state.get(values.stream).equals(Application.streamstate.camera.toString()) ||
+                        state.get(values.stream).equals(Application.streamstate.camandmic.toString())) {
 
-//                    Util.delay(STREAM_CONNECT_DELAY);
-
+                    app.driverCallServer(PlayerCommands.streammode, Application.streamstate.stop.toString()); // force GUI video resize
+                    app.driverCallServer(PlayerCommands.streammode, Application.streamstate.camera.toString()); // and set state stream
                     killrealsense();
                     killwebrtc();
+                    Util.delay(STREAM_CONNECT_DELAY);
                 }
-
+                else
+                    app.driverCallServer(PlayerCommands.streammode, Application.streamstate.camera.toString());
 
                 if (app.player instanceof IServiceCapableConnection) {// flash client
 //                    Ros.roscommand("roslaunch df dockcam.launch dockdevice:=/dev/video" + dockcamdevicenum);
@@ -622,42 +613,36 @@ public class Video {
                             "dockdevice:=/dev/video" + dockcamdevicenum)));
                 }
 
-                state.set(values.dockcamon, true);
                 state.set(State.values.controlsinverted, true);
 
-                Util.delay(STREAM_CONNECT_DELAY);
-                app.driverCallServer(PlayerCommands.streammode, Application.streamstate.camera.toString());
 
             } }).start();
 
         }
-        else if ((str.equalsIgnoreCase(Settings.OFF) ||
-                str.equalsIgnoreCase(Settings.DISABLED)) && state.getBoolean(values.dockcamon)) { // turn off
+        else if ( (str.equalsIgnoreCase(Settings.OFF) || str.equalsIgnoreCase(Settings.DISABLED)) &&
+                state.getBoolean(values.dockcamon)) { // turn off
 
             state.set(values.dockcamon, false);
             state.delete(values.dockcamready);
 
             state.set(State.values.controlsinverted, false);
-//            Ros.roscommand("rosnode kill /gst_video_server /usb_cam");
-//            Ros.roscommand("rosnode kill /usb_cam");
-            killwebrtc();
-//            killrealsensebypid();
-
             app.driverCallServer(PlayerCommands.streammode, Application.streamstate.stop.toString());
+            killwebrtc();
+
         }
     }
 
     public void killrealsense() {
-        if (!realsensepstring.equals("") && !state.get(State.values.navsystemstatus).equals(Ros.navsystemstate.running.toString())) {
+        if (realsensepstring != null && !state.get(State.values.navsystemstatus).equals(Ros.navsystemstate.running.toString())) {
             Ros.killlaunch(realsensepstring);
-            realsensepstring = "";
+            realsensepstring = null;
         }
     }
 
     private void killwebrtc() {
-        if (!webrtcpstring.equals("")) {
+        if (webrtcpstring != null) {
             Ros.killlaunch(webrtcpstring);
-            webrtcpstring = "";
+            webrtcpstring = null;
         }
     }
 
