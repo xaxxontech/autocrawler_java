@@ -8,7 +8,7 @@ var webrtcinit = false;
 
 
 function commClientLoaded() {
-	commclientid = Date.now();
+	commclientid = getOurId(); // webrtc.js ... was ... Date.now();
 	// comm_client_log("commClientLoaded, id: "+commclientid); 
 
 	if (/auth=/.test(document.cookie)) { commLoginFromCookie(); }

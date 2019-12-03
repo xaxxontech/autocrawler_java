@@ -6,13 +6,10 @@ import java.io.FileInputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
-import java.util.Map;
 
 import developer.Ros;
 import developer.image.ImageUtils;
-import oculusPrime.Application;
-import oculusPrime.PlayerCommands;
-import oculusPrime.Util;
+import autocrawler.Util;
 
 
 public class OpenNIRead  {
@@ -30,7 +27,7 @@ public class OpenNIRead  {
 	
 	public boolean startDepthCam() {
 		if (depthCamInit) return false;
-		oculusPrime.Util.log("START ros openni 320x240", this);
+		autocrawler.Util.log("START ros openni 320x240", this);
 
 		lockfile.delete();
 		
@@ -68,7 +65,7 @@ public class OpenNIRead  {
 	
 	public void stopDepthCam()  {
 		if (!depthCamInit) return;
-		oculusPrime.Util.log("STOP ros openni 320x240", this);
+		autocrawler.Util.log("STOP ros openni 320x240", this);
 
 		Util.systemCall("pkill roslaunch");
 		

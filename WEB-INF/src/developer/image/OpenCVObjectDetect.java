@@ -1,18 +1,14 @@
 package developer.image;
 
 
-import oculusPrime.*;
+import autocrawler.*;
 import org.opencv.core.*;
-import org.opencv.imgproc.Imgproc;
 import org.opencv.objdetect.HOGDescriptor;
-import org.opencv.video.BackgroundSubtractorMOG2;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.net.URL;
-import java.util.Arrays;
-import java.util.List;
 
 public class OpenCVObjectDetect {
 
@@ -186,7 +182,7 @@ public class OpenCVObjectDetect {
                 BufferedImage img = null;
 
                 try {
-                    img = ImageIO.read(new URL("http://127.0.0.1:" + port + "/oculusPrime/frameGrabHTTP"));
+                    img = ImageIO.read(new URL("http://127.0.0.1:" + port + "/autocrawler/frameGrabHTTP"));
                 } catch (IOException e) {
                     e.printStackTrace();
                     state.delete(State.values.objectdetect);

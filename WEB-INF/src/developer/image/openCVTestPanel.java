@@ -1,13 +1,10 @@
 package developer.image;
 
-import oculusPrime.Util;
+import autocrawler.Util;
 import org.opencv.core.Core;
 
-import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
-import java.awt.image.BufferedImage;
-import java.net.URL;
 
 /**
  * Created by colin on 21/04/15.

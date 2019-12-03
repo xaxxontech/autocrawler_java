@@ -299,7 +299,7 @@ public class Mapper {
     		System.out.println("lastAngle: "+Math.toDegrees(lastAngle));
     		
     		/*
-    		 * DEBUG: Sat Jan 25 10:46:32 PST 2014, oculusPrime.commport.ArduinoGyro, serial in: angle 17.32
+    		 * DEBUG: Sat Jan 25 10:46:32 PST 2014, autocrawler.commport.ArduinoGyro, serial in: angle 17.32
 ****ERROR VARS
 cwidth: 240
 cheight: 232
@@ -308,7 +308,7 @@ newH: -35
 angle: 218.06965517241417
 lastAngle: 38277.57166213958
 
-DEBUG: Sat Jan 25 10:46:32 PST 2014, oculusPrime.commport.ArduinoGyro, serial in: angle 17.32
+DEBUG: Sat Jan 25 10:46:32 PST 2014, autocrawler.commport.ArduinoGyro, serial in: angle 17.32
 ****ERROR VARS
 cwidth: 240
 cheight: 232

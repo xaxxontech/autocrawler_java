@@ -4,8 +4,8 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
-import oculusPrime.PlayerCommands;
-import oculusPrime.Util;
+import autocrawler.PlayerCommands;
+import autocrawler.Util;
 
 import java.awt.*;
 import java.awt.event.KeyEvent;

@@ -2,8 +2,6 @@ package developer.depth;
 
 import java.awt.image.BufferedImage;
 
-import oculusPrime.Util;
-
 import org.opencv.calib3d.StereoSGBM;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
@@ -14,8 +12,6 @@ import org.opencv.core.Size;
 import org.opencv.highgui.Highgui;
 import org.opencv.highgui.VideoCapture;
 import org.opencv.imgproc.Imgproc;
-
-import developer.image.OpenCVUtils;
 
 public class Stereo {
 	private static VideoCapture captureLeft;

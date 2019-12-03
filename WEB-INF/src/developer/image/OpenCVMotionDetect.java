@@ -1,7 +1,7 @@
 package developer.image;
 
 
-import oculusPrime.*;
+import autocrawler.*;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
@@ -9,7 +9,6 @@ import org.opencv.imgproc.Imgproc;
 import org.opencv.video.BackgroundSubtractorMOG2;
 
 import javax.imageio.ImageIO;
-import javax.swing.*;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.net.URL;
@@ -70,7 +69,7 @@ public class OpenCVMotionDetect  {
 //
 //                    try {
 //                        img = ImageIO.read(new URL("http://127.0.0.1:" +
-//                                settings.readRed5Setting("http.port") + "/oculusPrime/frameGrabHTTP"));
+//                                settings.readRed5Setting("http.port") + "/autocrawler/frameGrabHTTP"));
 //                    } catch (IOException e) {
 //                        e.printStackTrace();
 //                    }
@@ -174,7 +173,7 @@ public class OpenCVMotionDetect  {
                 BufferedImage img = null;
 
                 try {
-                    img = ImageIO.read(new URL("http://127.0.0.1:" + port + "/oculusPrime/frameGrabHTTP"));
+                    img = ImageIO.read(new URL("http://127.0.0.1:" + port + "/autocrawler/frameGrabHTTP"));
                 } catch (IOException e) {
                     e.printStackTrace();
                     state.delete(State.values.motiondetect);

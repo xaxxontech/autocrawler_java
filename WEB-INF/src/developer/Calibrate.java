@@ -1,8 +1,8 @@
 package developer;
 
-import oculusPrime.*;
-import oculusPrime.State.values;
-import oculusPrime.commport.Malg;
+import autocrawler.*;
+import autocrawler.State.values;
+import autocrawler.commport.Malg;
 
 /**
  * Created by colin on 8/3/2016.

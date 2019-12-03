@@ -22,8 +22,8 @@ import javax.swing.JTable;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableModel;
 
-import oculusPrime.State;
-import oculusPrime.State.values;
+import autocrawler.State;
+import autocrawler.State.values;
  
 public class StateMonitor extends JFrame {
 	
@@ -93,7 +93,7 @@ public class StateMonitor extends JFrame {
         setVisible(true);
         
 		new Timer().scheduleAtFixedRate(new Task(), 2000, 9000);
-		new Timer().scheduleAtFixedRate(new nullTask(), oculusPrime.Util.TWO_MINUTES, oculusPrime.Util.TWO_MINUTES);
+		new Timer().scheduleAtFixedRate(new nullTask(), autocrawler.Util.TWO_MINUTES, autocrawler.Util.TWO_MINUTES);
 
     }
  

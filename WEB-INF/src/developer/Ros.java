@@ -9,10 +9,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
-import oculusPrime.*;
+import autocrawler.*;
 
 public class Ros {
 
@@ -40,7 +39,7 @@ public class Ros {
 	public static String mapyamlname = "map.yaml";
 
 	public static String rospackagedir;
-	public static final String ROSPACKAGE = "df";
+	public static final String ROSPACKAGE = "autocrawler";
 
 	static final int OCCUPIEDTHRESHOLD = 60;
 	static final int FREETHRESHOLD = 25;
@@ -187,14 +186,6 @@ public class Ros {
 		return str;
 	}
 
-//	public static boolean launch(String launch) {
-////		if (checkIfRoslaunchRunning()) return false;
-//
-//		String cmd = Settings.redhome + Util.sep + "ros.sh"; // setup ros environment
-//		cmd += " roslaunch df " + launch + ".launch";
-//		Util.systemCall(cmd);
-//		return true;
-//	}
 
 	public static String launch(String arg) {
 		ArrayList <String> str = new ArrayList<>();
@@ -221,7 +212,6 @@ public class Ros {
 		args.add(0, "roslaunch"); // 2nd
 		args.add(0, Settings.redhome + Util.sep + "ros.sh"); // 1st
 		processBuilder.command(args);
-//        processBuilder.command(Settings.redhome + Util.sep + "ros.sh", "roslaunch", "df", file+".launch");
 
         try {
 			Process proc = processBuilder.start();
@@ -250,7 +240,7 @@ public class Ros {
 
         items.add("pkill");
         items.add("-f");
-        items.add("roslaunch df "+str);
+        items.add("roslaunch "+ROSPACKAGE+" "+str);
         Util.debug(items.get(2), "Ros.killlaunch()");
 
         ProcessBuilder processBuilder = new ProcessBuilder();
@@ -261,6 +251,7 @@ public class Ros {
     }
 
 	public static void roscommand(String str) {
+	    Util.debug("Ros.java roscommand: "+str, null);
 		String cmd = Settings.redhome + Util.sep + "ros.sh"; // setup ros environment
 		cmd += " " + str;
 		Util.systemCall(cmd);

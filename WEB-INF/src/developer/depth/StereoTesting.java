@@ -1,36 +1,23 @@
 package developer.depth;
 
-import java.awt.Color;
 import java.awt.EventQueue;
-import java.awt.Graphics2D;
-import java.awt.geom.Ellipse2D;
-import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
-import java.awt.image.WritableRaster;
-import java.net.URL;
 
-import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
 import javax.swing.JLabel;
 
-import org.opencv.calib3d.StereoSGBM;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
-import org.opencv.core.Point;
 import org.opencv.core.Rect;
-import org.opencv.core.Size;
 import org.opencv.highgui.Highgui;
 import org.opencv.highgui.VideoCapture;
 import org.opencv.imgproc.Imgproc;
-import org.opencv.photo.Photo;
 
-import oculusPrime.Application;
-import oculusPrime.OculusImage;
-import oculusPrime.Util;
+import autocrawler.Util;
 import developer.image.OpenCVUtils;
 
 public class StereoTesting extends JFrame {
@@ -179,8 +166,8 @@ public class StereoTesting extends JFrame {
     }
 
     private Mat[] loadImages() {
-        String folder = "Z:\\xaxxon\\oculusPrime\\software\\scans-dev-temp\\stereo\\";
-//        String folder = "/mnt/skyzorg/xaxxon/oculusPrime/software/scans-dev-temp/stereo/";
+        String folder = "Z:\\xaxxon\\autocrawler\\software\\scans-dev-temp\\stereo\\";
+//        String folder = "/mnt/skyzorg/xaxxon/autocrawler/software/scans-dev-temp/stereo/";
         Mat left = Highgui.imread(folder+"left0.png");
         Mat right = Highgui.imread(folder+"right0.png");
 //		Mat left = Highgui.imread(folder+"left500_1-12.png");
@@ -199,8 +186,8 @@ public class StereoTesting extends JFrame {
     	Stereo stereo = new Stereo();
 //    	developer.image.OpenCVUtils cv = new OpenCVUtils();
     	
-        String folder = "Z:\\xaxxon\\oculusPrime\\software\\scans-dev-temp\\stereo\\";
-//    	String folder = "/mnt/skyzorg/xaxxon/oculusPrime/software/scans-dev-temp/stereo/";
+        String folder = "Z:\\xaxxon\\autocrawler\\software\\scans-dev-temp\\stereo\\";
+//    	String folder = "/mnt/skyzorg/xaxxon/autocrawler/software/scans-dev-temp/stereo/";
 //		Mat left = Highgui.imread(folder+"left2.png");
 //		Mat right = Highgui.imread(folder+"right2.png");
 //		Mat left = Highgui.imread(folder+"left1.png");
@@ -324,61 +311,6 @@ public class StereoTesting extends JFrame {
 		}).start();	
 		
 	}
-	
-	/*
-	private void grabDockInStereo() {
-		developer.image.OpenCVUtils cv = new OpenCVUtils();
-		BufferedImage img;
-		OculusImage oculusImage = new OculusImage();
-		int[] argb;
-		String results[];
-		String str;
-		int x, y, w, h, ctrx, ctry;
-		Graphics2D g2d;
-		oculusImage.dockSettings("1.2162162_0.21891892_0.18708709_0.24039039_135_134_90_74_-0.0");
-
-		img = cv.webcamCapture(1);
-		oculusImage.lastThreshhold = -1;
-		argb = img.getRGB(0, 0, img.getWidth(), img.getHeight(), null, 0, img.getWidth());
-		results = oculusImage.findBlobs(argb, img.getWidth(), img.getHeight());
-		x = Integer.parseInt(results[0]);
-		y = Integer.parseInt(results[1]);
-		w = Integer.parseInt(results[2]);
-		h = Integer.parseInt(results[3]);
-		ctrx = x+w/2;
-		ctry = y+h/2;
-//		img.setRGB(x, y, 0xff0000);
-		g2d = img.createGraphics();
-		g2d.setColor(new Color(255,0,0));
-		g2d.drawRect(x, y, w, h);
-		JLabel pic0 = new JLabel(new ImageIcon(img));
-		panel.add(pic0);
-		panel.repaint(); 
-		str = x+" "+y+" "+w+" "+h+" "+results[4];
-		System.out.println(str);
-
-		
-		img = cv.webcamCapture(0);
-		oculusImage.lastThreshhold = -1;
-		argb = img.getRGB(0, 0, img.getWidth(), img.getHeight(), null, 0, img.getWidth());
-		results = oculusImage.findBlobs(argb, img.getWidth(), img.getHeight());
-		x = Integer.parseInt(results[0]);
-		y = Integer.parseInt(results[1]);
-		w = Integer.parseInt(results[2]);
-		h = Integer.parseInt(results[3]);
-		ctrx = x+w/2;
-		ctry = y+h/2;
-		img.setRGB(x, y, 0xff0000);
-		g2d = img.createGraphics();
-		g2d.setColor(new Color(255,0,0));
-		g2d.drawRect(x, y, w, h);
-		JLabel pic1 = new JLabel(new ImageIcon(img));
-		panel_1.add(pic1);
-		panel_1.repaint(); 
-		str = x+" "+y+" "+w+" "+h+" "+results[4];
-		System.out.println(str);
-	}
-	*/
 
 	
 	/**

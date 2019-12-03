@@ -6,8 +6,8 @@ import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.InputStreamReader;
 
-import oculusPrime.Settings;
-import oculusPrime.Util;
+import autocrawler.Settings;
+import autocrawler.Util;
 
 /**
  * read file, nuke </body></html>at end, add new stuff, add end back, rewrite file
@@ -20,7 +20,7 @@ import oculusPrime.Util;
 public class NavigationLog {
 
     public static final String navigationlogpath =  Settings.redhome+Util.sep + "webapps" + Util.sep +
-            "oculusPrime"+ Util.sep + "navigationlog" + Util.sep + "index.html";
+            "autocrawler" + Util.sep + "navigationlog" + Util.sep + "index.html";
 
     // testing:
 //    public static final String navigationlogpath = System.getenv("HOME")+Util.sep+"temp"+Util.sep+"navroutelog/index.html";
@@ -140,7 +140,7 @@ public class NavigationLog {
         String str = "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">\n";
         str += "<!-- DO NOT MODIFY THIS FILE, THINGS WILL BREAK -->\n";
         str += "<html><head>\n";
-        str +="<title>Oculus Prime Navigation Route Log</title>\n" +
+        str +="<title>Autocrawler Navigation Route Log</title>\n" +
                 "<meta http-equiv=\"Pragma\" content=\"no-cache\">\n" +
                 "<meta http-equiv=\"Cache-Control\" Content=\"no-cache\">\n" +
                 "<meta http-equiv=\"Expires\" content=\"-1\">\n";
@@ -192,7 +192,7 @@ public class NavigationLog {
         str += "</head><body onload=\"loaded();\">\n";
         str += "<div style='padding-top: 5px; padding-bottom: 5px; padding-left: 15px; cursor: pointer;' ";
         str += "onclick=\"window.open(document.URL.replace(/#.*$/, ''), '_self'); \" ";
-        str += ">Oculus Prime Navigation Log</div>\n";
+        str += ">Autocrawler Navigation Log</div>\n";
         str += FILEEND;
 
         return str;

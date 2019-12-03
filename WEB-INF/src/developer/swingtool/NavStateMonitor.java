@@ -22,8 +22,8 @@ import javax.swing.JTable;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableModel;
 
-import oculusPrime.State;
-import oculusPrime.State.values;
+import autocrawler.State;
+import autocrawler.State.values;
  
 public class NavStateMonitor extends JFrame {
 	

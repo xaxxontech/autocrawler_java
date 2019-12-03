@@ -11,7 +11,7 @@
 var ws_server="xaxxon.com";
 var ws_port;
 // Set this to use a specific peer id instead of a random one
-var default_peer_id=777;
+var default_peer_id; // =777;
 // Override with your own STUN servers if you want
 // var rtc_configuration = {iceServers: [{urls: "stun:stun.services.mozilla.com"},
                                       // {urls: "stun:stun.l.google.com:19302"}]};
@@ -32,7 +32,8 @@ var local_stream_promise;
 var ws_conn_close_forever = false;
 
 function getOurId() {
-    return Math.floor(Math.random() * (9000 - 10) + 10).toString();
+	if (commclientid) return commclientid;
+    return Math.floor(Math.random() * (900000000 - 10) + 10).toString();
 }
 
 function resetState() {
@@ -210,6 +211,7 @@ function websocketServerConnect() {
         // textarea.value = JSON.stringify(default_constraints);
     // Fetch the peer id to use
     peer_id = default_peer_id || getOurId();
+    webrtc_log("using peer id: "+peer_id);
     ws_port = ws_port || '8443';
     if (window.location.protocol.startsWith ("file")) {
         ws_server = ws_server || "127.0.0.1";
@@ -323,5 +325,5 @@ function createCall(msg) {
 }
 
 function webrtc_log(str) {
-	// console.log(str);
+	console.log(str);
 }

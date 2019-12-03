@@ -1,8 +1,8 @@
 package developer.depth;
 
 /*
- * this class to be run standalone as xtion.jar under oculusPrime/xtionread/
- * also copy contents of 'OpenNI-Linux-x86-2.2/Redist' folder to oculusPrime/xtionread/
+ * this class to be run standalone as xtion.jar under autocrawler/xtionread/
+ * also copy contents of 'OpenNI-Linux-x86-2.2/Redist' folder to autocrawler/xtionread/
  * called by OpenNIRead.startDepthCam()
  * (cut/paste this into its own eclipse project, with redist libs in paths)
  */

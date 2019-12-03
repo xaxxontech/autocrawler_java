@@ -4,18 +4,18 @@
    xsi:schemaLocation="http://java.sun.com/xml/ns/j2ee http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd" 
    version="2.4"> 
 
-	<display-name>oculusPrime</display-name>
+	<display-name>autocrawler</display-name>
 
 	<context-param>
 		<param-name>webAppRootKey</param-name>
-		<param-value>/oculusPrime</param-value>
+		<param-value>/autocrawler</param-value>
 	</context-param>
 	
 	<servlet>
 		<servlet-name>rtmpPortRequest</servlet-name>
 		<servlet-class>
-			oculusPrime.servlet.RtmpPortRequest
-		</servlet-class>
+            autocrawler.servlet.RtmpPortRequest
+        </servlet-class>
 		<load-on-startup>3</load-on-startup>
 	</servlet>
 	
@@ -27,8 +27,8 @@
 	<servlet>
 		<servlet-name>frameGrabHTTP</servlet-name>
 		<servlet-class>
-			oculusPrime.servlet.FrameGrabHTTP
-		</servlet-class>
+            autocrawler.servlet.FrameGrabHTTP
+        </servlet-class>
 		<load-on-startup>4</load-on-startup>
 	</servlet>
 	
@@ -39,7 +39,7 @@
 	
 	<servlet>
 		<servlet-name>DashboardServlet</servlet-name>
-		<servlet-class>oculusPrime.servlet.DashboardServlet</servlet-class>
+		<servlet-class>autocrawler.servlet.DashboardServlet</servlet-class>
 	</servlet>
 	<servlet-mapping>
 		<servlet-name>DashboardServlet</servlet-name>
@@ -48,7 +48,7 @@
 	
 	<servlet>
 		<servlet-name>StaticContentServlet</servlet-name>
-		<servlet-class>oculusPrime.servlet.StaticContentServlet</servlet-class>
+		<servlet-class>autocrawler.servlet.StaticContentServlet</servlet-class>
 	</servlet>
 	<servlet-mapping>
 		<servlet-name>StaticContentServlet</servlet-name>
@@ -73,7 +73,7 @@
 
 	<servlet>
 		<servlet-name>NetworkServlet</servlet-name>
-		<servlet-class>oculusPrime.servlet.NetworkServlet</servlet-class>
+		<servlet-class>autocrawler.servlet.NetworkServlet</servlet-class>
 	</servlet>
 	<servlet-mapping>
 		<servlet-name>NetworkServlet</servlet-name>
@@ -82,7 +82,7 @@
 
 	<servlet>
 		<servlet-name>MediaServlet</servlet-name>
-		<servlet-class>oculusPrime.servlet.MediaServlet</servlet-class>
+		<servlet-class>autocrawler.servlet.MediaServlet</servlet-class>
 	</servlet>
 	<servlet-mapping>
 		<servlet-name>MediaServlet</servlet-name>
@@ -91,7 +91,7 @@
 
 	<servlet>
 		<servlet-name>CommServlet</servlet-name>
-		<servlet-class>oculusPrime.servlet.CommServlet</servlet-class>
+		<servlet-class>autocrawler.servlet.CommServlet</servlet-class>
 	</servlet>
 	<servlet-mapping>
 		<servlet-name>CommServlet</servlet-name>

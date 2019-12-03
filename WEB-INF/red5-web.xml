@@ -22,7 +22,7 @@
 	</bean>
 
 	<bean id="web.handler" 
-        class="oculusPrime.Application"
+        class="autocrawler.Application"
       />
 	
 

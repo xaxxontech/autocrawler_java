@@ -11,16 +11,16 @@ import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 
-import oculusPrime.*;
-import oculusPrime.commport.Malg;
+import autocrawler.*;
+import autocrawler.commport.Malg;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
 import developer.image.OpenCVObjectDetect;
-import oculusPrime.AutoDock.autodockmodes;
-import oculusPrime.State.values;
-import oculusPrime.servlet.FrameGrabHTTP;
+import autocrawler.AutoDock.autodockmodes;
+import autocrawler.State.values;
+import autocrawler.servlet.FrameGrabHTTP;
 
 public class Navigation implements Observer {
 	
@@ -31,7 +31,7 @@ public class Navigation implements Observer {
 	public static final File navroutesfile = new File(redhome+"/conf/navigationroutes.xml");
 	public static final long WAYPOINTTIMEOUT = Util.TEN_MINUTES;
 	public static final long NAVSTARTTIMEOUT = Util.TWO_MINUTES;
-	public static final int RESTARTAFTERCONSECUTIVEROUTES = 15;
+	public static final int RESTARTAFTERCONSECUTIVEROUTES = 15; // testing, was 15
 	private final static Settings settings = Settings.getReference();
 	public volatile boolean navdockactive = false;
 	public static int consecutiveroute = 1;
@@ -161,7 +161,7 @@ public class Navigation implements Observer {
 
             app.driverCallServer(PlayerCommands.cameracommand, Malg.cameramove.horiz.toString());
 
-            app.driverCallServer(PlayerCommands.streamsettingsset, Application.camquality.med.toString());
+//            app.driverCallServer(PlayerCommands.streamsettingsset, Application.camquality.med.toString());
 
             String currentstream = videoRestartRequiredBlocking();
 
@@ -448,7 +448,7 @@ public class Navigation implements Observer {
 	public void runRoute(final String name) {
 
 		// build error checking into this (ignore duplicate waypoints, etc)
-		// assume goto dock at the end, whether or not dock is a waypoint
+		// assumes goto dock at the end, whether or not dock is a waypoint
 
 		if (state.getBoolean(State.values.autodocking)) {
 			app.driverCallServer(PlayerCommands.messageclients, "command dropped, autodocking");
@@ -646,7 +646,8 @@ public class Navigation implements Observer {
 				if (!state.exists(State.values.navigationroute)) return;
 				if (!state.get(State.values.navigationrouteid).equals(id)) return;
 
-				// GO!
+
+				// GO - start route!
 				routestarttime = System.currentTimeMillis();
 				state.set(State.values.lastusercommand, routestarttime);  // avoid watchdog abandoned
 				routemillimeters = 0l;
@@ -729,6 +730,7 @@ public class Navigation implements Observer {
 						continue; 
 					}
 
+					// waypoint reached
 					// send actions and duration delay to processRouteActions()
 					NodeList actions = ((Element) waypoints.item(wpnum)).getElementsByTagName("action");
 					long duration = Long.parseLong(
@@ -926,11 +928,11 @@ public class Navigation implements Observer {
 				if (human)
 					app.driverCallServer(PlayerCommands.streamsettingsset, Application.camquality.med.toString());
 				else if (motion)
-					app.driverCallServer(PlayerCommands.streamsettingsset, Application.camquality.high.toString());
+					app.driverCallServer(PlayerCommands.streamsettingsset, Application.camquality.med.toString());
 				else if (photo)
-					app.driverCallServer(PlayerCommands.streamsettingscustom, "1280_720_8_85");
+                    app.driverCallServer(PlayerCommands.streamsettingsset, Application.camquality.high.toString());
 				else // record
-					app.driverCallServer(PlayerCommands.streamsettingsset, Application.camquality.high.toString());
+					app.driverCallServer(PlayerCommands.streamsettingsset, Application.camquality.med.toString());
 			}
 
 			if (photo)
@@ -1017,7 +1019,7 @@ public class Navigation implements Observer {
 				Util.delay(3000); // allow time to download
 
 				String navlogmsg = "<a href='" + link + "' target='_blank'>Photo</a>";
-				String msg = "[Oculus Prime Photo] ";
+				String msg = "[Autocrawler Photo] ";
 				msg += navlogmsg+", time: "+
 						Util.getTime()+", at waypoint: " + wpname + ", route: " + name;
 
@@ -1065,17 +1067,17 @@ public class Navigation implements Observer {
 				if (email || rss) {
 
 					if (streamactivity.contains(OpenCVObjectDetect.HUMAN)) {
-						msg = "[Oculus Prime Detected "+streamactivity+"] " + msg;
+						msg = "[Autocrawler Detected "+streamactivity+"] " + msg;
 						msg += "\nimage link: " + link + "\n";
 						Util.delay(3000); // allow time for download thread to capture image before turning off camera
 					}
 					if (streamactivity.contains("video")) {
-						msg = "[Oculus Prime Detected Motion] " + msg;
+						msg = "[Autocrawler Detected Motion] " + msg;
 						msg += "\nimage link: " + link + "\n";
 						Util.delay(3000); // allow time for download thread to capture image before turning off camera
 					}
 					else if (streamactivity.contains("audio")) {
-						msg = "[Oculus Prime Sound Detection] Sound " + msg;
+						msg = "[Autocrawler Sound Detection] Sound " + msg;
 					}
 
 					if (email) {
@@ -1125,7 +1127,7 @@ public class Navigation implements Observer {
 				String msg = "";
 
 				if (email || rss) {
-					msg = "[Oculus Prime: "+notdetectedaction+" NOT detected] ";
+					msg = "[Autocrawler: "+notdetectedaction+" NOT detected] ";
 					msg += "At waypoint: " + wpname + ", route: " + name + ", time: "+Util.getTime();
 				}
 
@@ -1179,7 +1181,7 @@ public class Navigation implements Observer {
 			String navlogmsg = "<a href='" + recordlink + "_video.flv' target='_blank'>Video</a>";
 			if (!settings.getBoolean(ManualSettings.useflash))
 				navlogmsg += "<br><a href='" + recordlink + "_audio.flv' target='_blank'>Audio</a>";
-			String msg = "[Oculus Prime Video] ";
+			String msg = "[Autocrawler Video] ";
 			msg += navlogmsg+", time: "+
 					Util.getTime()+", at waypoint: " + wpname + ", route: " + name;
 
@@ -1199,9 +1201,8 @@ public class Navigation implements Observer {
 			app.video.record(Settings.FALSE); // stop recording
 		}
 
-		if (!camAlreadyOn)
-			app.driverCallServer(PlayerCommands.publish, Application.streamstate.stop.toString());
 		if (camera) {
+			app.driverCallServer(PlayerCommands.publish, Application.streamstate.stop.toString());
 			app.driverCallServer(PlayerCommands.spotlight, "0");
 			app.driverCallServer(PlayerCommands.cameracommand, Malg.cameramove.horiz.toString());
 		}

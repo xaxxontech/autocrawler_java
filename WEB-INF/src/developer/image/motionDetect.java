@@ -5,14 +5,14 @@ import java.io.ByteArrayInputStream;
 
 import javax.imageio.ImageIO;
 
-import oculusPrime.PlayerCommands;
-import oculusPrime.commport.Malg;
+import autocrawler.PlayerCommands;
+import autocrawler.commport.Malg;
 import org.red5.server.api.IConnection;
 import org.red5.server.api.service.IServiceCapableConnection;
 
-import oculusPrime.Application;
-import oculusPrime.State;
-import oculusPrime.Util;
+import autocrawler.Application;
+import autocrawler.State;
+import autocrawler.Util;
 
 public class motionDetect {
 	private State state = State.getReference();
