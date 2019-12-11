@@ -29,6 +29,7 @@ public class Ros {
 	public static final String REMOTE_NAV = "remote_nav"; // nav launch file 
 	public static final String ROSGOALSTATUS_SUCCEEDED = "succeeded";
 	public static final String MAKE_MAP = "make_map"; // mapping launch file
+    public static final String MAKE_MAP_GMAPPING = "make_map_gmapping"; // mapping launch file
 
 	private static File lockfile = new File("/run/shm/map.raw.lock");
 	private static BufferedImage map = null;

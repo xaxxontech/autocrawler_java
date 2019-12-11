@@ -558,7 +558,7 @@ video settings:<br>
 <span id="custom_specs" style="font-size: 11px; color: #666666;"></span>&nbsp;<a
 class="blackbg" href="javascript: streamset('setcustom');">change</a> &gt;
 <br>
-<a id="recordlink" class="blackbg" href="javascript: callServer('record','true');">record</a>
+<a id="recordlink" class="blackbg" style="display: none" href="javascript: callServer('record','true');">record</a>
 <table><tr><td style="height: 5px"></td></tr></table>
 
 <table><tr>
@@ -1140,7 +1140,8 @@ href="javascript: waypointstoggle();">toggle waypoints on/off</a><br>
 
 <table><tr><td style="height: 10px"></td></tr></table>
 
-<a class="blackbg" href="javascript: callServer('startmapping','');">start mapping</a><br>
+<a class="blackbg" href="javascript: callServer('startmapping','cartographer');">start mapping - cartographer</a><br>
+<a class="blackbg" href="javascript: callServer('startmapping','gmapping');">start mapping - gmapping</a><br>
 <a class="blackbg" href="javascript: if (confirm('Create backup and save new map\n are you sure?'))
 { callServer('savemap',''); }">save new map</a><br>
 <a class="blackbg" href="javascript: if (confirm('Shutting down mapping, save new map first')){callServer('stopnav','');}">stop mapping</a><br>
@@ -1287,9 +1288,11 @@ Choose action:<br>
 
 <!-- logo -->
 
+<!--
 <div style="position: fixed; bottom: 5px; right: 5px; z-index: -1; padding-left: 5px;">
 <img src="images/oculus_corner_logo.gif" alt="">
 </div>
+-->
 
 <iframe id="upload_frame" name="upload_frame" style="display: none"></iframe>
 

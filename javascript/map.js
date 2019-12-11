@@ -35,12 +35,20 @@ var mapshowwaypoints = true;
 var routesxml = null;
 var temproutesxml;
 var navmenuinit = false;
-var navrouteavailableactions = ["rotate", "email", "rss", "photo", "record video",
+// var navrouteavailableactions = ["rotate", "email", "rss", "photo", "record video",
+	// "motion", "sound", "human", "not detect" ];
+// var navrouteactiondescriptions = ["rotate in place 45 degrees at a time, at least 1 full rotation", 
+	// "send email alert if action detected",
+	// "post new item to RSS feed if action detected",
+	// "record video and audio to local file",
+	// "take photo at waypoint and post to navigation log",
+	// "detect motion", "detect loud noise", "detect human", 
+	// "alert only if action NOT detected"];
+var navrouteavailableactions = ["rotate", "email", "rss", "photo",
 	"motion", "sound", "human", "not detect" ];
 var navrouteactiondescriptions = ["rotate in place 45 degrees at a time, at least 1 full rotation", 
 	"send email alert if action detected",
 	"post new item to RSS feed if action detected",
-	"record video and audio to local file",
 	"take photo at waypoint and post to navigation log",
 	"detect motion", "detect loud noise", "detect human", 
 	"alert only if action NOT detected"];

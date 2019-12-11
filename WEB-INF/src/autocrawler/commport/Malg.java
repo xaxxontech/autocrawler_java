@@ -1548,10 +1548,10 @@ public class Malg implements jssc.SerialPortEventListener {
 	
 	public void camCommand(cameramove move){
 
-        if (!state.get(State.values.navsystemstatus).equals(Ros.navsystemstate.stopped.toString())) {
-            application.driverCallServer(PlayerCommands.messageclients, "camera tilt disabled, realsense depth cam running");
-            return;
-        }
+//        if (!state.get(State.values.navsystemstatus).equals(Ros.navsystemstate.running.toString())) {
+//            application.driverCallServer(PlayerCommands.messageclients, "camera tilt disabled, realsense depth cam running");
+//            return;
+//        }
 
         int position;
 

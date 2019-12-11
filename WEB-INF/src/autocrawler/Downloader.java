@@ -31,7 +31,7 @@ public class Downloader {
 		OutputStream os = null;
 		URLConnection URLConn = null;
 
-		// create path to local file
+		// create PATH to local file
 		final String path = System.getenv("RED5_HOME")+ sep + destinationDir + sep + localFileName;
 
 		// create target directory
@@ -70,7 +70,7 @@ public class Downloader {
 
 			Util.log("saved to local file: " + path + " bytes: " + ByteWritten, this);
 			// Util.debug("download took: "+ (System.currentTimeMillis()-start) + " ms", this);
-			// Util.debug("downloaded " + ByteWritten + " bytes to: " + path, this);
+			// Util.debug("downloaded " + ByteWritten + " bytes to: " + PATH, this);
 
 		} catch (Exception e) {
 			Util.log("ERROR downloading file", this);

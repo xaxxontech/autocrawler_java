@@ -874,7 +874,7 @@ public class Util {
 		final String path = "./log/archive/logs_" + System.currentTimeMillis() + ".tar ";
 		final String[] cmd = new String[]{"/bin/sh", "-c", "tar -cf " + path + list};
 
-		// log("[tar -jcf " + path + list+"]");
+		// log("[tar -jcf " + PATH + list+"]");
 
 		new File(Settings.redhome + sep + "./log/archive").mkdir(); // make sure its there
 		new Thread(new Runnable() { public void run() {

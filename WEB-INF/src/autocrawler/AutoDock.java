@@ -245,7 +245,7 @@ public class AutoDock {
             Util.delay(10);
 
         if (state.exists(State.values.lightlevel)) {
-            if (state.getInteger(State.values.lightlevel) < 25) {
+            if (state.getInteger(State.values.lightlevel) < 15) { // was 25, bit too bright
                 app.driverCallServer(PlayerCommands.floodlight, Integer.toString(FLHIGH)); // light on
                 Util.delay(2000);  // initial wait for dock found
             }

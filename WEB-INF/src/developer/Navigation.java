@@ -43,7 +43,6 @@ public class Navigation implements Observer {
 	
 	/** Constructor */
 	public Navigation(Application a) {
-		state.set(State.values.navsystemstatus, Ros.navsystemstate.stopped.toString());
 		Ros.loadwaypoints();
 		Ros.rospackagedir = Ros.getRosPackageDir(); // required for map saving
 		navlog = new NavigationLog();
@@ -116,7 +115,7 @@ public class Navigation implements Observer {
 	}
 
 
-	public void startMapping() {
+	public void startMapping(String str) {
 		if (!state.get(State.values.navsystemstatus).equals(Ros.navsystemstate.stopped.toString())) {
 			app.driverCallServer(PlayerCommands.messageclients, "Navigation.startMapping(): unable to start mapping, system already running");
 			return;
@@ -136,7 +135,8 @@ public class Navigation implements Observer {
 //
 //            if (currentstream != null)  app.driverCallServer(PlayerCommands.publish, currentstream);
 
-            Ros.launch(Ros.MAKE_MAP);
+            if (str.equals("gmapping")) Ros.launch(Ros.MAKE_MAP_GMAPPING);
+            else Ros.launch(Ros.MAKE_MAP);
 
             app.driverCallServer(PlayerCommands.messageclients, "starting mapping, please wait");
             state.set(State.values.navsystemstatus, Ros.navsystemstate.starting.toString()); // set running by ROS node when ready
@@ -210,14 +210,8 @@ public class Navigation implements Observer {
         Ros.roscommand("rosnode kill /remote_nav");
         Ros.roscommand("rosnode kill /map_remote");
 
-//		state.set(State.values.navsystemstatus, Ros.navsystemstate.stopping.toString());
-//		new Thread(new Runnable() { public void run() {
-//			Util.delay(Ros.ROSSHUTDOWNDELAY);
-//			state.set(State.values.navsystemstatus, Ros.navsystemstate.stopped.toString());
-//			app.video.killrealsensebypid();
-//		}  }).start();
-
-        if (!state.get(values.stream).equals(Application.streamstate.stop.toString()))
+        if (!state.get(values.stream).equals(Application.streamstate.stop.toString())
+                && !state.get(values.navsystemstatus).equals(Ros.navsystemstate.mapping.toString()))
             app.driverCallServer(PlayerCommands.publish, Application.streamstate.stop.toString());
 	}
 

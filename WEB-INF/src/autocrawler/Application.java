@@ -88,7 +88,7 @@ public class Application extends MultiThreadedApplicationAdapter {
 		super();
 
 		PowerLogger.append("==============Autocrawler Java Start===============\n", this); // extra newline on end
-		Util.log ("==============Autocrawler Java Start 1===============\n", this); // extra newline on end
+		Util.log ("==============Autocrawler Java Start 2===============\n", this); // extra newline on end
 		Util.log("Linux Version:"+Util.getUbuntuVersion()
 				+", Java Model:"+System.getProperty("sun.arch.data.model")
 				+", Java Arch:"+state.get(values.osarch), this);
@@ -270,48 +270,6 @@ public class Application extends MultiThreadedApplicationAdapter {
 		// currently no username info when passenger disconnects
 	}
 
-	// called by flash
-	public void grabbersignin(String mode) {
-		if (mode.equals("init")) {
-			state.delete(State.values.stream);
-		} else {
-//			state.set(State.values.stream, Application.streamstate.stop.toString());
-			driverCallServer(PlayerCommands.state, State.values.stream.toString() + " " +
-					Application.streamstate.stop.toString());
-		}
-		grabber = Red5.getConnectionLocal();
-		String str = "awaiting&nbsp;connection";
-		if (state.get(State.values.driver) != null) {
-			str = state.get(State.values.driver) + "&nbsp;connected";
-		}
-		str += " stream " + state.get(State.values.stream);
-		messageGrabber("connected to subsystem", "connection " + str);
-		Util.log("grabber signed in from " + grabber.getRemoteAddress(), this);
-		
-		if (state.get(State.values.driverstream).equals(driverstreamstate.mic.toString())) {
-			grabberPlayPlayer(1);
-			messageGrabber("playerbroadcast", "1");
-		}
-
-		// eliminate any other grabbers
-		Collection<Set<IConnection>> concollection = getConnections();
-		for (Set<IConnection> cc : concollection) {
-			for (IConnection con : cc) {
-				if (con instanceof IServiceCapableConnection && con != grabber && con != player
-						&& (con.getRemoteAddress()).equals("127.0.0.1")) { 
-					con.close();
-				}
-			}
-		}
-		
-		// set video, audio quality mode in grabber flash, depending on server/client OS
-		String videosoundmode=state.get(State.values.videosoundmode);
-		if (videosoundmode == null)	videosoundmode=VIDEOSOUNDMODEHIGH;  
-		
-		setGrabberVideoSoundMode(videosoundmode);
-		Util.systemCall(System.getenv("RED5_HOME")+"/flashsymlink.sh");		
-	}
-
 	public void killGrabber() {
 		if (settings.getBoolean(ManualSettings.useflash)) Util.systemCall("pkill chrome");    // TODO: use PID
 	}
@@ -364,7 +322,8 @@ public class Application extends MultiThreadedApplicationAdapter {
 		network = new Network(this);	
 		watchdog = new SystemWatchdog(this);
 
-		if(settings.getBoolean(GUISettings.navigation)) {
+        state.set(State.values.navsystemstatus, Ros.navsystemstate.stopped.toString());
+        if(settings.getBoolean(GUISettings.navigation)) {
 			navigation = new developer.Navigation(this);
 			navigation.runAnyActiveRoute();
 		}
@@ -1010,7 +969,7 @@ public class Application extends MultiThreadedApplicationAdapter {
 		case gotowaypoint: if (navigation != null) navigation.gotoWaypoint(str); break;
 		case startnav:     if (navigation != null) navigation.startNavigation(); break;
 		case stopnav:      if (navigation != null) navigation.stopNavigation(); break;
-		case startmapping: if (navigation != null) navigation.startMapping(); break;
+		case startmapping: if (navigation != null) navigation.startMapping(str); break;
 		case savemap:      if (navigation != null) navigation.saveMap(); break;
 		case gotodock:     if (navigation != null) navigation.dock(); break;
 		
@@ -2288,12 +2247,12 @@ public class Application extends MultiThreadedApplicationAdapter {
 				messageplayer("no new version available", null, null);
 			}
 		}
-		if (str.equals("download")) {
+		else if (str.equals("download")) {
 			messageplayer("downloading software update...", null, null);
 			new Thread(new Runnable() {
 				public void run() {
-					Updater up = new Updater();
-					final String fileurl = up.checkForUpdateFile();
+					Updater updater = new Updater();
+					final String fileurl = updater.checkForUpdateFile();
 					Util.log("downloading url: " + fileurl,this);
 					Downloader dl = new Downloader();
 					if (dl.FileDownload(fileurl, "update.zip", "download")) {
@@ -2314,7 +2273,7 @@ public class Application extends MultiThreadedApplicationAdapter {
 				}
 			}).start();
 		}
-		if (str.equals("versiononly")) {
+		else if (str.equals("versiononly")) {
 			double currver = new Updater().getCurrentVersion();
 			String msg = "";
 			if (currver == -1)

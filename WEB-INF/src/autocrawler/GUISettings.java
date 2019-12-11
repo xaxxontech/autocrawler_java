@@ -40,14 +40,14 @@ public enum GUISettings {
 		config.setProperty(cammin.name(), "52");
 		config.setProperty(loginnotify.name() , Settings.FALSE);
 		config.setProperty(redock.name() , Settings.FALSE);
-		config.setProperty(navigation.name() , Settings.FALSE);
+		config.setProperty(navigation.name() , Settings.TRUE);
 		config.setProperty(email_smtp_server.name(), Settings.DISABLED);
 		config.setProperty(email_smtp_port.name(), "25");
 		config.setProperty(email_username.name(), Settings.DISABLED);
 		config.setProperty(email_password.name(), Settings.DISABLED);
 		config.setProperty(email_from_address.name(), Settings.DISABLED);
 		config.setProperty(email_to_address.name(), Settings.DISABLED);
-		config.setProperty(telnetport.name(), Settings.DISABLED);
+		config.setProperty(telnetport.name(), "4444");
 		config.setProperty(relayserver.name(), Settings.DISABLED);
 		config.setProperty(relayserverauth.name(), Settings.DISABLED);
 
