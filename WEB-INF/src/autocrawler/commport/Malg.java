@@ -2365,5 +2365,12 @@ public class Malg implements jssc.SerialPortEventListener {
 		sendCommand(ODOMETRY_REPORT);
 	}
 
+    public void cameraHorizSet(int h) {
+        if (h != CAM_HORIZ) {
+            settings.writeSettings(GUISettings.camhoriz.name(), h);
+            sendCommand(new byte[] { CAMHORIZSET,  (byte) h }); // writes to eeprom for horiz-on-reset
+            CAM_HORIZ = h;
+        }
+    }
 
 }

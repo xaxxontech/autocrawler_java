@@ -170,7 +170,7 @@ public class Video {
 
                 case camandmic:
 
-                    if (app.player instanceof IServiceCapableConnection && realsensepstring == null) // flash client
+                    if (app.player instanceof IServiceCapableConnection && realsensepstring == null) // TODO: flash client audio
                         return;
 
                     else {                                               // webrtc client

@@ -17,7 +17,7 @@ var default_peer_id; // =777;
                                       // {urls: "stun:stun.l.google.com:19302"}]};
 var rtc_configuration = {iceServers: [{urls: "stun:stun.l.google.com:19302"},
                                       {urls: "turn:"+window.location.hostname+":3478",
-										  username: "oculus",
+										  username: "auto",
 										  credential: "robot"
 										  }]};
 // The default constraints that will be attempted. Can be overriden by the user.
@@ -325,5 +325,5 @@ function createCall(msg) {
 }
 
 function webrtc_log(str) {
-	console.log(str);
+	// console.log(str);
 }

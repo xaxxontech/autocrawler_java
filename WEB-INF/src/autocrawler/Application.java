@@ -88,7 +88,7 @@ public class Application extends MultiThreadedApplicationAdapter {
 		super();
 
 		PowerLogger.append("==============Autocrawler Java Start===============\n", this); // extra newline on end
-		Util.log ("==============Autocrawler Java Start 2===============\n", this); // extra newline on end
+		Util.log ("==============Autocrawler Java Start 3===============\n", this); // extra newline on end
 		Util.log("Linux Version:"+Util.getUbuntuVersion()
 				+", Java Model:"+System.getProperty("sun.arch.data.model")
 				+", Java Arch:"+state.get(values.osarch), this);
@@ -104,8 +104,11 @@ public class Application extends MultiThreadedApplicationAdapter {
 	}
 
 
+	// flash connect
 	@Override
 	public boolean appConnect(IConnection connection, Object[] params) {
+
+	    Util.debug("APPCONNECT from "+connection.getRemoteAddress(), this);
 
 		authtoken = null;
 
@@ -281,7 +284,7 @@ public class Application extends MultiThreadedApplicationAdapter {
 		Util.getLinuxUptime();
 
 		if (settings.readSetting("user0") == null)
-			driverCallServer(PlayerCommands.new_user_add, "autocrawler robot");
+			driverCallServer(PlayerCommands.new_user_add, "auto robot");
 
 		comport = new Malg(this);   // note: blocking
 		powerport = new Power(this); // note: blocking
@@ -1465,13 +1468,15 @@ public class Application extends MultiThreadedApplicationAdapter {
             settings.writeSettings(GUISettings.reversesteeringcomp, comps[8]);
 
             comport.CAM_MAX = Integer.parseInt(comps[9]);
-			comport.CAM_HORIZ = Integer.parseInt(comps[10]);
+//			comport.CAM_HORIZ = Integer.parseInt(comps[10]);
 			comport.CAM_MIN = Integer.parseInt(comps[11]);
 			settings.writeSettings(GUISettings.cammax, comps[9]);
-			settings.writeSettings(GUISettings.camhoriz, comps[10]);
+//			settings.writeSettings(GUISettings.camhoriz, comps[10]);
 			settings.writeSettings(GUISettings.cammin, comps[11]);
 
-			String s = comport.speedslow + " " + comport.speedmed + " " 
+            comport.cameraHorizSet(Integer.parseInt(comps[10]));
+
+            String s = comport.speedslow + " " + comport.speedmed + " "
 					+ comport.nudgedelay + " " + comport.maxclicknudgedelay
 					+ " " + comport.maxclickcam
 					+ " " + comport.fullrotationdelay 

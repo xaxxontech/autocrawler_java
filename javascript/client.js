@@ -1,4 +1,5 @@
-7//TODO: clean out unused 'overlay off' and 'extended settings box' references (in html too) 
+
+//TODO: clean out unused 'overlay off' and 'extended settings box' references (in html too) 
 
 var sentcmdcolor = "#777777";
 var enablekeyboard = false;
@@ -80,18 +81,16 @@ var firstresize = true;
 
 
 function loaded() {
+	oculusPrimeplayerSWF = document.getElementById("oculusPrime_player"); 
+
 	loadwindowpositions();
 	loadrosmapwindowpos();
 		
 	if (clicksteeron) { clicksteer("on"); }
     overlay("on");
     browserwindowresized();
-    // main_window_resize();
-
-	try {	oculusPrimeplayerSWF = document.getElementById("oculusPrime_player"); } 
-	catch { console.log("non flash client"); } 	
 	
-	if (oculusPrimeplayerSWF == null) commClientLoaded();
+	if (oculusPrimeplayerSWF == null) commClientLoaded(); 
 }
 
 function main_window_resize() {
@@ -129,10 +128,8 @@ function main_window_resize() {
 }
 
 function flashloaded() {
-	videologo("on");
+	videologoflash("on");
 	openxmlhttp("rtmpPortRequest",rtmpPortReturned);
-	
-
 }
 
 function openxmlhttp(theurl, functionname) {
@@ -403,6 +400,8 @@ function setstatus(status, value) {
 			// if (value == "camera" || value == "camandmic") videologo("off");
 			// else if (value == "stop" || value == "mic") { videologo("on"); docklinetoggle("off"); }
 			if (value == "stop" || value == "mic") { videologo("on"); docklinetoggle("off"); }
+			else if ( oculusPrimeplayerSWF != null && (value == "camera" || value == "camandmic")) videologo("off");
+
 		}
 
 		a.innerHTML = value;
@@ -1926,6 +1925,7 @@ function loginsend() {
 	
 	if (oculusPrimeplayerSWF == null) commLogin(str1, str2, str3);
 	else { 
+		console.log("attempting oculusPrimeplayerSWF.connect");
 		oculusPrimeplayerSWF.connect(str1+" "+str2+" "+str3+" ");
 		logintimer = setTimeout("window.location.reload()", logintimeout);
 	}
@@ -2072,7 +2072,11 @@ function steeringmouseup(id) {
 }
 
 function videologo(state) {
-	// pass "" as state to reposition only
+	
+	if (oculusPrimeplayerSWF != null) {
+		videologoflash(state);
+		return;
+	}
 	
 	var i = document.getElementById("videologo");
 
@@ -2094,6 +2098,19 @@ function videologo(state) {
     i.style.left = x + "px";
     i.style.top = y + "px";
     
+}
+
+function videologoflash(state) {
+	// pass "" as state to reposition only
+	var i = document.getElementById("videologo");
+    var video = document.getElementById("video");
+    var xy = findpos(video);
+	if (state=="on") { i.style.display = ""; }
+	if (state=="off") { i.style.display = "none"; }
+    var x = xy[0] + (video.offsetWidth/2) - (i.width/2);
+    var y = xy[1] + (video.offsetHeight/2) - (i.height/2);
+    i.style.left = x + "px";
+    i.style.top = y + "px";
 }
 
 function docklinecalibrate(str) {
