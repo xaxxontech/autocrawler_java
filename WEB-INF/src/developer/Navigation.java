@@ -199,20 +199,23 @@ public class Navigation implements Observer {
                 state.get(State.values.navsystemstatus).equals(Ros.navsystemstate.stopping.toString()) )
             return;
 
+        if (!state.get(values.navsystemstatus).equals(Ros.navsystemstate.mapping.toString()))
+            app.video.killrealsense();
+
+        // TODO: why? routes?
+        if (!state.get(values.stream).equals(Application.streamstate.stop.toString())
+                && !state.get(values.navsystemstatus).equals(Ros.navsystemstate.mapping.toString()))
+            app.driverCallServer(PlayerCommands.publish, Application.streamstate.stop.toString());
 
         state.set(State.values.navsystemstatus, Ros.navsystemstate.stopped.toString());
         Util.log("stopping navigation", this);
         app.driverCallServer(PlayerCommands.messageclients, "navigation stopped");
 
-        if (!state.get(values.navsystemstatus).equals(Ros.navsystemstate.mapping.toString()))
-            app.video.killrealsense();
+
 
         Ros.roscommand("rosnode kill /remote_nav");
         Ros.roscommand("rosnode kill /map_remote");
 
-        if (!state.get(values.stream).equals(Application.streamstate.stop.toString())
-                && !state.get(values.navsystemstatus).equals(Ros.navsystemstate.mapping.toString()))
-            app.driverCallServer(PlayerCommands.publish, Application.streamstate.stop.toString());
 	}
 
 

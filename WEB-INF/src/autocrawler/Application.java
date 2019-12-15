@@ -108,8 +108,6 @@ public class Application extends MultiThreadedApplicationAdapter {
 	@Override
 	public boolean appConnect(IConnection connection, Object[] params) {
 
-	    Util.debug("APPCONNECT from "+connection.getRemoteAddress(), this);
-
 		authtoken = null;
 
 // TODO: testing avconv/ffmpeg stream accept all non-auth LAN connections
