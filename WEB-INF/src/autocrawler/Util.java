@@ -273,9 +273,8 @@ public class Util {
 		if(str == null) return;
 		String filter = "static";
 		if(c!=null) filter = c.getClass().getName();
-
-			System.out.println("DEBUG: " + getTime() + ", " + filter +  ", " +str);
-//			history.add(System.currentTimeMillis() + ", " +str);
+		if (filter.equals("java.lang.String")) filter = (String) c;
+        System.out.println("DEBUG: " + getTime() + ", " + filter +  ", " +str);
 	}
 
 	public static String memory() {

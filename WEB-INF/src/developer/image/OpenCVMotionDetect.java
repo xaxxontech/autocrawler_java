@@ -46,6 +46,8 @@ public class OpenCVMotionDetect  {
         state.delete(State.values.streamactivity);
         state.set(State.values.motiondetect, true);
 
+        app.driverCallServer(PlayerCommands.messageclients, "motion detection enabled");
+
         new Thread(new Runnable() {
             public void run() {
                 BackgroundSubtractorMOG2 mog = new BackgroundSubtractorMOG2(0, 512, false);
@@ -136,6 +138,8 @@ public class OpenCVMotionDetect  {
                 if (bl != null) bl.release();
                 m.release();
                 state.set(State.values.motiondetect, false);
+                app.driverCallServer(PlayerCommands.messageclients, "motion detection disabled");
+
             }
         }).start();
 

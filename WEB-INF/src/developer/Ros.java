@@ -22,8 +22,6 @@ public class Ros {
 		stopped, starting, running, mapping, stopping
 	}
 
-	;
-
 	public static final long ROSSHUTDOWNDELAY = 2000; // was 15000
 
 	public static final String REMOTE_NAV = "remote_nav"; // nav launch file 
@@ -182,7 +180,7 @@ public class Ros {
 		}
 
 		if (state.exists(State.values.lidar))
-			str += " " + State.values.lidar.toString() + "_" + state.get(State.values.lidar);
+			str += " " + State.values.lidar.toString() + "_true";
 
 		return str;
 	}
@@ -199,8 +197,10 @@ public class Ros {
         ProcessBuilder processBuilder = new ProcessBuilder();
 
 		args.set(0, args.get(0)+".launch");
+		args.add(0, ROSPACKAGE); // 3rd
+		args.add(0, "roslaunch"); // 2nd
 
-		// return string should be file.launch + args
+        // return string should be file.launch + args
         String pstring = "";
         int i = 0; // skip 0: 'ros.sh'
         while (i < args.size()) {
@@ -209,8 +209,6 @@ public class Ros {
         }
         pstring = pstring.trim();
 
-		args.add(0, ROSPACKAGE); // 3rd
-		args.add(0, "roslaunch"); // 2nd
 		args.add(0, Settings.redhome + Util.sep + "ros.sh"); // 1st
 		processBuilder.command(args);
 
@@ -241,7 +239,8 @@ public class Ros {
 
         items.add("pkill");
         items.add("-f");
-        items.add("roslaunch "+ROSPACKAGE+" "+str);
+//        items.add("roslaunch "+ROSPACKAGE+" "+str);
+        items.add(str);
         Util.debug(items.get(2), "Ros.killlaunch()");
 
         ProcessBuilder processBuilder = new ProcessBuilder();
@@ -256,7 +255,7 @@ public class Ros {
 		String cmd = Settings.redhome + Util.sep + "ros.sh"; // setup ros environment
 		cmd += " " + str;
 		Util.systemCall(cmd);
-	}
+    }
 
 //	public static Process roscommand(String str) {
 //		ProcessBuilder pb = new ProcessBuilder();

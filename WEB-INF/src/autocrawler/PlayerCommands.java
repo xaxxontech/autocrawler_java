@@ -7,6 +7,8 @@ public enum PlayerCommands {
 	relayconnect, relaydisable,
     // not typically used by scripts, undocumented:
     softwareupdate, relaydisconnect,
+    // undocumented
+    clientjs,
 
 	// operating system
     reboot, systemshutdown, memory, systemcall, setsystemvolume, cpu, waitforcpu, 

@@ -35,15 +35,20 @@ var mapshowwaypoints = true;
 var routesxml = null;
 var temproutesxml;
 var navmenuinit = false;
-// var navrouteavailableactions = ["rotate", "email", "rss", "photo", "record video",
-	// "motion", "sound", "human", "not detect" ];
-// var navrouteactiondescriptions = ["rotate in place 45 degrees at a time, at least 1 full rotation", 
-	// "send email alert if action detected",
-	// "post new item to RSS feed if action detected",
-	// "record video and audio to local file",
-	// "take photo at waypoint and post to navigation log",
-	// "detect motion", "detect loud noise", "detect human", 
-	// "alert only if action NOT detected"];
+
+/* // record removed until recording solved
+var navrouteavailableactions = ["rotate", "email", "rss", "photo", "record video",
+	"motion", "sound", "human", "not detect" ];
+var navrouteactiondescriptions = ["rotate in place 45 degrees at a time, at least 1 full rotation", 
+	"send email alert if action detected",
+	"post new item to RSS feed if action detected",
+	"record video and audio to local file",
+	"take photo at waypoint and post to navigation log",
+	"detect motion", "detect loud noise", "detect human", 
+	"alert only if action NOT detected"];
+*/
+
+// same as above, without record	
 var navrouteavailableactions = ["rotate", "email", "rss", "photo",
 	"motion", "sound", "human", "not detect" ];
 var navrouteactiondescriptions = ["rotate in place 45 degrees at a time, at least 1 full rotation", 
@@ -52,10 +57,12 @@ var navrouteactiondescriptions = ["rotate in place 45 degrees at a time, at leas
 	"take photo at waypoint and post to navigation log",
 	"detect motion", "detect loud noise", "detect human", 
 	"alert only if action NOT detected"];
+
+
 var activeroute = null;
 var navsystemstatustext;
 var goalreachalert = false;
-var lidar = true;
+var lidar = false;
 
 function navigationmenu() {
 	if (navmenuinit) {
@@ -256,8 +263,8 @@ function rosinfo() {
 						secondstonextroute = ss[1];
 						break;
 						
-					// case "lidar":
-						// lidar = (ss[1] == 'true');
+					case "lidar":
+						lidar = (ss[1] == 'true');
 				
 				}
 			}
@@ -1482,15 +1489,16 @@ function waypointactionaddnew(routenum, waypointnum, id) {
 			waypointDeleteAnyActionsNamed(waypoint, "rotate");
 			waypointDeleteAnyActionsNamed(waypoint, "human");
 			waypointDeleteAnyActionsNamed(waypoint, "motion");
-			waypointDeleteAnyActionsNamed(waypoint, "sound");
 		}
 		else if (actiontext == "rotate") {
 			waypointDeleteAnyActionsNamed(waypoint, "not detect");
 			waypointDeleteAnyActionsNamed(waypoint, "photo");
+			if (lidar) 
+				waypointDeleteAnyActionsNamed(waypoint, "sound");
 		}
 		else if (actiontext == "sound") {
-			 waypointDeleteAnyActionsNamed(waypoint, "record video");
-			 waypointDeleteAnyActionsNamed(waypoint, "photo");
+			waypointDeleteAnyActionsNamed(waypoint, "record video");
+			if (lidar) waypointDeleteAnyActionsNamed(waypoint, "rotate");
 		 }
 			 
 		else if (actiontext == "record video")  waypointDeleteAnyActionsNamed(waypoint, "sound");

@@ -8,8 +8,8 @@
  */
 
 // Set this to override the automatic detection in websocketServerConnect()
-var ws_server="xaxxon.com";
-var ws_port;
+var ws_server; // default window.location.hostname
+var ws_port; // default 8443
 // Set this to use a specific peer id instead of a random one
 var default_peer_id; // =777;
 // Override with your own STUN servers if you want
@@ -196,8 +196,10 @@ function websocketServerConnect() {
 	
     connect_attempts++;
     if (connect_attempts > 3) {
+        var link = "https://"+window.location.hostname+":"+ws_port;
+        message("Try adding exception for certificate? <a href='"+link+"' target='_blank'><u>"+link+"</u></a>", "orange");
         setError("Too many connection attempts, aborting. Refresh page to try again");
-        message("No connection to signalling server at "+ws_server, "red");
+        message("No connection to webrtc signalling server at "+ws_server, "red");
         ws_conn_close_forever = true;
         return;
     }
@@ -217,6 +219,8 @@ function websocketServerConnect() {
         ws_server = ws_server || "127.0.0.1";
     } else if (window.location.protocol.startsWith ("http")) {
         ws_server = ws_server || window.location.hostname;
+        if (ws_server == "localhost" || ws_server == "127.0.0.1") {
+			ws_server = window.location.hostname; }
     } else {
         throw new Error ("Don't know how to connect to the signalling server with uri" + window.location);
     }

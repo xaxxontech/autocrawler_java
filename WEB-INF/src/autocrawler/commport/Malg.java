@@ -671,7 +671,9 @@ public class Malg implements jssc.SerialPortEventListener {
 	 *
 	 */
 	public void goForward(final int delay) {
-		
+
+		if (!state.getBoolean(State.values.motionenabled) && state.getBoolean(State.values.controlsinverted)) return;
+
 		final long moveID = System.nanoTime();
 		currentMoveID = moveID;
 		
@@ -891,7 +893,8 @@ public class Malg implements jssc.SerialPortEventListener {
 	
 	public void goBackward() {
 
-		if (state.get(State.values.dockstatus).equals(AutoDock.DOCKED) && !state.getBoolean(State.values.controlsinverted)) return;
+//		if (state.get(State.values.dockstatus).equals(AutoDock.DOCKED) && !state.getBoolean(State.values.controlsinverted)) return;
+		if (!state.getBoolean(State.values.motionenabled) && !state.getBoolean(State.values.controlsinverted)) return;
 
 		final long moveID = System.nanoTime();
 		currentMoveID = moveID;
@@ -1012,7 +1015,9 @@ public class Malg implements jssc.SerialPortEventListener {
 
 //		Util.debug("turnRight, current dir="+state.get(State.values.direction), this);
 
-		if (state.get(State.values.dockstatus).equals(AutoDock.DOCKED)) return;
+//		if (state.get(State.values.dockstatus).equals(AutoDock.DOCKED)) return;
+		if (!state.getBoolean(State.values.motionenabled)) return;
+
 
 		currentMoveID = moveID;
 
@@ -1152,7 +1157,8 @@ public class Malg implements jssc.SerialPortEventListener {
 
 //		Util.debug("turnLeft, current dir="+state.get(State.values.direction), this);
 
-		if (state.get(State.values.dockstatus).equals(AutoDock.DOCKED)) return;
+//		if (state.get(State.values.dockstatus).equals(AutoDock.DOCKED)) return;
+		if (!state.getBoolean(State.values.motionenabled)) return;
 
 		currentMoveID = moveID;
 
@@ -1596,11 +1602,6 @@ public class Malg implements jssc.SerialPortEventListener {
 	
 
 	public void camtilt(int position) {
-        if (!state.get(State.values.navsystemstatus).equals(Ros.navsystemstate.stopped.toString())) {
-            application.driverCallServer(PlayerCommands.messageclients, "camera tilt disabled, realsense depth cam running");
-            return;
-        }
-
         camTargetPosition=position;
 	}
 

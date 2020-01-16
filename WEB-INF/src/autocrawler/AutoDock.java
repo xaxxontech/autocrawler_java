@@ -48,7 +48,7 @@ public class AutoDock {
     private final int FLCALIBRATE = 2;
     private volatile boolean autodocknavrunning = false;
     private boolean odometrywasrunning = false;
-    public static final long DOCKGRABDELAY = 200;
+    public static final long DOCKGRABDELAY = 400;
 
     public AutoDock(Application theapp, Malg com, Power powercom) {
         this.app = theapp;
@@ -156,13 +156,13 @@ public class AutoDock {
 						if (state.getInteger(State.values.floodlightlevel) > FLLOW)
 							app.driverCallServer(PlayerCommands.floodlight, Integer.toString(FLLOW));
 
-						if (Math.abs(baselinkangle) >= 1.3) { // need to ctr dock in view
+						if (Math.abs(baselinkangle) >= 1.5) { // need to ctr dock in view TODO: sometimes hangs here, trying 1.5 (was 1.3)
                             Util.debug("0.55-0, rotate", this);
                             autoDockRotate(baselinkangle);
                         } else {
                             if (Math.abs(targetpitch) < 6) { // go for final dock
                                 Util.debug("go dock", this);
-                                autoDockForward(baselinkdistance - 0.30);
+                                autoDockForward(baselinkdistance - 0.25);
                                 dock();
                                 // check if success
                                 return;
@@ -245,8 +245,8 @@ public class AutoDock {
             Util.delay(10);
 
         if (state.exists(State.values.lightlevel)) {
-            if (state.getInteger(State.values.lightlevel) < 15) { // was 25, bit too bright
-                app.driverCallServer(PlayerCommands.floodlight, Integer.toString(FLHIGH)); // light on
+            if (state.getInteger(State.values.lightlevel) < 20) { // was 25, bit too bright, tried 15, bit too dark
+                    app.driverCallServer(PlayerCommands.floodlight, Integer.toString(FLHIGH)); // light on
                 Util.delay(2000);  // initial wait for dock found
             }
         }
@@ -254,16 +254,23 @@ public class AutoDock {
     }
 
 	private void autoDockTurn(Malg.direction dir, double angle) { // blocking, non-progressive turn
-		comport.rotate(dir, angle);
+        if (!state.getBoolean(State.values.odometry))
+            app.driverCallServer(PlayerCommands.odometrystart, null);
+
+        comport.rotate(dir, angle);
 		Util.delay(100);
 		state.block(State.values.direction, Malg.direction.stop.toString(), 10000);
 		Util.delay(Malg.TURNING_STOP_DELAY+DOCKGRABDELAY);
 	}
 
 	private void autoDockRotate(double angle) { // blocking, progressive turn
+        Util.debug("autoDockRotate(): "+angle, this);
+
 	    if (Math.abs(angle) <1.0) return;
-	    
-		Util.debug("autoDockRotate(): "+angle, this);
+
+        if (!state.getBoolean(State.values.odometry))
+            app.driverCallServer(PlayerCommands.odometrystart, null);
+
         state.set(State.values.odomrotating, Settings.FALSE);
         comport.rotate(angle);
         state.block(State.values.odomrotating, Settings.FALSE, 10000);
@@ -272,6 +279,10 @@ public class AutoDock {
 
     private void autoDockForward(double distance) { // blocking
 		Util.debug("autoDockForward(): "+distance, this);
+
+        if (!state.getBoolean(State.values.odometry))
+            app.driverCallServer(PlayerCommands.odometrystart, null);
+
         comport.movedistance(Malg.direction.forward,  distance);
         Util.delay((long) (distance / state.getDouble(State.values.odomlinearmpms.toString())));
         state.block(State.values.direction, Malg.direction.stop.toString(), 10000);
@@ -712,16 +723,17 @@ public class AutoDock {
 					}
 					
 					BufferedImage img = null;
-					if (Application.framegrabimg != null) {
-
-						// convert bytes to image
-						ByteArrayInputStream in = new ByteArrayInputStream(Application.framegrabimg);
-						img = ImageIO.read(in);
-						in.close();
+//					if (Application.framegrabimg != null) {
+//
+//						// convert bytes to image
+//						ByteArrayInputStream in = new ByteArrayInputStream(Application.framegrabimg);
+//						img = ImageIO.read(in);
+//						in.close();
+//
+//					}
 						
-					}
-						
-					else if (Application.processedImage != null) {
+//					else
+                    if (Application.processedImage != null) {
 						img = Application.processedImage;
 					}
 					
@@ -794,21 +806,21 @@ public class AutoDock {
 				}
 
 				BufferedImage img = null;
-				if (Application.framegrabimg != null) { // TODO: unused?
+//				if (Application.framegrabimg != null) { // TODO: unused?
+//
+//					ByteArrayInputStream in = new ByteArrayInputStream(Application.framegrabimg);
+//
+//					try {
+//						img = ImageIO.read(in);
+//						in.close();
+//					} catch (IOException e) {
+//						e.printStackTrace();
+//					}
+//
+//				}
 
-					// convert bytes to image
-					ByteArrayInputStream in = new ByteArrayInputStream(Application.framegrabimg);
-
-					try {
-						img = ImageIO.read(in);
-						in.close();
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-
-				}
-
-				else if (Application.processedImage != null) {
+//				else
+                if (Application.processedImage != null) {
 					img = Application.processedImage;
 				}
 

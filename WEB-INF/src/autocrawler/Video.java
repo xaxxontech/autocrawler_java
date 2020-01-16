@@ -2,6 +2,7 @@ package autocrawler;
 
 
 import developer.Ros;
+import developer.image.ImageUtils;
 import org.red5.server.api.IConnection;
 import org.red5.server.api.service.IServiceCapableConnection;
 import org.red5.server.stream.ClientBroadcastStream;
@@ -12,6 +13,7 @@ import java.awt.image.BufferedImage;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 
 @SuppressWarnings("MagicConstant")
@@ -47,15 +49,15 @@ public class Video {
     public String realsensepstring = null;
     private String webrtcpstring = null;
     private volatile long lastvideocommand = 0;
+    private Settings settings = Settings.getReference();
 
     public Video(Application a) {
         app = a;
-        port = Settings.getReference().readRed5Setting("rtmp.port");
+        port = settings.readRed5Setting("rtmp.port");
         ubuntuVersion = Util.getUbuntuVersion();
         setAudioDevice();
         setDockCamVideoDevice();
 
-        Settings settings = Settings.getReference();
         String vals[] = settings.readSetting(settings.readSetting(GUISettings.vset)).split("_");
         lastwidth = Integer.parseInt(vals[0]);
         lastheight = Integer.parseInt(vals[1]);
@@ -150,7 +152,7 @@ public class Video {
                 case camera:
 
                     if (app.player instanceof IServiceCapableConnection && realsensepstring == null) // flash client
-                        realsensepstring = Ros.launch("rgbpublish");
+                        realsensepstring = Ros.launch("rgbpublish"); // TODO: assign rtmp port as param
 
                     else  {                                                                     // webrtc client
                         if (realsensepstring == null) {
@@ -161,6 +163,8 @@ public class Video {
                         if (state.exists(values.driverclientid)) {
                             webrtcpstring = Ros.launch(new ArrayList<String>(Arrays.asList("rgbwebrtc",
                                 "peerid:=" + state.get(values.driverclientid),
+                                "webrtcserver:=wss://"+settings.readSetting(ManualSettings.webrtcserver)+":"
+                                        +settings.readSetting(ManualSettings.webrtcport),
                                 "videowidth:=" + lastwidth, "videoheight:=" + lastheight, "videobitrate:=" + lastbitrate)));
                         }
                     }
@@ -182,6 +186,8 @@ public class Video {
                         if (state.exists(values.driverclientid)) {
                             webrtcpstring = Ros.launch(new ArrayList<String>(Arrays.asList("rgbwebrtc",
                                 "peerid:=" + state.get(values.driverclientid),
+                                "webrtcserver:=wss://"+settings.readSetting(ManualSettings.webrtcserver)+":"
+                                        +settings.readSetting(ManualSettings.webrtcport),
                                 "audiodevice:=--audio-device=" + adevicenum,
                                 "videowidth:=" + lastwidth, "videoheight:=" + lastheight, "videobitrate:=" + lastbitrate)));
                         }
@@ -190,18 +196,52 @@ public class Video {
 //                    Util.delay(STREAM_CONNECT_DELAY);
                     break;
 
-                /*
+
                 case mic:
-                    try {
-                        Process p = new ProcessBuilder("sh", "-c",
-                            avprog+" -re -f alsa -ac 1 -ar 22050 " +
-                            "-i hw:" + adevicenum + " -f flv rtmp://" + host + ":" +
-                            port + "/autocrawler/"+STREAM1+ " >/dev/null 2>&1").start();
-                    } catch (Exception e){ Util.printError(e);}
-                    // avconv -re -f alsa -ac 1 -ar 22050 -i hw:1 -f flv rtmp://127.0.0.1:1935/autocrawler/stream1
-                    app.driverCallServer(PlayerCommands.streammode, mode.toString());
+                    if (app.player instanceof IServiceCapableConnection && realsensepstring == null) // TODO: flash client audio
+                        return;
+
+                    else {
+                        if (state.exists(values.driverclientid)) {
+
+                            ProcessBuilder processBuilder = new ProcessBuilder();
+
+                            webrtcpstring = "micwebrtc";
+                            String cmd = Settings.redhome+"/"+Settings.appsubdir+"/micwebrtc"+
+                                " --peer-id=" + state.get(values.driverclientid)+
+                                " --audio-device=" + adevicenum+
+                                " --server=wss://"+settings.readSetting(ManualSettings.webrtcserver)+":"
+                                    +settings.readSetting(ManualSettings.webrtcport);
+
+                            List <String> args = new ArrayList<>();
+                            String[] array = cmd.split(" ");
+                            for (String t : array) args.add(t);
+                            processBuilder.command(args);
+
+                            try{
+                                int attempts = 0;
+                                while (attempts<10) {
+                                    Util.debug("mic webrtc signalling server attempt #"+attempts, this);
+                                    Process proc = processBuilder.start();
+                                    int exitcode = (proc.waitFor());
+                                    if (exitcode == 0) break;
+                                    else {
+                                        Util.debug("micwebrtc exit code: "+exitcode, this);
+                                        if (!state.get(values.stream).equals(Application.streamstate.mic.toString()))
+                                            break;
+                                    }
+                                    attempts ++;
+                                }
+                                if (attempts == 10)
+                                    app.driverCallServer(PlayerCommands.messageclients, "mic webrtc failed to start");
+
+                            } catch (Exception e) { e.printStackTrace(); }
+
+                        }
+                    }
+
                     break;
-                */
+
 
                 case stop:
                     if (state.getBoolean(values.dockcamon)) {
@@ -232,11 +272,12 @@ public class Video {
 
     public void framegrab(final String res) {
 
-        state.set(State.values.framegrabbusy.name(), true);
+        state.set(State.values.framegrabbusy, true);
 
         lastframegrab = System.currentTimeMillis();
 
         new Thread(new Runnable() { public void run() {
+
 
             // resolution check: set to same as main stream params as default
             int width = lastwidth;
@@ -294,7 +335,9 @@ public class Video {
                         int i=0;
                         for (int y=0; y< lastheight; y++) {
                             for (int x=0; x<lastwidth; x++) {
-                                int argb = (bArray[i]<<16) + (bArray[i+1]<<8) + bArray[i+2];
+                                int argb;
+                                argb = (bArray[i]<<16) + (bArray[i+1]<<8) + bArray[i+2];
+
                                 app.processedImage.setRGB(x, y, argb);
                                 i += 3;
                             }
@@ -314,26 +357,35 @@ public class Video {
         } }).start();
     }
 
-    private void dumpframegrabs(final String res) {
+    public void dumpframegrabs(final String res) {
 
-        // set to same as main stream params as default
-        int width = lastwidth;
-        int height = lastheight;
-
-        // set lower resolution if required
-        if (res.equals(AutoDock.LOWRES)) {
-            width=lowreswidth;
-            height=lowresheight;
-        }
-
-        state.set(State.values.writingframegrabs, width);
-
-        // run ros node
-        String topic = "camera/color/image_raw";
-        if (state.getBoolean(values.dockcamon)) topic = "usb_cam/image_raw";
-        Ros.roscommand("rosrun "+Ros.ROSPACKAGE+" image_to_shm.py _camera_topic:="+topic);
 
         new Thread(new Runnable() { public void run() {
+
+            if (state.exists(values.writingframegrabs)) {
+                forceShutdownFrameGrabs();
+                Util.delay(STREAM_CONNECT_DELAY); // allow ros node time to exit
+            }
+
+            // set to same as main stream params as default
+            int width = lastwidth;
+            int height = lastheight;
+
+            // set lower resolution if required
+            if (res.equals(AutoDock.LOWRES)) {
+                width=lowreswidth;
+                height=lowresheight;
+            }
+
+            if (state.exists(values.writingframegrabs)) return; // just in case
+
+            state.set(State.values.writingframegrabs, width);
+
+            // run ros node
+            String topic = "camera/color/image_raw";
+//            if (state.getBoolean(values.dockcamon)) topic = "fiducial_images";
+            if (state.getBoolean(values.dockcamon)) topic = "usb_cam/image_raw";
+            Ros.roscommand("rosrun "+Ros.ROSPACKAGE+" image_to_shm.py _camera_topic:="+topic);
 
             while(state.exists(State.values.writingframegrabs)
                     && System.currentTimeMillis() - lastframegrab < Util.ONE_MINUTE) {
@@ -400,7 +452,7 @@ public class Video {
                         break;
 
                     case camandmic:
-                        if (!Settings.getReference().getBoolean(ManualSettings.useflash)) {
+                        if (!settings.getBoolean(ManualSettings.useflash)) {
                             ClientBroadcastStream audiostream = (ClientBroadcastStream) app.getBroadcastStream(conn.getScope(), STREAM2);
                             app.messageplayer("recording to: " + urlString+streamName + AUDIO + FMTEXT,
                                     State.values.record.toString(), state.get(State.values.record));
@@ -438,7 +490,7 @@ public class Video {
             switch((Application.streamstate.valueOf(state.get(State.values.stream)))) {
 
                 case camandmic:
-                    if (!Settings.getReference().getBoolean(ManualSettings.useflash)) {
+                    if (!settings.getBoolean(ManualSettings.useflash)) {
                         ClientBroadcastStream audiostream = (ClientBroadcastStream) app.getBroadcastStream(conn.getScope(), STREAM2);
 //                        app.driverCallServer(PlayerCommands.messageclients, "2nd audio recording stopped");
                         audiostream.stopRecording();
@@ -557,7 +609,7 @@ public class Video {
                     return;
                 }
 
-                if (voldB > Settings.getReference().getDouble(ManualSettings.soundthresholdalt) && state.getBoolean(State.values.sounddetect)) {
+                if (voldB > settings.getDouble(ManualSettings.soundmaxthreshold) && state.getBoolean(State.values.sounddetect)) {
                     state.set(State.values.streamactivity, "audio " + voldB+"dB");
                     state.set(State.values.sounddetect, false);
                     app.driverCallServer(PlayerCommands.messageclients, "sound detected: "+ voldB+"dB");
@@ -573,8 +625,76 @@ public class Video {
 
         } }).start();
 
+    }
+
+    public void sounddetectgst(String mode) {
+
+        if (!state.exists(State.values.sounddetect)) state.set(State.values.sounddetect, false);
+
+
+        // mode = false
+        if (mode.toLowerCase().equals(Settings.FALSE)) {
+            if (!state.getBoolean(State.values.sounddetect)) {
+                app.driverCallServer(PlayerCommands.messageclients, "sound detection not running, command dropped");
+            } else {
+                state.set(State.values.sounddetect, false);
+                app.driverCallServer(PlayerCommands.messageclients, "sound detection cancelled");
+            }
+            return;
+        }
+
+
+        // mode = true
+
+        if (state.get(values.stream).equals(Application.streamstate.camandmic.toString())  ||
+                state.get(values.stream).equals(Application.streamstate.mic.toString()) ) {
+            app.driverCallServer(PlayerCommands.messageclients, "mic already running, command dropped");
+            return;
+        }
+
+        app.driverCallServer(PlayerCommands.messageclients, "sound detection enabled");
+
+        state.set(State.values.sounddetect, true);
+        state.delete(State.values.streamactivity);
+
+        new Thread(new Runnable() { public void run() {
+
+            long timeout = System.currentTimeMillis() + Util.ONE_HOUR;
+
+            ProcessBuilder processBuilder = new ProcessBuilder();
+
+            String cmd = Settings.redhome+"/"+Settings.appsubdir+"/sounddetect "+ adevicenum;
+
+            List <String> args = new ArrayList<>();;
+            String[] array = cmd.split(" ");
+            for (String t : array) args.add(t);
+            processBuilder.command(args);
+
+            try {
+                Process proc = processBuilder.start();
+
+                BufferedReader reader = new BufferedReader(new InputStreamReader(proc.getInputStream()));
+
+                String line = reader.readLine(); // skip 1st line
+                while ((line = reader.readLine()) != null && state.getBoolean(State.values.sounddetect)) {
+                    double voldB = Double.parseDouble(line);
+                    Util.debug("soundlevel: "+voldB, this);
+                    if (Double.parseDouble(line) > settings.getDouble(ManualSettings.soundmaxthreshold)) {
+                        state.set(State.values.streamactivity, "audio " + voldB+"dB");
+                        app.driverCallServer(PlayerCommands.messageclients, "sound detected: "+ voldB+" dB");
+                        break;
+                    }
+                }
+
+                state.set(State.values.sounddetect, false);
+                proc.destroy();
+
+            } catch (Exception e) { e.printStackTrace(); }
+
+        } }).start();
 
     }
+
 
     public void dockcam(String str) {
 
@@ -618,18 +738,25 @@ public class Video {
 
                     webrtcpstring = Ros.launch(new ArrayList<String>(Arrays.asList("dockwebrtc",
                         "peerid:="+peerid,
+                        "webrtcserver:=wss://"+settings.readSetting(ManualSettings.webrtcserver)+":"
+                                +settings.readSetting(ManualSettings.webrtcport),
                         "dockdevice:=/dev/video" + dockcamdevicenum)));
 
                 }
 
                 state.set(State.values.controlsinverted, true);
 
+//                if (state.exists(State.values.driver))
+//                    app.driverCallServer(PlayerCommands.clientjs, "depthView dock");
 
             } }).start();
 
         }
         else if ( (str.equalsIgnoreCase(Settings.OFF) || str.equalsIgnoreCase(Settings.DISABLED)) &&
                 state.getBoolean(values.dockcamon)) { // turn off
+
+            if (state.exists(State.values.driver))
+                app.driverCallServer(PlayerCommands.clientjs, "dockview off");
 
             state.set(values.dockcamon, false);
             state.delete(values.dockcamready);
@@ -638,8 +765,11 @@ public class Video {
             app.driverCallServer(PlayerCommands.streammode, Application.streamstate.stop.toString());
             killwebrtc();
 
+            forceShutdownFrameGrabs();
+
         }
     }
+
 
     public void killrealsense() {
         if (realsensepstring != null && !state.get(State.values.navsystemstatus).equals(Ros.navsystemstate.running.toString())) {
@@ -647,6 +777,7 @@ public class Video {
             realsensepstring = null;
         }
     }
+
 
     private void killwebrtc() {
         if (webrtcpstring != null) {

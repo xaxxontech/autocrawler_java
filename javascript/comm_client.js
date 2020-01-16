@@ -67,7 +67,8 @@ function msgReceived(xhr) {
 				return;
 			}
 			
-			if (!webrtcinit) {
+			// if (!webrtcinit) {
+			if (!webrtcinit && ws_server) {
 				webrtcinit = true;
 				websocketServerConnect(); // webrtc.js
 			}
@@ -80,12 +81,14 @@ function msgReceived(xhr) {
 			else if (msg.hasOwnProperty('fn')) {
 				comm_client_log(msg.params);
 				// var params = msg.params.replace(/"/g, "&quot;");
-				var params = msg.params.replace(/"/g, "'");
-				params = params.replace("\n"," ");
-				// var params = msg.params.replace("\n"," ");
+				if (msg.params) {
+					var params = msg.params.replace(/"/g, "'");
+					params = params.replace("\n"," ");
+					// var params = msg.params.replace("\n"," ");
 
-				comm_client_log(msg.fn+"(\""+params+"\")");
-				eval(msg.fn+"(\""+params+"\")");
+					comm_client_log(msg.fn+"(\""+params+"\")");
+					eval(msg.fn+"(\""+params+"\")");
+				}
 			}
 			
 			checkForMsg();

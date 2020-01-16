@@ -219,12 +219,12 @@ public class CommServlet extends HttpServlet {
 
     public static void sendToClientFunction(String fn, String params) {
 
-		Util.debug(params, "sendToClientFunction");
-
 		JSONObject obj = new JSONObject();
 		obj.put("fn", fn);
 		obj.put("params", params);
 		String msg = obj.toJSONString();
+
+        Util.debug("sendToClientFunction: "+msg, "CommServlet.sendToClientFunction()");
 
 		if (!state.exists(State.values.driver)) {
 			logdebug("no driver, dropped: sendToClientFunction: " + msg, "CommServlet.sendToClientFunction()");

@@ -399,7 +399,7 @@ function setstatus(status, value) {
 			value = s[0];
 			// if (value == "camera" || value == "camandmic") videologo("off");
 			// else if (value == "stop" || value == "mic") { videologo("on"); docklinetoggle("off"); }
-			if (value == "stop" || value == "mic") { videologo("on"); docklinetoggle("off"); }
+			if (value == "stop" || value == "mic") { videologo("on"); } // docklinetoggle("off"); }
 			else if ( oculusPrimeplayerSWF != null && (value == "camera" || value == "camandmic")) videologo("off");
 
 		}
@@ -528,6 +528,8 @@ function setstatus(status, value) {
 		browserwindowresized();
 		main_window_resize();
 	}
+	else if (status=="webrtcserver") { ws_server = value; } // webrtc.js
+	else if (status=="webrtcport") { ws_port = value; } // webrtc.js
 		 
 }
 
@@ -1190,6 +1192,8 @@ function autodock(str) {
 		autodocking = true;
 	    var str = "Auto Dock: <table><tr><td style='height: 7px'></td></tr></table>";
 	    str+="in progress... stand by"
+		str+="<table><tr><td style='height: 11px'></td></tr></table>";
+		str+="<a href='javascript: dockview();'>show raw video</a>";
 		str+="<table><tr><td style='height: 11px'></td></tr></table>";
 	    str+="<a href='javascript: autodock(&quot;cancel&quot;);'>"
 	    str+= "<span class='cancelbox'><b>X</b></span> CANCEL</a><br>"
@@ -2783,6 +2787,7 @@ function depthView(mode) {
 		    w=640; h=360;
 		}
 		else if (mode=="stereotop") { w=435; h=320; }
+		else if (mode=="dock") { w=640; h=480; }
 		var v = document.getElementById("video");
 		var xy = findpos(v);
 		var x = xy[0]+v.offsetWidth;
@@ -2839,4 +2844,11 @@ function imgOverVideoReload() {
 	var img = document.getElementById("videologo");
 	img.src = "frameGrabHTTP?mode=videoOverlayImg&date=" + new Date().getTime();
 	img.onload = function() { imgOverVideoRepeat(); }
+}
+
+function dockview(mode) {
+	if (mode=="off")
+		depthView("off");
+	else
+		depthView("dock");
 }

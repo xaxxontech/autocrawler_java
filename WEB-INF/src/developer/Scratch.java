@@ -38,6 +38,7 @@ public class Scratch {
     public static void main(String[] args) {
 //        new Scratch().regexp();
 
+        String[] asdf = "zork blorl".split(" ");
 
         try {
             ProcessBuilder p = new ProcessBuilder("xcalc");

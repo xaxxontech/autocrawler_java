@@ -58,7 +58,7 @@ public class FrameGrabHTTP extends HttpServlet {
 		}
 
         if (req.getParameter("mode") != null) {
-        	final String mode = req.getParameter("mode");
+        	String mode = req.getParameter("mode");
             
             if (mode.equals("radar"))  radarGrab(req,res);     
             else if (mode.equals("battery")) batteryGrab(req, res);
@@ -131,8 +131,11 @@ public class FrameGrabHTTP extends HttpServlet {
 				part.write(save.getAbsolutePath());
 				app.message("map saved as: " + save.getAbsolutePath(), null, null);
 			}
+			else if (mode.equals("dock")) dockFrameGrab(req, res);
         }
-		else { frameGrab(req, res); }
+		else {
+		    frameGrab(req, res);
+		}
 	}
 	
 	private void frameGrab(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
@@ -140,8 +143,11 @@ public class FrameGrabHTTP extends HttpServlet {
 		res.setContentType("image/jpeg");
 		OutputStream out = res.getOutputStream();
 
-		Application.framegrabimg = null;
-		Application.processedImage = null;
+        if (!state.getBoolean(State.values.framegrabbusy)) {
+//            Application.framegrabimg = null;
+            Application.processedImage = null;
+        }
+
 		if (app.frameGrab()) {
 			
 			int n = 0;
@@ -154,22 +160,53 @@ public class FrameGrabHTTP extends HttpServlet {
 				}
 			}
 
-			if (Application.framegrabimg != null) { // TODO: unused?
-				for (int i=0; i<Application.framegrabimg.length; i++) {
-					out.write(Application.framegrabimg[i]);
-				}
-			}
-
-			else {
+//			if (Application.framegrabimg != null) { // TODO: unused?
+//				for (int i=0; i<Application.framegrabimg.length; i++) {
+//					out.write(Application.framegrabimg[i]);
+//				}
+//			}
+//
+//			else {
 				if (Application.processedImage != null) {
 					ImageIO.write(Application.processedImage, "JPG", out);
 				}
-			}
+//			}
 			
 		    out.close();
 		}
 	}
-	
+
+	// unused, using dockwebrtc ros topic fiducial_images instead
+    private void dockFrameGrab(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
+
+        res.setContentType("image/jpeg");
+        OutputStream out = res.getOutputStream();
+
+        if (!state.getBoolean(State.values.framegrabbusy))
+            Application.processedImage = null;
+
+        if (app.frameGrab()) {
+
+            int n = 0;
+            long start = System.currentTimeMillis();
+            while (state.getBoolean(State.values.framegrabbusy) && System.currentTimeMillis() - start < 10000)
+                Util.delay(5);
+
+            if (!state.getBoolean(values.framegrabbusy)) {
+
+                if (Application.processedImage != null) {
+                    ImageIO.write(Application.processedImage, "JPG", out);
+                }
+            }
+            else  state.set(State.values.framegrabbusy, false);
+
+        } else {
+            ImageIO.write(new BufferedImage(640, 480, BufferedImage.TYPE_INT_RGB), "JPG", out);
+        }
+
+        out.close();
+    }
+
 	private void processedImg(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
 		
 		if (Application.processedImage == null) return;
@@ -200,7 +237,7 @@ public class FrameGrabHTTP extends HttpServlet {
 		OutputStream out = res.getOutputStream();
 		ImageIO.write(Application.videoOverlayImage, "JPG", out);
 	}
-	
+
 	private void batteryGrab(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
 		generateBatteryImage();
 		res.setContentType("image/gif");

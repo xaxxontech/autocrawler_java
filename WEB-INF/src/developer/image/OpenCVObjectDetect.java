@@ -77,7 +77,7 @@ public class OpenCVObjectDetect {
 
                     // get frame
                     boolean fg = app.frameGrab();
-                    long waittime = System.currentTimeMillis() + 2000;
+                    long waittime = System.currentTimeMillis() + 5000; // was 2000
                     while (state.getBoolean(State.values.framegrabbusy) && System.currentTimeMillis() < waittime) {
                         Util.delay(1);
                         if (!state.exists(State.values.objectdetect)) return; // help reduce cpu quicker on shutdown
@@ -88,6 +88,11 @@ public class OpenCVObjectDetect {
                         state.delete(State.values.objectdetect);
                         return;
                     }
+
+                    // shrink if necessary (saves CPU, crashes)
+                    if (app.processedImage.getWidth() > 640)
+                        app.processedImage = ImageUtils.resizeBufferedImage(app.processedImage, 640, 480);
+
                     BufferedImage img = ImageUtils.toBufferedImageOfType(app.processedImage, BufferedImage.TYPE_3BYTE_BGR);
                     frame = OpenCVUtils.bufferedImageToMat(img);
 

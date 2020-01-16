@@ -6,12 +6,11 @@ public enum ManualSettings {
 	
 	motorport, powerport, developer, debugenabled, wheeldiameter,
 	gyrocomp, alertsenabled, odomturnpwm, odomlinearpwm, checkaddresses,
-	soundthreshold, motionthreshold, useflash, redockifweakconnection,
-	arcmovecomp, usearcmoves, arcpwmthreshold,
-	soundthresholdalt, undockdistance,
+	motionthreshold, useflash, redockifweakconnection,
+	arcmovecomp, usearcmoves, arcpwmthreshold, undockdistance,
 
 	// undocumented
-	lowbattery, timedshutdown, camhold,
+	lowbattery, timedshutdown, camhold, soundmaxthreshold, webrtcserver, webrtcport,
 	
 	;
 	
@@ -26,7 +25,6 @@ public enum ManualSettings {
 		config.setProperty(wheeldiameter.name(), "106");
 		config.setProperty(gyrocomp.name() , "1.095");
 		config.setProperty(alertsenabled.name() , Settings.TRUE);
-		config.setProperty(soundthreshold.name(), "10");
 		config.setProperty(motionthreshold.name(), "0.003");
 		config.setProperty(odomlinearpwm.name(), "150");
 		config.setProperty(odomturnpwm.name(), "110");
@@ -35,12 +33,14 @@ public enum ManualSettings {
 		config.setProperty(arcmovecomp.name(), "0.8");
 		config.setProperty(usearcmoves.name(), Settings.TRUE);
 		config.setProperty(arcpwmthreshold.name(), "200");
-		config.setProperty(soundthresholdalt.name(), "-8");
+		config.setProperty(soundmaxthreshold.name(), "-25");
 		config.setProperty(undockdistance.name(), "0.5");
 		config.setProperty(lowbattery.name(), "30");
         config.setProperty(timedshutdown.name(), Settings.TRUE);
 		config.setProperty(camhold.name(), Settings.FALSE);
-		return config;
+        config.setProperty(webrtcserver.name(), "xaxxon.com");
+        config.setProperty(webrtcport.name(), "8443");
+        return config;
 	}
 	
 	public static String getDefault(ManualSettings setting){

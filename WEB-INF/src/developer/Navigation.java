@@ -23,8 +23,9 @@ import autocrawler.State.values;
 import autocrawler.servlet.FrameGrabHTTP;
 
 public class Navigation implements Observer {
-	
-	protected static Application app = null;
+
+    public enum lidarstate { enabled, disabled }
+    protected static Application app = null;
 	private static State state = State.getReference();
 	public static final String DOCK = "dock"; // waypoint name
 	private static final String redhome = System.getenv("RED5_HOME");
@@ -39,15 +40,17 @@ public class Navigation implements Observer {
 	public static long routestarttime = 0;
 	public NavigationLog navlog;
 	int batteryskips = 0;
-	
-	
-	/** Constructor */
+    private String navpstring = null;
+
+
+    /** Constructor */
 	public Navigation(Application a) {
 		Ros.loadwaypoints();
 		Ros.rospackagedir = Ros.getRosPackageDir(); // required for map saving
 		navlog = new NavigationLog();
 		state.addObserver(this);
 		app = a;
+		state.set(values.lidar, true); // or any non null
 	}	
 	
 	@Override
@@ -135,8 +138,8 @@ public class Navigation implements Observer {
 //
 //            if (currentstream != null)  app.driverCallServer(PlayerCommands.publish, currentstream);
 
-            if (str.equals("gmapping")) Ros.launch(Ros.MAKE_MAP_GMAPPING);
-            else Ros.launch(Ros.MAKE_MAP);
+            if (str.equals("gmapping")) navpstring = Ros.launch(Ros.MAKE_MAP_GMAPPING);
+            else navpstring = Ros.launch(Ros.MAKE_MAP);
 
             app.driverCallServer(PlayerCommands.messageclients, "starting mapping, please wait");
             state.set(State.values.navsystemstatus, Ros.navsystemstate.starting.toString()); // set running by ROS node when ready
@@ -147,27 +150,28 @@ public class Navigation implements Observer {
 
 
 	public void startNavigation() {
-		if (!state.equals(State.values.navsystemstatus, Ros.navsystemstate.stopped)) return;
+		if (!state.equals(State.values.navsystemstatus, Ros.navsystemstate.stopped)) {
+            app.driverCallServer(PlayerCommands.messageclients, "navigation already running");
+            return;
+        }
 
 		new Thread(new Runnable() { public void run() {
 			app.driverCallServer(PlayerCommands.messageclients, "starting navigation, please wait");
 
 			// nuke any launch files using realsense, if running
-			if (app.video.realsensepstring != null) {
-                app.video.killrealsense();
-//                long start = System.currentTimeMillis();
-//                while (!app.video.realsensepstring.equals("") && System.currentTimeMillis() - start < 2000) Util.delay(1);
-            }
+//			if (app.video.realsensepstring != null) {
+//                app.video.killrealsense();
+//            }
 
             app.driverCallServer(PlayerCommands.cameracommand, Malg.cameramove.horiz.toString());
-
-//            app.driverCallServer(PlayerCommands.streamsettingsset, Application.camquality.med.toString());
 
             String currentstream = videoRestartRequiredBlocking();
 
             String vals[] = settings.readSetting(settings.readSetting(GUISettings.vset)).split("_");
-            app.video.realsensepstring = Ros.launch(new ArrayList<String>(Arrays.asList(Ros.REMOTE_NAV,
+            navpstring = Ros.launch(new ArrayList<String>(Arrays.asList(Ros.REMOTE_NAV,
                     "color_width:="+vals[0], "color_height:="+vals[1], "color_fps:="+vals[2])));
+
+            app.video.realsensepstring = navpstring;
 
             if (currentstream != null)  app.driverCallServer(PlayerCommands.publish, currentstream);
 
@@ -202,7 +206,6 @@ public class Navigation implements Observer {
         if (!state.get(values.navsystemstatus).equals(Ros.navsystemstate.mapping.toString()))
             app.video.killrealsense();
 
-        // TODO: why? routes?
         if (!state.get(values.stream).equals(Application.streamstate.stop.toString())
                 && !state.get(values.navsystemstatus).equals(Ros.navsystemstate.mapping.toString()))
             app.driverCallServer(PlayerCommands.publish, Application.streamstate.stop.toString());
@@ -211,12 +214,14 @@ public class Navigation implements Observer {
         Util.log("stopping navigation", this);
         app.driverCallServer(PlayerCommands.messageclients, "navigation stopped");
 
+        if (navpstring !=null) Ros.killlaunch(navpstring);
+        navpstring = null;
+        app.video.realsensepstring = null; // TODO: required?
 
+//        Ros.roscommand("rosnode kill /remote_nav");
+//        Ros.roscommand("rosnode kill /map_remote");
 
-        Ros.roscommand("rosnode kill /remote_nav");
-        Ros.roscommand("rosnode kill /map_remote");
-
-	}
+    }
 
 
     // restart stream if necessary
@@ -621,8 +626,13 @@ public class Navigation implements Observer {
 					if( ! delayToNextRoute(navroute, name, id)) return; 
 					continue;
 				} else { batteryskips = 0; }
-				
-				// start ros nav system
+
+                //setup realsense cam TODO: change cam/mic/resolution depending on all actions in route
+//                app.driverCallServer(PlayerCommands.streamsettingsset, Application.camquality.high.toString());
+                app.driverCallServer(PlayerCommands.publish, Application.streamstate.camera.toString());
+                Util.delay(Video.STREAM_CONNECT_DELAY);
+
+                // start ros nav system
 				if (!waitForNavSystem()) {
 					// check if cancelled while waiting
 					if (!state.exists(State.values.navigationroute)) return;
@@ -654,7 +664,6 @@ public class Navigation implements Observer {
 					SystemWatchdog.waitForCpu();
 					undockandlocalize();
 				}
-				app.driverCallServer(PlayerCommands.cameracommand, Malg.cameramove.horiz.toString());
 
 		    	// go to each waypoint
 		    	NodeList waypoints = navroute.getElementsByTagName("waypoint");	    	
@@ -868,10 +877,7 @@ public class Navigation implements Observer {
 		boolean mic = false;
 		String notdetectedaction = "";
 
-		boolean camAlreadyOn = false;
-//		if (!state.get(values.stream).equals(Application.streamstate.stop.toString()))
-//			camAlreadyOn = true;
-		
+
     	for (int i=0; i< actions.getLength(); i++) {
     		String action = ((Element) actions.item(i)).getTextContent();
     		switch (action) {
@@ -909,49 +915,46 @@ public class Navigation implements Observer {
 			}
     	}
 
-		// if no camera, what's the point in rotating
+		// if no camera, what's the point in rotating TODO: disallow this with javascript instead
     	if (!camera && rotate) {
 			rotate = false;
 			app.driverCallServer(PlayerCommands.messageclients, "rotate action ignored, camera unused");
 		}
 
     	// VIDEOSOUNDMODELOW required for flash stream activity function to work, saves cpu for camera
-    	String previousvideosoundmode = state.get(State.values.videosoundmode);
-    	if (mic || camera) app.driverCallServer(PlayerCommands.videosoundmode, Application.VIDEOSOUNDMODELOW);
+//    	String previousvideosoundmode = state.get(State.values.videosoundmode);
+//    	if (mic || camera) app.driverCallServer(PlayerCommands.videosoundmode, Application.VIDEOSOUNDMODELOW);
 
-		// setup camera mode and position
+		// setup camera position
 		if (camera) {
-			if (!camAlreadyOn) {
-				if (human)
-					app.driverCallServer(PlayerCommands.streamsettingsset, Application.camquality.med.toString());
-				else if (motion)
-					app.driverCallServer(PlayerCommands.streamsettingsset, Application.camquality.med.toString());
-				else if (photo)
-                    app.driverCallServer(PlayerCommands.streamsettingsset, Application.camquality.high.toString());
-				else // record
-					app.driverCallServer(PlayerCommands.streamsettingsset, Application.camquality.med.toString());
-			}
+//            if (human)
+//                app.driverCallServer(PlayerCommands.streamsettingsset, Application.camquality.med.toString());
+//            else if (motion)
+//                app.driverCallServer(PlayerCommands.streamsettingsset, Application.camquality.med.toString());
+//            else if (photo)
+//                app.driverCallServer(PlayerCommands.streamsettingsset, Application.camquality.high.toString());
+//            else // record
+//                app.driverCallServer(PlayerCommands.streamsettingsset, Application.camquality.med.toString());
 
-			if (photo)
-				app.driverCallServer(PlayerCommands.camtilt, String.valueOf(Malg.CAM_HORIZ - Malg.CAM_NUDGE * 2));
-			else
-				app.driverCallServer(PlayerCommands.camtilt, String.valueOf(Malg.CAM_HORIZ- Malg.CAM_NUDGE*3));
-		}
+
+            app.driverCallServer(PlayerCommands.camtilt, String.valueOf(Malg.CAM_HORIZ + Malg.CAM_NUDGE * 3 ));
+            Util.delay(2000); // prevents mysterious camtilt crash?
+        }
 
 		// turn on cam and or mic, allow delay for normalize
-		if (!camAlreadyOn) {
-			if (camera && mic) {
-				app.driverCallServer(PlayerCommands.publish, Application.streamstate.camandmic.toString());
-				Util.delay(5000);
-				if (!settings.getBoolean(ManualSettings.useflash)) Util.delay(5000); // takes a while for 2 streams
-			} else if (camera && !mic) {
-				app.driverCallServer(PlayerCommands.publish, Application.streamstate.camera.toString());
-				Util.delay(5000);
-			} else if (!camera && mic) {
-				app.driverCallServer(PlayerCommands.publish, Application.streamstate.mic.toString());
-				Util.delay(5000);
-			}
-		}
+        /*
+        if (camera && mic) {
+            app.driverCallServer(PlayerCommands.publish, Application.streamstate.camandmic.toString());
+            Util.delay(5000);
+            if (!settings.getBoolean(ManualSettings.useflash)) Util.delay(5000); // takes a while for 2 streams
+        } else if (camera && !mic) {
+            app.driverCallServer(PlayerCommands.publish, Application.streamstate.camera.toString());
+            Util.delay(5000);
+        } else if (!camera && mic) {
+            app.driverCallServer(PlayerCommands.publish, Application.streamstate.mic.toString());
+            Util.delay(5000);
+        }
+        */
 
 		String recordlink = null;
 		if (record)  recordlink = app.video.record(Settings.TRUE); // start recording
@@ -976,18 +979,21 @@ public class Navigation implements Observer {
 
 			// enable sound detection
 			if (sound) {
-				if (!settings.getBoolean(ManualSettings.useflash))   app.video.sounddetect(Settings.TRUE);
-				else   app.driverCallServer(PlayerCommands.setstreamactivitythreshold,
-						"0 " + settings.readSetting(ManualSettings.soundthreshold));
+			    if (state.exists(values.lidar)) {
+                    state.set(values.lidar, lidarstate.disabled.toString());
+                    Util.delay(2000);
+                    waypointstart += 2000;
+			    }
+
+			    app.driverCallServer(PlayerCommands.sounddetect, Settings.TRUE);
 			}
 
 			// lights on if needed
-			boolean lightondelay = false;
 			if (camera) {
 				if (turnLightOnIfDark()) {
-					Util.delay(4000); // allow cam to adjust
-					lightondelay = true;
-				}
+				    Util.delay(3000); // allow cam to adjust
+                    waypointstart += 3000;
+                }
 			}
 
 			// enable human or motion detection
@@ -997,17 +1003,17 @@ public class Navigation implements Observer {
 				app.driverCallServer(PlayerCommands.motiondetect, null);
 
 			// mic takes a while to start up
-			if (sound && !lightondelay) Util.delay(2000);
+//			if (sound && !lightondelay) Util.delay(2000);
 
 			// ALL SENSES ENABLED, NOW WAIT
 			long start = System.currentTimeMillis();
 			while (!state.exists(State.values.streamactivity) && System.currentTimeMillis() - start < delay
 					&& state.get(State.values.navigationrouteid).equals(id)) { Util.delay(10); }
 
+//            SystemWatchdog.waitForCpu();
+
 			// PHOTO
 			if (photo) {
-				if (!settings.getBoolean(ManualSettings.useflash))  SystemWatchdog.waitForCpu();
-
 				String link = FrameGrabHTTP.saveToFile(null);
 
 				Util.delay(2000); // allow time for framgrabusy flag to be set true
@@ -1098,13 +1104,12 @@ public class Navigation implements Observer {
 					app.driverCallServer(PlayerCommands.motiondetectcancel, null);
 				if (state.exists(State.values.objectdetect))
 					app.driverCallServer(PlayerCommands.objectdetectcancel, null);
-				if (sound) {
-					if (!settings.getBoolean(ManualSettings.useflash))   // app.video.sounddetect(Settings.FALSE);
-						app.driverCallServer(PlayerCommands.sounddetect, Settings.FALSE);
-					else   app.driverCallServer(PlayerCommands.setstreamactivitythreshold, "0 0");
-				}
+				if (sound)
+				    state.set(values.sounddetect, false);
+				if (camera)
+				    state.delete(State.values.writingframegrabs); // saves cpu, especially high res
 
-				break; // go to next waypoint, stop if rotating
+                break; // go to next waypoint, stop if rotating
 			}
 
 			// nothing detected, shut down sensing
@@ -1112,11 +1117,8 @@ public class Navigation implements Observer {
 				app.driverCallServer(PlayerCommands.motiondetectcancel, null);
 			if (state.exists(State.values.objectdetect))
 				app.driverCallServer(PlayerCommands.objectdetectcancel, null);
-			if (sound) {
-				if (!settings.getBoolean(ManualSettings.useflash))   // app.video.sounddetect(Settings.FALSE);
-					app.driverCallServer(PlayerCommands.sounddetect, Settings.FALSE);
-				else   app.driverCallServer(PlayerCommands.setstreamactivitythreshold, "0 0");
-			}
+			if (sound)
+                state.set(values.sounddetect, false);
 
 			// ALERT if not detect
 			if (notdetect) {
@@ -1150,16 +1152,21 @@ public class Navigation implements Observer {
 				Util.delay(2000);
 				SystemWatchdog.waitForCpu(8000); // lots of missed stop commands, cpu timeouts here
 
-				double degperms = state.getDouble(State.values.odomturndpms.toString());   // typically 0.0857;
-				app.driverCallServer(PlayerCommands.move, Malg.direction.left.toString());
-				Util.delay((long) (50.0 / degperms));
-				app.driverCallServer(PlayerCommands.move, Malg.direction.stop.toString());
+//				double degperms = state.getDouble(State.values.odomturndpms.toString());   // typically 0.0857;
+//				app.driverCallServer(PlayerCommands.move, Malg.direction.left.toString());
+//				Util.delay((long) (50.0 / degperms));
+//				app.driverCallServer(PlayerCommands.move, Malg.direction.stop.toString());
+//
+//				long stopwaiting = System.currentTimeMillis()+750; // timeout if error
+//				while(!state.get(State.values.direction).equals(Malg.direction.stop.toString()) &&
+//						System.currentTimeMillis() < stopwaiting) { Util.delay(1); } // wait for stop
+//				if (!state.get(State.values.direction).equals(Malg.direction.stop.toString()))
+//					Util.log("error, missed turnstop within 750ms", this);
 
-				long stopwaiting = System.currentTimeMillis()+750; // timeout if error
-				while(!state.get(State.values.direction).equals(Malg.direction.stop.toString()) &&
-						System.currentTimeMillis() < stopwaiting) { Util.delay(1); } // wait for stop
-				if (!state.get(State.values.direction).equals(Malg.direction.stop.toString()))
-					Util.log("error, missed turnstop within 750ms", this);
+
+                app.driverCallServer(PlayerCommands.rotate, "45");
+                Util.delay(100); // allow state value set
+                state.block(State.values.direction, Malg.direction.stop.toString(), 10000);
 
 				Util.delay(4000); // 2000 if condition below enabled
 
@@ -1199,11 +1206,18 @@ public class Navigation implements Observer {
 		}
 
 		if (camera) {
-			app.driverCallServer(PlayerCommands.publish, Application.streamstate.stop.toString());
+//			app.driverCallServer(PlayerCommands.publish, Application.streamstate.stop.toString());
 			app.driverCallServer(PlayerCommands.spotlight, "0");
+            Util.delay(2000); // << this appears to be critical to avoid crashes
 			app.driverCallServer(PlayerCommands.cameracommand, Malg.cameramove.horiz.toString());
+            Util.delay(2000);
 		}
-		if (mic) app.driverCallServer(PlayerCommands.videosoundmode, previousvideosoundmode);
+
+		if (sound && state.exists(values.lidar)) {
+            state.set(values.lidar, lidarstate.enabled.toString());
+            Util.delay(5000);
+        }
+
 
 		state.set(values.waypointbusy, "false");
 
@@ -1216,9 +1230,8 @@ public class Navigation implements Observer {
 		state.delete(State.values.lightlevel);
 		app.driverCallServer(PlayerCommands.getlightlevel, null);
 		long timeout = System.currentTimeMillis() + 5000;
-		while (!state.exists(State.values.lightlevel) && System.currentTimeMillis() < timeout) {
+		while (!state.exists(State.values.lightlevel) && System.currentTimeMillis() < timeout)
 			Util.delay(10);
-		}
 
 		if (state.exists(State.values.lightlevel)) {
 			if (state.getInteger(State.values.lightlevel) < 25) {

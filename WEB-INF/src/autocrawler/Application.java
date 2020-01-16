@@ -4,6 +4,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
@@ -74,7 +75,7 @@ public class Application extends MultiThreadedApplicationAdapter {
 	public static developer.depth.ScanUtils scanUtils = null;
 	private developer.Navigation navigation = null;
 
-	public static byte[] framegrabimg  = null;
+//	public static byte[] framegrabimg  = null;
 	public static BufferedImage processedImage = null;
 	public static BufferedImage videoOverlayImage = null;
 
@@ -88,7 +89,7 @@ public class Application extends MultiThreadedApplicationAdapter {
 		super();
 
 		PowerLogger.append("==============Autocrawler Java Start===============\n", this); // extra newline on end
-		Util.log ("==============Autocrawler Java Start 3===============\n", this); // extra newline on end
+		Util.log ("==============Autocrawler Java Start 1===============\n", this); // extra newline on end
 		Util.log("Linux Version:"+Util.getUbuntuVersion()
 				+", Java Model:"+System.getProperty("sun.arch.data.model")
 				+", Java Arch:"+state.get(values.osarch), this);
@@ -505,6 +506,9 @@ public class Application extends MultiThreadedApplicationAdapter {
 
         String vals[] = settings.readSetting(settings.readSetting(GUISettings.vset)).split("_");
         str += " videowidth "+vals[0]+ " videoheight "+vals[1];
+
+        str += " webrtcserver " + settings.readSetting(ManualSettings.webrtcserver);
+        str += " webrtcport " + settings.readSetting(ManualSettings.webrtcport);
 
         if (authtoken != null) {
             str += " storecookie " + authtoken;
@@ -985,7 +989,7 @@ public class Application extends MultiThreadedApplicationAdapter {
 		case unblock: banlist.removeblockedFile(str); break;
 		case block:	banlist.addBlockedFile(str); break;
 		case log: Util.log("log: "+str, this); break;
-		case sounddetect: video.sounddetect(str); break;
+		case sounddetect: video.sounddetectgst(str); break;
 		case clearmap: Mapper.clearMap(); break; // TODO: old dev only maybe nuke
 		
 		case cpu:
@@ -1095,6 +1099,14 @@ public class Application extends MultiThreadedApplicationAdapter {
 //				driverCallServer(PlayerCommands.relaydisconnect, null);
 			network.connectNetwork(str);
 			break;
+
+        case clientjs:
+            String arr[] = str.split(" ",2);
+            if (arr.length == 1)
+                sendplayerfunction(arr[0], "");
+            else if (arr.length >= 2)
+                sendplayerfunction(arr[0], arr[1]);
+            break;
 
 		}
 
@@ -1320,16 +1332,19 @@ public class Application extends MultiThreadedApplicationAdapter {
 //	}
 
 	public boolean frameGrab() {
-		return frameGrab("");
+
+        return frameGrab("");
+
 	}
 
 	/**  */
 	public boolean frameGrab(String res) {
 
-		 if(state.getBoolean(State.values.framegrabbusy.name()) || 
-				 !(state.get(State.values.stream).equals(Application.streamstate.camera.toString()) ||
+		 if(state.getBoolean(State.values.framegrabbusy.name()) ||
+                !(state.get(State.values.stream).equals(Application.streamstate.camera.toString()) ||
 						 state.get(State.values.stream).equals(Application.streamstate.camandmic.toString()))) {
-			 messageplayer("stream unavailable or framegrab busy", null, null);
+//			 messageplayer("stream unavailable or framegrab busy", null, null);
+             Util.log("stream unavailable or framegrab busy", this);
 			 return false;
 		 }
 
@@ -1541,7 +1556,7 @@ public class Application extends MultiThreadedApplicationAdapter {
 			str += " battery " + state.get(State.values.batterylife);
 
 			if (state.exists(values.record)) str += " record " + state.get(values.record);
-			
+
 			messageplayer("status check received", "multiple", str.trim());
 
 		} else { 
@@ -1716,7 +1731,9 @@ public class Application extends MultiThreadedApplicationAdapter {
 			return;
 		}
 
-		if (state.get(values.dockstatus).equals(AutoDock.DOCKED)) {
+//		if (state.get(values.dockstatus).equals(AutoDock.DOCKED)) {
+        if (!state.getBoolean(State.values.motionenabled)) {
+
             if (str.equals(Malg.direction.forward.toString())) {
                 if (!state.getBoolean(State.values.motionenabled)) state.set(State.values.motionenabled, true);
                 messageplayer("command received: " + str, "motion", "MOVING");
@@ -1730,9 +1747,9 @@ public class Application extends MultiThreadedApplicationAdapter {
                 comport.goBackward();
                 return;
             }
-        }
+//        }
 	
-		if (!state.getBoolean(State.values.motionenabled)) {
+//		if (!state.getBoolean(State.values.motionenabled)) {
 			messageplayer("motion disabled (try forward)", "motion", "DISABLED");
 			return;
 		}

@@ -66,16 +66,16 @@ public class motionDetect {
 						}
 
 						BufferedImage img = null;
-						if (Application.framegrabimg != null) {
+//						if (Application.framegrabimg != null) {
+//
+//							ByteArrayInputStream in = new ByteArrayInputStream(Application.framegrabimg);
+//							img = ImageIO.read(in);
+//							in.close();
+//
+//						}
 
-							// convert bytes to image
-							ByteArrayInputStream in = new ByteArrayInputStream(Application.framegrabimg);
-							img = ImageIO.read(in);
-							in.close();
-
-						}
-
-						else if (Application.processedImage != null) {
+//						else
+						    if (Application.processedImage != null) {
 							img = Application.processedImage;
 						}
 
