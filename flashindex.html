@@ -90,7 +90,7 @@ onload="loaded();" onunload="playerexit();" onresize="browserwindowresized();">
 
 <!--  base_popup_menu -->
 <div id="main_menu_under" class="popupmenu_underlay" style="position: absolute; display: none; "></div>
-<div id="main_menu_over" >  <!-- main_menu_over div -->
+<div id="main_menu_over" style="position: absolute">  <!-- main_menu_over div -->
 <div id="main_menu_topbar" style="line-height: 18px; cursor: move;"
 onmouseover="maintopbar('overpending');" onmouseout="maintopbar('out');"
 onmousedown="popupmenu('main', 'move');" > &nbsp; </div>
@@ -109,7 +109,7 @@ style="width: 28px; height: 32px; background-image: url(images/wrench.png);">
 <td style="padding-left: 5px;">
 
 <table><tr valign="top"><td style="text-align: right">
-<div id="video" style="position: relative; z-index: 0; width: 640px; height: 480px;">
+<div id="video" style="position: relative; z-index: 0;">
 <script type="text/javascript">
 
 // Version check based upon the values defined in globals
@@ -408,7 +408,8 @@ style="padding-left: 3px; padding-right: 3px">
 <td  class="cambutton" style="padding-left: 10px">self mic OFF</td>
 </tr></table>
 </div>
-</div> <!-- end of div selfstream_controls -->
+</div>
+<!-- end of div selfstream_controls -->
 
 <div id="speakchatlinks" class="cambutton" onmouseover="camiconbutton('over',this.id);"
 onmouseout="camiconbutton('out',this.id);" onclick="speakchat('show','speechbox');"
@@ -425,6 +426,7 @@ style="padding-left: 3px; padding-right: 3px">
 </tr></table>
 
 </td></tr></table>
+
 </div><!-- ** end of main_menu_contents div ** -->
 </div><!-- ** end of main_menu_over div ** -->
 
@@ -470,7 +472,7 @@ position: absolute; "> </div>
 filter:alpha(opacity=0); opacity: 0.0; -moz-opacity:0.0; line-height: 0px"></div>
 
 <!-- video overlay logo -->
-<img id="videologo" src="images/eye.gif" width="640" height="480"
+<img id="videologo" src="images/eye.gif"
 style="position: absolute; display: none; z-index: 4" alt="">
 
 <!-- speechbox -->
@@ -600,7 +602,7 @@ video settings:<br>
 <span id="custom_specs" style="font-size: 11px; color: #666666;"></span>&nbsp;<a
 class="blackbg" href="javascript: streamset('setcustom');">change</a> &gt;
 <br>
-<a id="recordlink" class="blackbg" href="javascript: callServer('record','true');">record</a>
+<a id="recordlink" class="blackbg" style="display: none" href="javascript: callServer('record','true');">record</a>
 <table><tr><td style="height: 5px"></td></tr></table>
 
 <table><tr>
@@ -1182,7 +1184,10 @@ href="javascript: waypointstoggle();">toggle waypoints on/off</a><br>
 
 <table><tr><td style="height: 10px"></td></tr></table>
 
-<a class="blackbg" href="javascript: callServer('startmapping','');">start mapping</a><br>
+<a class="blackbg" href="javascript: callServer('startmapping','cartographer');">start mapping</a><br>
+<!--
+<a class="blackbg" href="javascript: callServer('startmapping','gmapping');">start mapping - gmapping</a><br>
+-->
 <a class="blackbg" href="javascript: if (confirm('Create backup and save new map\n are you sure?'))
 { callServer('savemap',''); }">save new map</a><br>
 <a class="blackbg" href="javascript: if (confirm('Shutting down mapping, save new map first')){callServer('stopnav','');}">stop mapping</a><br>
@@ -1299,7 +1304,7 @@ class="inputbox" onfocus="this.style.backgroundColor='#000000';" onblur="this.st
 
 <!-- someone already driving box -->
 <div id="someonealreadydrivingbox" style="display: none; padding-top: 150px">
-<span id="usernamealreadydrivingbox"></span>&nbsp;is at the controls of OCULUS<br>
+<span id="usernamealreadydrivingbox"></span>&nbsp;is at the controls of AUTOCRAWLER<br>
 Choose action:<br>
 <a class="blackbg" href="javascript: beapassenger();">be a passenger</a><br>
 <a class="blackbg" href="javascript: assumecontrol();">assume control</a><br>
@@ -1329,11 +1334,15 @@ Choose action:<br>
 
 <!-- logo -->
 
+<!--
 <div style="position: fixed; bottom: 5px; right: 5px; z-index: -1; padding-left: 5px;">
 <img src="images/oculus_corner_logo.gif" alt="">
 </div>
+-->
 
+<!--
 <iframe id="upload_frame" name="upload_frame" style="display: none"></iframe>
+-->
 
 <!--  debugbox -->
 <div id="debugbox" style="position: absolute; z-index: 100; left: 10px; top: 10px; display: none; "></div>

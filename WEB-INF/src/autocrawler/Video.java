@@ -151,8 +151,14 @@ public class Video {
             switch (mode) {
                 case camera:
 
-                    if (app.player instanceof IServiceCapableConnection && realsensepstring == null) // flash client
-                        realsensepstring = Ros.launch("rgbpublish"); // TODO: assign rtmp port as param
+                    if (app.player instanceof IServiceCapableConnection) { // flash client
+                        if (realsensepstring == null) {
+                            // TODO: assign rtmp port as param
+                            realsensepstring = Ros.launch(new ArrayList<String>(Arrays.asList("realsensergb",
+                                    "color_width:=" + lastwidth, "color_height:=" + lastheight, "color_fps:=" + lastfps)));
+                        }
+                        webrtcpstring = Ros.launch("rgbpublish");
+                    }
 
                     else  {                                                                     // webrtc client
                         if (realsensepstring == null) {

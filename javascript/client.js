@@ -397,11 +397,9 @@ function setstatus(status, value) {
 			var s = value.split("_");
 			if (s[0] != streammode) { play(value); }
 			value = s[0];
-			// if (value == "camera" || value == "camandmic") videologo("off");
-			// else if (value == "stop" || value == "mic") { videologo("on"); docklinetoggle("off"); }
+
 			if (value == "stop" || value == "mic") { videologo("on"); } // docklinetoggle("off"); }
 			else if ( oculusPrimeplayerSWF != null && (value == "camera" || value == "camandmic")) videologo("off");
-
 		}
 
 		a.innerHTML = value;
@@ -520,10 +518,10 @@ function setstatus(status, value) {
 			b.href="javascript: callServer('record','true');";
 		}
 	}
-	else if (status=="videowidth") {
+	else if (status=="videowidth" && oculusPrimeplayerSWF == null) {
 		document.getElementById("video").style.width = value+"px";
 	}
-	else if (status=="videoheight") {
+	else if (status=="videoheight" && oculusPrimeplayerSWF == null) {
 		document.getElementById("video").style.height = value+"px";
 		browserwindowresized();
 		main_window_resize();
@@ -2091,8 +2089,14 @@ function videologo(state) {
     var video = document.getElementById("video");
     var xy = findpos(video);
     var s = document.getElementById("stream");
-	if (state=="on") { i.style.display = ""; s.style.display="none"; }
-	if (state=="off") { i.style.display = "none"; s.style.display="";}
+	if (state=="on") { 
+		i.style.display = ""; 
+		s.style.display="none"; 
+	}
+	if (state=="off") { 
+		i.style.display = "none"; 
+		s.style.display="";
+	}
 	
 	i.width = video.offsetWidth;
 	i.height = video.offsetHeight;
@@ -2111,6 +2115,10 @@ function videologoflash(state) {
     var xy = findpos(video);
 	if (state=="on") { i.style.display = ""; }
 	if (state=="off") { i.style.display = "none"; }
+	
+	i.width = video.offsetWidth;
+	i.height = video.offsetHeight;
+
     var x = xy[0] + (video.offsetWidth/2) - (i.width/2);
     var y = xy[1] + (video.offsetHeight/2) - (i.height/2);
     i.style.left = x + "px";

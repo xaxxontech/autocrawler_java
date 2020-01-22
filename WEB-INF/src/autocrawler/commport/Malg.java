@@ -1692,7 +1692,7 @@ public class Malg implements jssc.SerialPortEventListener {
 
                         long stopwaiting = System.currentTimeMillis()+delay;
                         while( System.currentTimeMillis() < stopwaiting && currentpos == camTargetPosition  )
-                            {  Util.delay(1);  } // wait
+                            {  Util.delay(5);  } // wait
 
                         if (currentpos == camTargetPosition) {
                             application.messageplayer(null, "cameratilt", state.get(autocrawler.State.values.cameratilt));
@@ -1704,7 +1704,7 @@ public class Malg implements jssc.SerialPortEventListener {
                         Util.delay(CAM_SMOOTH_DELAY);
                     }
 
-                    Util.delay(1); // non busy wait
+                    Util.delay(5); // non busy wait
                     continue;
                 }
 
