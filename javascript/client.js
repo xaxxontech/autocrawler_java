@@ -78,7 +78,7 @@ var windowpos = [null, null, null, null]; // needs same length as above
 var oculusPrimeplayerSWF = null;
 var recordmode = streammode;
 var firstresize = true;
-
+var webrtcinit = false;
 
 function loaded() {
 	oculusPrimeplayerSWF = document.getElementById("oculusPrime_player"); 
@@ -90,7 +90,16 @@ function loaded() {
     overlay("on");
     browserwindowresized();
 	
-	if (oculusPrimeplayerSWF == null) commClientLoaded(); 
+	if (oculusPrimeplayerSWF == null) { 
+		commClientLoaded(); 
+		if (/auth=/.test(document.cookie)) { 
+			commLoginFromCookie(); 
+			logintimer = setTimeout("eraseCookie('auth'); window.location.reload()", logintimeout);
+		}
+		else login(); // user input goes out thru commLogin() below
+		videologo("on");
+	}
+
 }
 
 function main_window_resize() {
@@ -330,7 +339,7 @@ function message(message, colour, status, value) {
 		var tempmessage = message;
 		var d = new Date();
 		
-		if (message == "status check received") { 
+		if (message == "serverok") { 
 			statuscheckreceived=true;
 			if (officiallagtimer != 0) {
 				var i = d.getTime() - officiallagtimer;
@@ -383,6 +392,11 @@ function message(message, colour, status, value) {
 	if (status != null) {  //(!/\S/.test(d.value))
 		if (status == "multiple") { setstatusmultiple(value); }
 		else { setstatus(status, value); }
+	}
+	
+	if (!webrtcinit && ws_server && ws_port) {
+		webrtcinit = true;
+		websocketServerConnect(); // webrtc.js
 	}
 }
 
@@ -1929,8 +1943,8 @@ function loginsend() {
 	else { 
 		console.log("attempting oculusPrimeplayerSWF.connect");
 		oculusPrimeplayerSWF.connect(str1+" "+str2+" "+str3+" ");
-		logintimer = setTimeout("window.location.reload()", logintimeout);
 	}
+	logintimer = setTimeout("window.location.reload()", logintimeout);
 }
 
 function logout() {

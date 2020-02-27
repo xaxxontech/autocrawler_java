@@ -329,5 +329,5 @@ function createCall(msg) {
 }
 
 function webrtc_log(str) {
-	// console.log(str);
+	console.log(str);
 }

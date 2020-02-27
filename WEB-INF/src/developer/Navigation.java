@@ -126,18 +126,6 @@ public class Navigation implements Observer {
 
         new Thread(new Runnable() { public void run() {
 
-//            app.driverCallServer(PlayerCommands.cameracommand, Malg.cameramove.horiz.toString());
-//
-//            app.driverCallServer(PlayerCommands.streamsettingsset, Application.camquality.med.toString());
-//
-//            String currentstream = videoRestartRequiredBlocking();
-//
-//            String vals[] = settings.readSetting(settings.readSetting(GUISettings.vset)).split("_");
-//            app.video.realsensepstring = Ros.launch(new ArrayList<String>(Arrays.asList(Ros.MAKE_MAP,
-//                    "color_width:="+vals[0], "color_height:="+vals[1], "color_fps:="+vals[2])));
-//
-//            if (currentstream != null)  app.driverCallServer(PlayerCommands.publish, currentstream);
-
             if (str.equals("gmapping")) navpstring = Ros.launch(Ros.MAKE_MAP_GMAPPING);
             else navpstring = Ros.launch(Ros.MAKE_MAP);
 
@@ -158,24 +146,24 @@ public class Navigation implements Observer {
 		new Thread(new Runnable() { public void run() {
 			app.driverCallServer(PlayerCommands.messageclients, "starting navigation, please wait");
 
-			// nuke any launch files using realsense, if running
-//			if (app.video.realsensepstring != null) {
-//                app.video.killrealsense();
-//            }
-
             app.driverCallServer(PlayerCommands.cameracommand, Malg.cameramove.horiz.toString());
 
+            // stop any current video
             String currentstream = videoRestartRequiredBlocking();
 
+            // launch remote_nav.launch
+            navpstring = Ros.launch(Ros.REMOTE_NAV);
+
+            // launch realsense with RGB and depth
             String vals[] = settings.readSetting(settings.readSetting(GUISettings.vset)).split("_");
-            navpstring = Ros.launch(new ArrayList<String>(Arrays.asList(Ros.REMOTE_NAV,
-                    "color_width:="+vals[0], "color_height:="+vals[1], "color_fps:="+vals[2])));
+            app.video.realsensepstring = Ros.launch(new ArrayList<String>(Arrays.asList(Ros.REALSENSE,
+                    "color_width:="+vals[0], "color_height:="+vals[1], "color_fps:="+vals[2],
+                    "enable_depth:=true", "initial_reset:=true" )));
 
-            app.video.realsensepstring = navpstring;
-
+            // re-launch stream-to-client if there was current video
             if (currentstream != null)  app.driverCallServer(PlayerCommands.publish, currentstream);
 
-            state.set(State.values.navsystemstatus, Ros.navsystemstate.starting.toString()); // set running by ROS node when ready
+            state.set(State.values.navsystemstatus, Ros.navsystemstate.starting.toString()); // set to 'running' by ROS node when ready
 
 			state.set(values.lidar, lidarstate.enabled.toString());
 
@@ -205,8 +193,10 @@ public class Navigation implements Observer {
                 state.get(State.values.navsystemstatus).equals(Ros.navsystemstate.stopping.toString()) )
             return;
 
-        if (!state.get(values.navsystemstatus).equals(Ros.navsystemstate.mapping.toString()))
-            app.video.killrealsense();
+        if (!state.get(values.navsystemstatus).equals(Ros.navsystemstate.mapping.toString())) {
+            Ros.killlaunch(app.video.realsensepstring);
+            app.video.realsensepstring = null;
+        }
 
         if (!state.get(values.stream).equals(Application.streamstate.stop.toString())
                 && !state.get(values.navsystemstatus).equals(Ros.navsystemstate.mapping.toString()))
@@ -631,8 +621,8 @@ public class Navigation implements Observer {
 
                 //setup realsense cam TODO: change cam/mic/resolution depending on all actions in route
 //                app.driverCallServer(PlayerCommands.streamsettingsset, Application.camquality.med.toString()); // reduce crashes
-//                app.driverCallServer(PlayerCommands.publish, Application.streamstate.camera.toString());
-//                Util.delay(Video.STREAM_CONNECT_DELAY);
+                app.driverCallServer(PlayerCommands.publish, Application.streamstate.camera.toString());
+                Util.delay(Video.STREAM_CONNECT_DELAY);
 
                 // start ros nav system
 				if (!waitForNavSystem()) {
@@ -864,6 +854,7 @@ public class Navigation implements Observer {
     	// takes 5-10 seconds to init if mic is on (mic only, or mic + camera)
 		
 		state.set(values.waypointbusy, "true");
+		Util.debug("processWayPointActions wp:" +wpname, this);
 
 		boolean rotate = false;
 		boolean email = false;
@@ -923,43 +914,22 @@ public class Navigation implements Observer {
 			app.driverCallServer(PlayerCommands.messageclients, "rotate action ignored, camera unused");
 		}
 
-    	// VIDEOSOUNDMODELOW required for flash stream activity function to work, saves cpu for camera
-//    	String previousvideosoundmode = state.get(State.values.videosoundmode);
-//    	if (mic || camera) app.driverCallServer(PlayerCommands.videosoundmode, Application.VIDEOSOUNDMODELOW);
+    	long startupdelay = 0;
 
 		// setup camera position
 		if (camera) {
-
-//            if (human)
-//                app.driverCallServer(PlayerCommands.streamsettingsset, Application.camquality.med.toString());
-//            else if (motion)
-//                app.driverCallServer(PlayerCommands.streamsettingsset, Application.camquality.med.toString());
-//            else if (photo)
-//                app.driverCallServer(PlayerCommands.streamsettingsset, Application.camquality.high.toString());
-//            else // record
-//                app.driverCallServer(PlayerCommands.streamsettingsset, Application.camquality.med.toString());
-
-			stopNavigation();
-			Util.delay(2500);
 			app.driverCallServer(PlayerCommands.camtilt, String.valueOf(Malg.CAM_HORIZ + Malg.CAM_NUDGE * 4 ));
-			app.driverCallServer(PlayerCommands.publish, Application.streamstate.camera.toString());
-			Util.delay(Video.STREAM_CONNECT_DELAY);
+			startupdelay = 2000;
         }
 
-		// turn on cam and or mic, allow delay for normalize
-        /*
-        if (camera && mic) {
-            app.driverCallServer(PlayerCommands.publish, Application.streamstate.camandmic.toString());
-            Util.delay(5000);
-            if (!settings.getBoolean(ManualSettings.useflash)) Util.delay(5000); // takes a while for 2 streams
-        } else if (camera && !mic) {
-            app.driverCallServer(PlayerCommands.publish, Application.streamstate.camera.toString());
-            Util.delay(5000);
-        } else if (!camera && mic) {
-            app.driverCallServer(PlayerCommands.publish, Application.streamstate.mic.toString());
-            Util.delay(5000);
-        }
-        */
+		if (mic) {
+			if (state.exists(values.lidar)) {
+				state.set(values.lidar, lidarstate.disabled.toString());
+				startupdelay = 3000;
+			}
+		}
+
+		Util.delay(startupdelay);
 
 		String recordlink = null;
 		if (record)  recordlink = app.video.record(Settings.TRUE); // start recording
@@ -984,12 +954,6 @@ public class Navigation implements Observer {
 
 			// enable sound detection
 			if (sound) {
-			    if (state.exists(values.lidar)) {
-                    state.set(values.lidar, lidarstate.disabled.toString());
-                    if (!camera) Util.delay(3000); // TODO: already disabled if camera
-                    waypointstart += 3000;
-			    }
-
 			    app.driverCallServer(PlayerCommands.sounddetect, Settings.TRUE);
 			}
 
@@ -1157,28 +1121,12 @@ public class Navigation implements Observer {
 				Util.delay(2000);
 				SystemWatchdog.waitForCpu(8000); // lots of missed stop commands, cpu timeouts here
 
-//				double degperms = state.getDouble(State.values.odomturndpms.toString());   // typically 0.0857;
-//				app.driverCallServer(PlayerCommands.move, Malg.direction.left.toString());
-//				Util.delay((long) (50.0 / degperms));
-//				app.driverCallServer(PlayerCommands.move, Malg.direction.stop.toString());
-//
-//				long stopwaiting = System.currentTimeMillis()+750; // timeout if error
-//				while(!state.get(State.values.direction).equals(Malg.direction.stop.toString()) &&
-//						System.currentTimeMillis() < stopwaiting) { Util.delay(1); } // wait for stop
-//				if (!state.get(State.values.direction).equals(Malg.direction.stop.toString()))
-//					Util.log("error, missed turnstop within 750ms", this);
-
-
                 app.driverCallServer(PlayerCommands.rotate, "45");
                 Util.delay(100); // allow state value set
                 state.block(State.values.direction, Malg.direction.stop.toString(), 10000);
 
-				Util.delay(4000); // 2000 if condition below enabled
-
-				// nuke this condition, delay always required, esp. if turning towards bright light source (eg., window)
-//				if (state.getInteger(State.values.spotlightbrightness) > 0)
-//					Util.delay(2000); // allow cam to normalize
-
+				Util.delay(4000);
+				
 				turns ++;
 			}
 
@@ -1211,17 +1159,14 @@ public class Navigation implements Observer {
 		}
 
 		if (camera) {
-			app.driverCallServer(PlayerCommands.spotlight, "0");
-
 			app.driverCallServer(PlayerCommands.cameracommand, Malg.cameramove.horiz.toString());
 			Util.delay(2000);
-			waitForNavSystem();
-
 		}
 
 		if (sound && state.exists(values.lidar)) {
             state.set(values.lidar, lidarstate.enabled.toString());
-            Util.delay(5000);
+            Util.delay(3000);
+            if (!camera) Util.delay(2000);
         }
 
 

@@ -65,11 +65,16 @@ var goalreachalert = false;
 var lidar = false;
 
 function navigationmenu() {
-	if (navmenuinit) {
-		var str = document.getElementById('navigation_menu').innerHTML;
-		str += "<div id='navmenutest'> </div>";
-		popupmenu('menu', 'show', null, null, str);
-	}
+	
+	if (typeof mobile === 'undefined') {
+		if (navmenuinit) {
+			var str = document.getElementById('navigation_menu').innerHTML;
+			str += "<div id='navmenutest'> </div>";
+			popupmenu('menu', 'show', null, null, str);
+		}
+	} 
+	else // mobile 
+		menu('navigation_menu');
  		
 	var date = new Date().getTime();
 	clearTimeout(rosmapinfotimer);
@@ -269,7 +274,7 @@ function rosinfo() {
 				}
 			}
 			
-			if (!navmenuinit) {
+			if (!navmenuinit && typeof mobile === 'undefined') {
 		 		var str = document.getElementById('navigation_menu').innerHTML;
 				str += "<div id='navmenutest'> </div>";
 				popupmenu('menu', 'show', null, null, str);
@@ -289,20 +294,38 @@ function rosinfo() {
 				routestatus.style.display = "";
 			}
 			
-			if (document.getElementById("routesmenutest"))   routespopulate();
-			
-			// debug("*"+activeroute+"* "+t);
 
-			// test for refresh?
+
+			// test for refresh ros info needed
 			var r = false;
+			
+			// refresh routes info if menu open 
+			if (document.getElementById("routesmenutest"))   routespopulate();
+			if (typeof mobile !== 'undefined') {
+				if (document.getElementById('routes_menu').style.display != "none") {
+					routespopulatemobile();
+					r = true;
+				}
+			}
+			
 			if (document.getElementById("navmenutest")) {
 				r = true;
 				popupmenu('menu','resize');
 			}
 			else if (document.getElementById("rosmapimg")) r = true;
 			else if (document.getElementById("routesmenutest")) r = true;
+			
+			if (typeof mobile !== 'undefined') {
+				if (document.getElementById('navigation_menu').style.display != "none") {
+					r = true;
+				}
+			}
+			
 			if (r)
 				rosmapinfotimer = setTimeout("openxmlhttp('frameGrabHTTP?mode=rosmapinfo&date="+t+"', rosinfo);", 510);
+			
+			// map stuff below
+			if (typeof mobile !== 'undefined') return;
 			
 			if (document.getElementById("rosmap_menu_over").style.display != "") return;
 			
@@ -914,6 +937,12 @@ function drawmapwaypoints() {
 }
 
 function waypointsmenu() {
+	
+	if (typeof mobile !== 'undefined') {
+		waypointsmenumobile();
+		return;
+	}
+	
 	if (waypoints.length == 0) { 
 		message("waypoints unavailble","orange");
 		navigationmenu();
@@ -965,6 +994,29 @@ function waypointsmenu() {
 	popupmenu("menu","show",null,null,str);
 }
 
+function waypointsmenumobile() {
+	
+	list = document.getElementById("waypointslist");
+	
+	if (waypoints.length == 0) { 
+		list.innerHTML = "no waypoints";
+		return;
+	}
+	
+	var str = "";
+	for (var i = 0 ; i <= waypoints.length - 4 ; i += 4) {
+		str +="<br><a href='javascript: gotowaypoint("+i+");'>"+waypoints[i]+"</a>";
+		if (waypoints[i] == "dock") {
+			str += " &nbsp; <a href='javascript: callServer(&quot;gotodock&quot;, &quot;&quot;);'>";
+			str += "<img src='images/charge.png' style='vertical-align: text-bottom;'>charge</a>";
+		}
+	}
+	
+	list.innerHTML = str;
+	menu("waypoints_menu");
+
+}
+
 function waypointstoggle() {
 	 if (mapshowwaypoints) { mapshowwaypoints = false; } 
 	 else { mapshowwaypoints = true; }
@@ -1006,14 +1058,19 @@ function gotowaypoint(i) {
 }
 
 function routesmenu() {
+	
 	if (waypoints.length == 0) { 
 		message("waypoints unavailble","orange");
 		return;
 	}
 
-	str = document.getElementById("routes_menu").innerHTML;
-	str += "<div id='routesmenutest'> </div>";
-	popupmenu("menu","show",null,null,str);
+	if (typeof mobile === 'undefined') {
+		str = document.getElementById("routes_menu").innerHTML;
+		str += "<div id='routesmenutest'> </div>";
+		popupmenu("menu","show",null,null,str);
+	}
+	else 
+		menu("routes_menu"); // mobile
 
 	clearTimeout(rosmapinfotimer);
 	var date = new Date().getTime();
@@ -1024,6 +1081,7 @@ function routesmenu() {
 		openxmlhttp("frameGrabHTTP?mode=rosmapinfo&date="+date, rosinfo);
 	}
 }
+
 
 function routesload() {
 	if (xmlhttp.readyState==4) {// 4 = "loaded"
@@ -1079,22 +1137,40 @@ function routespopulate() {
 
 }
 
+function routespopulatemobile() {
+	var list = document.getElementById("routeslist");
+
+	var routes = routesxml.getElementsByTagName("route");
+	if (routes.length == 0) {
+		list.innerHTML = "no routes defined";
+		return;
+	}
+		
+	var str = "";
+	for (var i=0; i < routes.length; i++ ) {
+		var name = routes[i].getElementsByTagName("rname")[0].childNodes[0].nodeValue;
+		if (activeroute != name) {
+			str += "<a href='javascript: activateroute(&quot;"+name+"&quot;);'>";
+			str += name+"</a><br>"
+		} else {
+			str += name+" <span class='status_info'>ACTIVE</span> <a href='javascript: deactivateroute();'>";
+			str += "<span class='cancelbox'><b> &nbsp; X &nbsp; </b></span></a><br>";
+		}
+	}
+
+	if (str != routespopulatestr) {
+		list.innerHTML = str;
+		routespopulatestr = str;
+	}
+
+}
+
 function activateroute(name) {
 	callServer("runroute", name);
-	// routesxml = null;
-	// routesmenu();
-	// clearTimeout(rosmapinfotimer);
-	// var date = new Date().getTime();
-	// setTimeout("openxmlhttp('frameGrabHTTP?mode=rosmapinfo&date="+date+"', rosinfo);", 500);
 }
 
 function deactivateroute() {
 	callServer("cancelroute", "");
-	// routesxml = null;
-	// routesmenu();
-	// clearTimeout(rosmapinfotimer);
-	// var date = new Date().getTime();
-	// setTimeout("openxmlhttp('frameGrabHTTP?mode=rosmapinfo&date="+date+"', rosinfo);", 500);
 }
 
 function editroute(name, rxml) {
@@ -1493,12 +1569,11 @@ function waypointactionaddnew(routenum, waypointnum, id) {
 		else if (actiontext == "rotate") {
 			waypointDeleteAnyActionsNamed(waypoint, "not detect");
 			waypointDeleteAnyActionsNamed(waypoint, "photo");
-			if (lidar) 
-				waypointDeleteAnyActionsNamed(waypoint, "sound");
+			// if (lidar) waypointDeleteAnyActionsNamed(waypoint, "sound");
 		}
 		else if (actiontext == "sound") {
 			waypointDeleteAnyActionsNamed(waypoint, "record video");
-			if (lidar) waypointDeleteAnyActionsNamed(waypoint, "rotate");
+			// if (lidar) waypointDeleteAnyActionsNamed(waypoint, "rotate");
 		 }
 			 
 		else if (actiontext == "record video")  waypointDeleteAnyActionsNamed(waypoint, "sound");

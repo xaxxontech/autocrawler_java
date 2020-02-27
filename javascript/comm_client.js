@@ -4,17 +4,10 @@ var msgsrcvd = 0;
 var msgPollTimeout = null;
 var initiallogin = false;
 var commclientid = null;
-var webrtcinit = false;
 
 
 function commClientLoaded() {
-	commclientid = getOurId(); // webrtc.js ... was ... Date.now();
-	// comm_client_log("commClientLoaded, id: "+commclientid); 
-
-	if (/auth=/.test(document.cookie)) { commLoginFromCookie(); }
-	else login(); // user input goes out thru commLogin() below
-	
-	videologo("on");
+	commclientid = getOurId(); 
 }
 
 function callServerComm(fn, s) {
@@ -26,7 +19,6 @@ function callServerComm(fn, s) {
 function commLogin(user, pass, remember) {
 	initiallogin = true;
 	getxmlhttp("comm?loginuser="+user+"&loginpass="+pass+"&loginremember="+remember);
-	logintimer = setTimeout("window.location.reload()", logintimeout);
 }
 
 function commLoginFromCookie() {
@@ -35,7 +27,6 @@ function commLoginFromCookie() {
 	
 	initiallogin = true;
 	postxmlhttp("comm?logincookie", str);
-	logintimer = setTimeout("eraseCookie('auth'); window.location.reload()", logintimeout);
 }
 
 function msgReceived(xhr) { 
@@ -67,24 +58,15 @@ function msgReceived(xhr) {
 				return;
 			}
 			
-			// if (!webrtcinit) {
-			if (!webrtcinit && ws_server) {
-				webrtcinit = true;
-				websocketServerConnect(); // webrtc.js
-			}
-
 			var msg = JSON.parse(xhr.responseText);
 			
 			if (msg.hasOwnProperty('str'))
 				message(msg.str, msg.colour, msg.status, msg.value); 
 			
 			else if (msg.hasOwnProperty('fn')) {
-				comm_client_log(msg.params);
-				// var params = msg.params.replace(/"/g, "&quot;");
 				if (msg.params) {
 					var params = msg.params.replace(/"/g, "'");
 					params = params.replace("\n"," ");
-					// var params = msg.params.replace("\n"," ");
 
 					comm_client_log(msg.fn+"(\""+params+"\")");
 					eval(msg.fn+"(\""+params+"\")");
@@ -106,7 +88,7 @@ function msgReceived(xhr) {
 
 function commclientclose() {
 	connectionlost();
-	websocketServerDisconnect();
+	if (ws_conn)  websocketServerDisconnect();
 }
 
 function checkForMsg() {
@@ -180,5 +162,5 @@ function postxmlhttp(theurl, data) {
 }
 
 function comm_client_log(str) {
-	// console.log(str);
+	console.log(str);
 }

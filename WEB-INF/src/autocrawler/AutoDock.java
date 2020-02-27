@@ -127,7 +127,7 @@ public class AutoDock {
                     }
 
                     // closer: turn towards dock then move forward
-                    else if (baselinkdistance <= 1 && baselinkdistance > 0.7) {
+                    else if (baselinkdistance > 0.7) {
 
                     	if (state.getInteger(State.values.floodlightlevel) > FLLOW)
                     		app.driverCallServer(PlayerCommands.floodlight, Integer.toString(FLLOW));
@@ -137,7 +137,7 @@ public class AutoDock {
                     }
 
                     // even closer: rotate, forward, then rotate to face dock
-                    else if (baselinkdistance <= 0.7 && baselinkdistance > 0.55) {
+                    else if (baselinkdistance > 0.55) {
 
 						if (state.getInteger(State.values.floodlightlevel) > FLLOW)
 							app.driverCallServer(PlayerCommands.floodlight, Integer.toString(FLLOW));
@@ -231,12 +231,11 @@ public class AutoDock {
         return false;
     }
 
-    private void checkIfDockLightRequired() {
+    public void checkIfDockLightRequired() {
+
         // returns if already on
-        if(state.getInteger(State.values.floodlightlevel) != 0) {
-//            app.driverCallServer(PlayerCommands.messageclients, "floodlightlevel"+state.getInteger(State.values.floodlightlevel));
+        if(state.getInteger(State.values.floodlightlevel) != 0)
             return;
-        }
 
         state.delete(State.values.lightlevel); // so docklight only turned on once
         app.driverCallServer(PlayerCommands.getlightlevel, null);
@@ -488,6 +487,8 @@ public class AutoDock {
 	 * events: dockgrabbed_find => enter MODE1 dockgrabbed_findfromxy => enter
 	 * MODE1
 	 */
+
+	/*
 	private void autoDockNav(final int fx, final int fy, final int w, final int h, final float slope) {
 		if (autodocknavrunning) {
 			Util.log("error, autodocknavrunning", this);
@@ -704,6 +705,7 @@ public class AutoDock {
 
 		} }).start();
 	}
+	*/
 
 	public void getLightLevel() {
 

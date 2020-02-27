@@ -49,6 +49,7 @@ public class Application extends MultiThreadedApplicationAdapter {
 	public static final String UBUNTU1604 = "16.04";
 	public static final String UBUNTU1804 = "18.04";
 	public static final String LOCALHOST = "127.0.0.1";
+	private static final String SERVEROK = "serverok";
 
 	private ConfigurablePasswordEncryptor passwordEncryptor = new ConfigurablePasswordEncryptor();
 	protected boolean initialstatuscalled = false;
@@ -64,7 +65,7 @@ public class Application extends MultiThreadedApplicationAdapter {
 	protected LoginRecords loginRecords = null;
 	private IConnection pendingplayer = null;
 	protected SystemWatchdog watchdog = null;
-	private AutoDock docker = null;
+	public AutoDock docker = null;
 	public Video video = null;
 
 	public Malg comport = null;
@@ -89,7 +90,7 @@ public class Application extends MultiThreadedApplicationAdapter {
 		super();
 
 		PowerLogger.append("==============Autocrawler Java Start===============\n", this); // extra newline on end
-		Util.log ("==============Autocrawler Java Start 1===============\n", this); // extra newline on end
+		Util.log ("==============Autocrawler Java Start 2===============\n", this); // extra newline on end
 		Util.log("Linux Version:"+Util.getUbuntuVersion()
 				+", Java Model:"+System.getProperty("sun.arch.data.model")
 				+", Java Arch:"+state.get(values.osarch), this);
@@ -525,6 +526,7 @@ public class Application extends MultiThreadedApplicationAdapter {
 
         watchdog.lastpowererrornotify = null; // new driver not notified of any errors yet
         state.set(values.driverclientid, clientID);
+        state.set(State.values.lastusercommand, System.currentTimeMillis());
     }
 
     // nonflash xmlhttp clients only
@@ -544,7 +546,7 @@ public class Application extends MultiThreadedApplicationAdapter {
 
         if (CommServlet.clientaddress != null) banlist.removeAddress(CommServlet.clientaddress);
 
-        //if autodocking, keep autodocking
+        //if autodocking, keep autodocking, otherwise do this
         if (!state.getBoolean(State.values.autodocking) &&
                 !(state.exists(values.navigationroute) && !state.exists(values.nextroutetime)) ) {
 
@@ -1380,7 +1382,7 @@ public class Application extends MultiThreadedApplicationAdapter {
 		
 		if(commandServer!=null) {
 			if(str!=null){
-				if(! str.equals("status check received")) // basic ping from client, ignore
+				if(! str.equals(SERVEROK)) // basic ping from client, ignore
 				commandServer.sendToGroup(TelnetServer.MSGPLAYERTAG + " " + str);
 			}
 			if (status !=null) {
@@ -1557,13 +1559,13 @@ public class Application extends MultiThreadedApplicationAdapter {
 
 			if (state.exists(values.record)) str += " record " + state.get(values.record);
 
-			messageplayer("status check received", "multiple", str.trim());
+			messageplayer(SERVEROK, "multiple", str.trim());
 
 		} else { 
 			if (s.equals("battcheck")) { 
-				messageplayer("status check received", "battery", state.get(State.values.batterylife));
+				messageplayer(SERVEROK, "battery", state.get(State.values.batterylife));
 			} else { // ping only
-				messageplayer("status check received",null, null); 
+				messageplayer(SERVEROK,null, null);
 			}
 		}
 	}

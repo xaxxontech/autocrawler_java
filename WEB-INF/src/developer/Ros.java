@@ -24,9 +24,7 @@ public class Ros {
 
 	public static final long ROSSHUTDOWNDELAY = 2000; // was 15000
 
-	public static final String REMOTE_NAV = "remote_nav"; // nav launch file 
 	public static final String ROSGOALSTATUS_SUCCEEDED = "succeeded";
-	public static final String MAKE_MAP = "make_map"; // mapping launch file
     public static final String MAKE_MAP_GMAPPING = "make_map_gmapping"; // mapping launch file
 
 	private static File lockfile = new File("/run/shm/map.raw.lock");
@@ -42,7 +40,17 @@ public class Ros {
 
 	static final int OCCUPIEDTHRESHOLD = 60;
 	static final int FREETHRESHOLD = 25;
-//	public static List<Process> proclist = new ArrayList<Process>();
+
+	// launch file name constants:
+	public static final String REMOTE_NAV = "remote_nav"; // nav
+	public static final String MAKE_MAP = "make_map"; // mapping
+	public static final String REALSENSE = "realsense"; // rgb and depthcam
+	public static final String RGBPUBLISH = "rgbpublish"; // gstreamer rgb to rtmp (flash client)
+	public static final String RGBWEBRTC = "rgbwebrtc"; // gstreamer webrtc rgb
+	public static final String MICWEBRTC = "micwebrtc"; // gstreamer webrtc microphone
+	public static final String DOCKCAM = "dockcam"; // gstreamer dock cam to rtmp (flash client) and aruco detect
+	public static final String DOCKWEBRTC = "dockwebrtc"; // gstreamer dock cam webrtc and aruco detect
+
 
 	public static BufferedImage rosmapImg() {
 		if (!state.exists(State.values.rosmapinfo)) return null;
@@ -239,7 +247,6 @@ public class Ros {
 
         items.add("pkill");
         items.add("-f");
-//        items.add("roslaunch "+ROSPACKAGE+" "+str);
         items.add(str);
         Util.debug(items.get(2), "Ros.killlaunch()");
 

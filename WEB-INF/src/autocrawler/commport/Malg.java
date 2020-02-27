@@ -57,7 +57,7 @@ public class Malg implements jssc.SerialPortEventListener {
 	public static final byte ODOMETRY_REPORT = 'k';
 	public static final byte PING = 'c';
 		
-	public static final int CAM_NUDGE = 3; // degrees
+	public static final int CAM_NUDGE = 3; // servo units
 	public static final long CAM_SMOOTH_DELAY = 50;
 	public static final long CAM_RELEASE_DELAY = 500;
 	public static final long CAMHOLD_RELEASE_DELAY = Util.FIVE_MINUTES;
@@ -1581,7 +1581,7 @@ public class Malg implements jssc.SerialPortEventListener {
 				break;
 			
 			case downabit:
-				position= state.getInteger(State.values.cameratilt) - CAM_NUDGE*3;
+				position= state.getInteger(State.values.cameratilt) - CAM_NUDGE*2;
 				if (position < CAM_MIN) {
 					position = CAM_MIN;
 				}
@@ -1589,7 +1589,7 @@ public class Malg implements jssc.SerialPortEventListener {
 				break;
 			
 			case upabit:
-				position = state.getInteger(State.values.cameratilt) + CAM_NUDGE*3;
+				position = state.getInteger(State.values.cameratilt) + CAM_NUDGE*2;
 				if (position > CAM_MAX) {
 					position = CAM_MAX;
 				}
@@ -1891,7 +1891,9 @@ public class Malg implements jssc.SerialPortEventListener {
 //			return;
 //		}
 
-		// important to set in main thread
+        if (Math.abs(degrees) < 1.5) return;
+
+        // important to set in main thread
 		long moveID = System.nanoTime();
 		state.set(State.values.odomrotating, moveID);
 

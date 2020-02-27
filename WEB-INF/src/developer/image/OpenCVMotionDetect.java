@@ -89,8 +89,7 @@ public class OpenCVMotionDetect  {
                         if (!state.getBoolean(State.values.motiondetect)) return; // help reduce cpu quicker on shutdown
                     }
                     if (state.getBoolean(State.values.framegrabbusy) || !fg) {
-                        app.driverCallServer(PlayerCommands.messageclients,
-                                "OpenCVMotionDetect().motionDetectGo() frame unavailable");
+                        Util.debug("OpenCVMotionDetect().motionDetectGo() frame unavailable", null);
                         return;
                     }
                     BufferedImage img = ImageUtils.toBufferedImageOfType(app.processedImage, BufferedImage.TYPE_3BYTE_BGR);

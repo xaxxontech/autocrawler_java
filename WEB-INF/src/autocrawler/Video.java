@@ -154,20 +154,22 @@ public class Video {
                     if (app.player instanceof IServiceCapableConnection) { // flash client
                         if (realsensepstring == null) {
                             // TODO: assign rtmp port as param
-                            realsensepstring = Ros.launch(new ArrayList<String>(Arrays.asList("realsensergb",
-                                    "color_width:=" + lastwidth, "color_height:=" + lastheight, "color_fps:=" + lastfps)));
+                            realsensepstring = Ros.launch(new ArrayList<String>(Arrays.asList(Ros.REALSENSE,
+                                "color_width:=" + lastwidth, "color_height:=" + lastheight, "color_fps:=" + lastfps,
+                                "enable_depth:=false", "initial_reset:=false" )));
                         }
-                        webrtcpstring = Ros.launch("rgbpublish");
+                        webrtcpstring = Ros.launch(Ros.RGBPUBLISH);
                     }
 
                     else  {                                                                     // webrtc client
                         if (realsensepstring == null) {
-                            realsensepstring = Ros.launch(new ArrayList<String>(Arrays.asList("realsensergb",
-                                "color_width:="+lastwidth, "color_height:="+lastheight, "color_fps:="+lastfps)));
+                            realsensepstring = Ros.launch(new ArrayList<String>(Arrays.asList(Ros.REALSENSE,
+                                "color_width:="+lastwidth, "color_height:="+lastheight, "color_fps:="+lastfps,
+                                "enable_depth:=false", "initial_reset:=false" )));
                         }
 
                         if (state.exists(values.driverclientid)) {
-                            webrtcpstring = Ros.launch(new ArrayList<String>(Arrays.asList("rgbwebrtc",
+                            webrtcpstring = Ros.launch(new ArrayList<String>(Arrays.asList(Ros.RGBWEBRTC,
                                 "peerid:=" + state.get(values.driverclientid),
                                 "webrtcserver:=wss://"+settings.readSetting(ManualSettings.webrtcserver)+":"
                                         +settings.readSetting(ManualSettings.webrtcport),
@@ -185,12 +187,13 @@ public class Video {
 
                     else {                                               // webrtc client
                         if (realsensepstring == null) {
-                            realsensepstring = Ros.launch(new ArrayList<String>(Arrays.asList("realsensergb",
-                                "color_width:="+lastwidth, "color_height:="+lastheight, "color_fps:="+lastfps)));
+                            realsensepstring = Ros.launch(new ArrayList<String>(Arrays.asList(Ros.REALSENSE,
+                                "color_width:="+lastwidth, "color_height:="+lastheight, "color_fps:="+lastfps,
+                                "enable_depth:=false", "initial_reset:=false")));
                         }
 
                         if (state.exists(values.driverclientid)) {
-                            webrtcpstring = Ros.launch(new ArrayList<String>(Arrays.asList("rgbwebrtc",
+                            webrtcpstring = Ros.launch(new ArrayList<String>(Arrays.asList(Ros.RGBWEBRTC,
                                 "peerid:=" + state.get(values.driverclientid),
                                 "webrtcserver:=wss://"+settings.readSetting(ManualSettings.webrtcserver)+":"
                                         +settings.readSetting(ManualSettings.webrtcport),
@@ -213,7 +216,7 @@ public class Video {
                             ProcessBuilder processBuilder = new ProcessBuilder();
 
                             webrtcpstring = "micwebrtc";
-                            String cmd = Settings.redhome+"/"+Settings.appsubdir+"/micwebrtc"+
+                            String cmd = Settings.redhome+"/"+Settings.appsubdir+"/"+Ros.MICWEBRTC+
                                 " --peer-id=" + state.get(values.driverclientid)+
                                 " --audio-device=" + adevicenum+
                                 " --server=wss://"+settings.readSetting(ManualSettings.webrtcserver)+":"
@@ -694,6 +697,7 @@ public class Video {
 
                 state.set(State.values.sounddetect, false);
                 proc.destroy();
+                app.driverCallServer(PlayerCommands.messageclients, "sound detection disabled");
 
             } catch (Exception e) { e.printStackTrace(); }
 
@@ -734,7 +738,7 @@ public class Video {
                     app.driverCallServer(PlayerCommands.streammode, Application.streamstate.camera.toString());
 
                 if (app.player instanceof IServiceCapableConnection) {// flash client
-                    webrtcpstring = Ros.launch(new ArrayList<String>(Arrays.asList("dockcam",
+                    webrtcpstring = Ros.launch(new ArrayList<String>(Arrays.asList(Ros.DOCKCAM,
                         "dockdevice:=/dev/video" + dockcamdevicenum)));
                 }
                 else { // webrtc
@@ -742,7 +746,7 @@ public class Video {
                     if (state.exists(values.driverclientid))
                         peerid = state.get(values.driverclientid);
 
-                    webrtcpstring = Ros.launch(new ArrayList<String>(Arrays.asList("dockwebrtc",
+                    webrtcpstring = Ros.launch(new ArrayList<String>(Arrays.asList(Ros.DOCKWEBRTC,
                         "peerid:="+peerid,
                         "webrtcserver:=wss://"+settings.readSetting(ManualSettings.webrtcserver)+":"
                                 +settings.readSetting(ManualSettings.webrtcport),
