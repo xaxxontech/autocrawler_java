@@ -15,11 +15,9 @@ var default_peer_id; // =777;
 // Override with your own STUN servers if you want
 // var rtc_configuration = {iceServers: [{urls: "stun:stun.services.mozilla.com"},
                                       // {urls: "stun:stun.l.google.com:19302"}]};
-var rtc_configuration = {iceServers: [{urls: "stun:stun.l.google.com:19302"},
-                                      {urls: "turn:"+window.location.hostname+":3478",
-										  username: "auto",
-										  credential: "robot"
-										  }]};
+var turnserver_login;
+var turnserver_port;
+var rtc_configuration;
 // The default constraints that will be attempted. Can be overriden by the user.
 // var default_constraints = {video: false, audio: false};
 
@@ -194,6 +192,8 @@ function getLocalStream() {
 function websocketServerConnect() {
 	if (ws_conn_close_forever) return;
 	
+	setwebrtcServerConfig();
+	
     connect_attempts++;
     if (connect_attempts > 3) {
         var link = "https://"+window.location.hostname+":"+ws_port;
@@ -328,6 +328,14 @@ function createCall(msg) {
     webrtcStatus("Created peer connection for call, waiting for SDP");
 }
 
+function setwebrtcServerConfig() {
+	rtc_configuration = {iceServers: [{urls: "stun:stun.l.google.com:19302"},
+									  {urls: "turn:"+window.location.hostname+":"+turnserver_port,
+										  username: turnserver_login.split(":")[0],
+										  credential: turnserver_login.split(":")[1]
+										  }]};
+}										  
+										  
 function webrtc_log(str) {
 	console.log(str);
 }

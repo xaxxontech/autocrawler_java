@@ -50,6 +50,7 @@ public class Video {
     private String webrtcpstring = null;
     private volatile long lastvideocommand = 0;
     private Settings settings = Settings.getReference();
+    public final static String TURNLOG = Settings.redhome + "/log/turnserver.log";
 
     public Video(Application a) {
         app = a;
@@ -57,21 +58,15 @@ public class Video {
         ubuntuVersion = Util.getUbuntuVersion();
         setAudioDevice();
         setDockCamVideoDevice();
+        launchTURNserver();
 
         String vals[] = settings.readSetting(settings.readSetting(GUISettings.vset)).split("_");
         lastwidth = Integer.parseInt(vals[0]);
         lastheight = Integer.parseInt(vals[1]);
         lastfps = Integer.parseInt(vals[2]);
         lastbitrate = Long.parseLong(vals[3]);
-    }
 
-    public void initAvconv() {
         state.set(State.values.stream, Application.streamstate.stop.toString());
-        if (state.get(State.values.osarch).equals(Application.ARM)) {
-//            avprog = FFMPEG;
-//            dumpfps = 8;
-//            STREAM_CONNECT_DELAY=3000;
-        }
     }
 
     private void setAudioDevice() {
@@ -112,6 +107,23 @@ public class Video {
         } catch (Exception e) { Util.printError(e);}
     }
 
+    private void launchTURNserver() {
+        // turnserver --user=auto:robot  --realm=xaxxon.com --no-stun --listening-port=3478
+        String cmd = "turnserver --user="+settings.readSetting(ManualSettings.turnserverlogin) +
+                " --realm=xaxxon.com --no-stun --listening-port=" +
+                settings.readSetting(ManualSettings.turnserverport);
+//                + " --log-file "+TURNLOG;
+
+        Util.systemCall(cmd);
+        Util.log("TURN server started: "+cmd, this);
+
+//        try {
+//            new ProcessBuilder("sh", "-c", cmd ).start();
+//            Util.log("TURN server started: "+cmd, this);
+//        } catch (Exception e){ e.printStackTrace();}
+
+    }
+
     public void publish (final Application.streamstate mode, final int w, final int h, final int fps, final long bitrate) {
         // todo: disallow unsafe custom values (device can be corrupted?)
 
@@ -123,7 +135,9 @@ public class Video {
         if ( (mode.equals(Application.streamstate.camera) || mode.equals(Application.streamstate.camandmic)) &&
                 (state.get(values.stream).equals(Application.streamstate.camera.toString()) ||
                 state.get(values.stream).equals(Application.streamstate.camandmic.toString())) &&
-                !state.getBoolean(values.dockcamon) ) {
+                !state.getBoolean(values.dockcamon)
+                && !(state.exists(values.navigationroute) && !state.exists(values.nextroutetime))  //route running
+                ) {
             app.driverCallServer(PlayerCommands.messageclients, "camera already running, stream: "+mode.toString()+" command dropped");
             return;
         }
@@ -173,7 +187,10 @@ public class Video {
                                 "peerid:=" + state.get(values.driverclientid),
                                 "webrtcserver:=wss://"+settings.readSetting(ManualSettings.webrtcserver)+":"
                                         +settings.readSetting(ManualSettings.webrtcport),
-                                "videowidth:=" + lastwidth, "videoheight:=" + lastheight, "videobitrate:=" + lastbitrate)));
+                                "videowidth:=" + lastwidth, "videoheight:=" + lastheight, "videobitrate:=" + lastbitrate,
+                                "turnserverport:="+settings.readSetting(ManualSettings.turnserverport),
+                                "turnserverlogin:="+settings.readSetting(ManualSettings.turnserverlogin)
+                            )));
                         }
                     }
 
@@ -198,7 +215,10 @@ public class Video {
                                 "webrtcserver:=wss://"+settings.readSetting(ManualSettings.webrtcserver)+":"
                                         +settings.readSetting(ManualSettings.webrtcport),
                                 "audiodevice:=--audio-device=" + adevicenum,
-                                "videowidth:=" + lastwidth, "videoheight:=" + lastheight, "videobitrate:=" + lastbitrate)));
+                                "videowidth:=" + lastwidth, "videoheight:=" + lastheight, "videobitrate:=" + lastbitrate,
+                                "turnserverport:="+settings.readSetting(ManualSettings.turnserverport),
+                                "turnserverlogin:="+settings.readSetting(ManualSettings.turnserverlogin)
+                            )));
                         }
                     }
 
@@ -220,7 +240,10 @@ public class Video {
                                 " --peer-id=" + state.get(values.driverclientid)+
                                 " --audio-device=" + adevicenum+
                                 " --server=wss://"+settings.readSetting(ManualSettings.webrtcserver)+":"
-                                    +settings.readSetting(ManualSettings.webrtcport);
+                                    +settings.readSetting(ManualSettings.webrtcport)+
+                                " --turnserver-port="+settings.readSetting(ManualSettings.turnserverport)+
+                                " --turnserver-login="+settings.readSetting(ManualSettings.turnserverlogin)
+                                ;
 
                             List <String> args = new ArrayList<>();
                             String[] array = cmd.split(" ");
@@ -750,7 +773,10 @@ public class Video {
                         "peerid:="+peerid,
                         "webrtcserver:=wss://"+settings.readSetting(ManualSettings.webrtcserver)+":"
                                 +settings.readSetting(ManualSettings.webrtcport),
-                        "dockdevice:=/dev/video" + dockcamdevicenum)));
+                        "dockdevice:=/dev/video" + dockcamdevicenum,
+                        "turnserverport:="+settings.readSetting(ManualSettings.turnserverport),
+                        "turnserverlogin:="+settings.readSetting(ManualSettings.turnserverlogin)
+                    )));
 
                 }
 

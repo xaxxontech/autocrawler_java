@@ -82,7 +82,8 @@ public class SystemWatchdog {
 
 			// deal with abandoned logins, driver still connected
 			if (state.exists(State.values.driver.toString()) && 
-					System.currentTimeMillis() - state.getLong(State.values.lastusercommand) > ABANDONDEDLOGIN ) {
+                    System.currentTimeMillis() - state.getLong(State.values.lastusercommand) > ABANDONDEDLOGIN
+                    && !(state.exists(values.navigationroute) && !state.exists(values.nextroutetime))  ) {
 
 				application.driverCallServer(PlayerCommands.disconnectotherconnections, null);
 				application.driverCallServer(PlayerCommands.driverexit, null);

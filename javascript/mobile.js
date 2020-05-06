@@ -99,7 +99,7 @@ function message(message, colour, status, value) {
 		else { setstatus(status, value); }
 	}
 
-	if (!webrtcinit && ws_server && ws_port) {
+	if (!webrtcinit && ws_server && ws_port && turnserver_login && turnserver_port) {
 		webrtcinit = true;
 		websocketServerConnect(); // webrtc.js
 	}
@@ -139,17 +139,16 @@ function setstatus(status, value) {
 			videologo("on");
 		}
 	}
+
 	else if (status=="webrtcserver") { ws_server = value; } // webrtc.js
 	else if (status=="webrtcport") { ws_port = value; } // webrtc.js
+	else if (status=="turnserverlogin") {turnserver_login = value; } // webrtc.js
+	else if (status=="turnserverport") {turnserver_port = value; } // webrtc.js
+
 	else if (status == "storecookie") createCookie("auth",value,30); 
 	if (status == "stream") {
 		if (value == "stop" || value == "mic")  videologo("on"); 
 	}
-
-	// else if (status == "cameratilt") cameratilt_status = value;
-	// else if (status == "battery") battery_status = value;
-	// else if (status == "dock") dock_status = value;
-	// else if (status == "user") user_status = value;
 
 }
 

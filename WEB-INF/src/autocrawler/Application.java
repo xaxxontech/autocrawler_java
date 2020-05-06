@@ -90,7 +90,7 @@ public class Application extends MultiThreadedApplicationAdapter {
 		super();
 
 		PowerLogger.append("==============Autocrawler Java Start===============\n", this); // extra newline on end
-		Util.log ("==============Autocrawler Java Start 2===============\n", this); // extra newline on end
+		Util.log ("==============Autocrawler Java Start 1===============\n", this); // extra newline on end
 		Util.log("Linux Version:"+Util.getUbuntuVersion()
 				+", Java Model:"+System.getProperty("sun.arch.data.model")
 				+", Java Arch:"+state.get(values.osarch), this);
@@ -234,7 +234,8 @@ public class Application extends MultiThreadedApplicationAdapter {
 				t.invoke("playerDisconnect");
 			}
 		}
-		
+
+		/*
 		if (connection.equals(grabber)) {
 			grabber = null;
 
@@ -256,6 +257,7 @@ public class Application extends MultiThreadedApplicationAdapter {
 			}).start();
 			return;
 		}
+		*/
 
 		if (connection.equals(relayclient)) {
 			relayclient = null;
@@ -301,10 +303,9 @@ public class Application extends MultiThreadedApplicationAdapter {
 			scanUtils = new developer.depth.ScanUtils();
 		}
 
-		// OpenCV, requires restart if ubuntu 14.04 running, with jar file targeted at 16.04 was present
+		// OpenCV
 		OpenCVUtils ocv = new OpenCVUtils(this);
 		ocv.loadOpenCVnativeLib();
-//		if (ocv.jarfiledeleted) restart();
 
 		Util.setSystemVolume(settings.getInteger(GUISettings.volume));
 		state.set(State.values.volume, settings.getInteger(GUISettings.volume));
@@ -319,7 +320,8 @@ public class Application extends MultiThreadedApplicationAdapter {
 		if( ! settings.getBoolean(ManualSettings.useflash)) state.set(values.driverstream, driverstreamstate.disabled.toString());
 		else state.set(State.values.driverstream, driverstreamstate.stop.toString());
 
-		grabberInitialize();
+		video = new Video(this);
+
 		state.set(State.values.lastusercommand, System.currentTimeMillis()); // must be before watchdog
 		docker = new AutoDock(this, comport, powerport);
 		network = new Network(this);	
@@ -389,13 +391,15 @@ public class Application extends MultiThreadedApplicationAdapter {
 		}
 	}
 
+	/*
 	private void grabberInitialize() {
 
 //		String host = LOCALHOST;
 //		if (!settings.readSetting(ManualSettings.relayserver).equals(Settings.DISABLED))
 //			host = settings.readSetting(ManualSettings.relayserver);
 
-		video = new Video(this);
+//		video = new Video(this);
+
 
 		// non flash, no gui
 		if (!settings.getBoolean(ManualSettings.useflash))   video.initAvconv();
@@ -407,6 +411,7 @@ public class Application extends MultiThreadedApplicationAdapter {
 		}
 
 	}
+	*/
 
 	public void grabber_launch(final String str) {
 		new Thread(new Runnable() {
@@ -510,6 +515,8 @@ public class Application extends MultiThreadedApplicationAdapter {
 
         str += " webrtcserver " + settings.readSetting(ManualSettings.webrtcserver);
         str += " webrtcport " + settings.readSetting(ManualSettings.webrtcport);
+		str += " turnserverlogin " + settings.readSetting(ManualSettings.turnserverlogin);
+		str += " turnserverport " + settings.readSetting(ManualSettings.turnserverport);
 
         if (authtoken != null) {
             str += " storecookie " + authtoken;

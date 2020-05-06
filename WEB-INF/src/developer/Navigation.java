@@ -922,7 +922,8 @@ public class Navigation implements Observer {
 			startupdelay = 2000;
         }
 
-		if (mic) {
+		// turn lidar off if necessary
+		if (mic || duration > Util.ONE_MINUTE) {
 			if (state.exists(values.lidar)) {
 				state.set(values.lidar, lidarstate.disabled.toString());
 				startupdelay = 3000;
@@ -947,8 +948,8 @@ public class Navigation implements Observer {
 		// remain at waypoint rotating and/or waiting, detection running if enabled
 		while (System.currentTimeMillis() - waypointstart < duration || turns < maxturns) {
 
-			if (!state.exists(State.values.navigationroute)) return;
-	    	if (!state.get(State.values.navigationrouteid).equals(id)) return;
+			if (!state.exists(State.values.navigationroute)) break;
+	    	if (!state.get(State.values.navigationrouteid).equals(id)) break;
 
 			state.delete(State.values.streamactivity);
 
@@ -977,9 +978,12 @@ public class Navigation implements Observer {
 			// ALL SENSES ENABLED, NOW WAIT
 			long start = System.currentTimeMillis();
 			while (!state.exists(State.values.streamactivity) && System.currentTimeMillis() - start < delay
-					&& state.get(State.values.navigationrouteid).equals(id)) { Util.delay(10); }
+				&& state.get(State.values.navigationrouteid).equals(id) && state.exists(values.navigationroute))
+					{ Util.delay(10); }
 
-//            SystemWatchdog.waitForCpu();
+			// if cancelled while waiting
+			if (!state.exists(State.values.navigationroute)) break;
+			if (!state.get(State.values.navigationrouteid).equals(id)) break;
 
 			// PHOTO
 			if (photo) {
@@ -1158,19 +1162,24 @@ public class Navigation implements Observer {
 			app.video.record(Settings.FALSE); // stop recording
 		}
 
-		if (camera) {
-			app.driverCallServer(PlayerCommands.cameracommand, Malg.cameramove.horiz.toString());
-			Util.delay(2000);
-		}
-
-		if (sound && state.exists(values.lidar)) {
-            state.set(values.lidar, lidarstate.enabled.toString());
-            Util.delay(3000);
-            if (!camera) Util.delay(2000);
+        // turn lidar back on if necessary
+		if (state.exists(values.lidar)) {
+		    if (state.get(values.lidar).equals(lidarstate.disabled.toString())) {
+                state.set(values.lidar, lidarstate.enabled.toString());
+                Util.delay(3000);
+                if (!camera) Util.delay(2000);
+            }
         }
 
+        if (camera) {
+            app.driverCallServer(PlayerCommands.cameracommand, Malg.cameramove.horiz.toString());
+            Util.delay(2000);
+        }
 
-		state.set(values.waypointbusy, "false");
+        if (state.getInteger(values.spotlightbrightness) != 0)
+            app.driverCallServer(PlayerCommands.spotlight, "0");
+
+        state.set(values.waypointbusy, Settings.FALSE);
 
 	}
 

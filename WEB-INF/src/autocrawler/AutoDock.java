@@ -191,6 +191,12 @@ public class AutoDock {
     }
 
     public void autoDockCancel() {
+
+		if (state.get(State.values.navsystemstatus).equals(Ros.navsystemstate.running.toString())) {
+			app.driverCallServer(PlayerCommands.move, Malg.direction.stop.toString());
+			return;
+		}
+
         if (!state.getBoolean(State.values.autodocking)) return;
 
         state.set(State.values.autodocking, false);

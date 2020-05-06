@@ -49,6 +49,8 @@ static const gchar *audio_device = NULL;
 static gboolean disable_ssl = FALSE;
 
 static gboolean serverConnected = FALSE;
+static const gchar *turnserver_port = NULL;
+static const gchar *turnserver_login = NULL;
 
 
 static GOptionEntry entries[] =
@@ -57,6 +59,8 @@ static GOptionEntry entries[] =
   { "server", 0, 0, G_OPTION_ARG_STRING, &server_url, "Signalling server to connect to", "URL" },
   { "disable-ssl", 0, 0, G_OPTION_ARG_NONE, &disable_ssl, "Disable ssl", NULL },
   { "audio-device", 0, 0, G_OPTION_ARG_STRING, &audio_device, "String of the audio device number", "ID" },
+  { "turnserver-port", 0, 0, G_OPTION_ARG_STRING, &turnserver_port, "TURN server port number", NULL },
+  { "turnserver-login", 0, 0, G_OPTION_ARG_STRING, &turnserver_login, "TURN server user:pass", NULL },
   { NULL },
 };
 
@@ -298,7 +302,8 @@ start_pipeline (void)
       //"queue ! " RTP_CAPS_OPUS "97 ! sendrecv. ",
       //&error);
       
-	gchar *pl = g_strconcat ("webrtcbin bundle-policy=max-bundle name=sendrecv " STUN_SERVER TURN_SERVER
+	gchar *pl = g_strconcat ("webrtcbin bundle-policy=max-bundle name=sendrecv " STUN_SERVER 
+		"turn-server=turn://", turnserver_login, "@127.0.0.1:", turnserver_port, " "
 		"alsasrc device=hw:", audio_device, " ! audioconvert ! audioresample ! queue ! opusenc ! rtpopuspay ! "
 		"queue ! " RTP_CAPS_OPUS "97 ! sendrecv. ", NULL);
 	pipe1 =	gst_parse_launch (pl, &error);

@@ -1,12 +1,13 @@
 package autocrawler.commport;
 
+import autocrawler.Settings;
+
 import java.io.RandomAccessFile;
 import java.util.Date;
 
 public class PowerLogger {
 
-	public final static String redhome = System.getenv("RED5_HOME");
-	public final static String powerlog = redhome + "/log/power.log";
+	public final static String powerlog = Settings.redhome + "/log/power.log";
 	private static RandomAccessFile logger = null;
 	
 	private static void init() {		

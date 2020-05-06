@@ -394,9 +394,11 @@ function message(message, colour, status, value) {
 		else { setstatus(status, value); }
 	}
 	
-	if (!webrtcinit && ws_server && ws_port) {
-		webrtcinit = true;
-		websocketServerConnect(); // webrtc.js
+	if (typeof ws_server !== 'undefined') {
+		if (!webrtcinit && ws_server && ws_port && turnserver_login && turnserver_port) {
+			webrtcinit = true;
+			websocketServerConnect(); // webrtc.js
+		}
 	}
 }
 
@@ -542,7 +544,8 @@ function setstatus(status, value) {
 	}
 	else if (status=="webrtcserver") { ws_server = value; } // webrtc.js
 	else if (status=="webrtcport") { ws_port = value; } // webrtc.js
-		 
+	else if (status=="turnserverlogin") {turnserver_login = value; } // webrtc.js
+	else if (status=="turnserverport") {turnserver_port = value; } // webrtc.js
 }
 
 function setstatusmultiple(value) {

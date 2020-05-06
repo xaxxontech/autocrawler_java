@@ -2347,6 +2347,7 @@ public class Malg implements jssc.SerialPortEventListener {
 						odometryReport();
 					}
 					else  break;
+					Util.delay(1);
 				}
 
 				odometryBroadCasting = false;
