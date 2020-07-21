@@ -278,13 +278,12 @@ function connectionlost() {
 function videologo(state) {
 	
 	mobilelog("videologo("+state+")");
+	
+	var pd = document.getElementById("pagediv");
+	if (pd.offsetWidth > pd.offsetHeight * 0.8) pd.style.width = Math.floor(pd.offsetHeight * 0.8) + "px";
 
 	var vidlogo = document.getElementById("videologo");
 	var vid = document.getElementById("stream");
-
-	// if (state != "on" && state != "off") {
-		// state = (vidlogo.style.display == "none") ? "on" : "off";
-	// }
 	
     var xyvid = findpos(vid);
 
@@ -394,10 +393,6 @@ function mobileAndTabletcheck() {
 	return check;
 }
 
-function mobilelog(str) {
-	console.log(str);
-}
-
 function openxmlhttp(theurl, functionname) {
 	  if (window.XMLHttpRequest) {// code for all new browsers
 	    xmlhttp=new XMLHttpRequest();}
@@ -413,4 +408,8 @@ function openxmlhttp(theurl, functionname) {
 	  else {
 	    alert("Your browser does not support XMLHTTP.");
 	  }
+}
+
+function mobilelog(str) {
+	//console.log(str);
 }

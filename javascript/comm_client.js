@@ -162,5 +162,5 @@ function postxmlhttp(theurl, data) {
 }
 
 function comm_client_log(str) {
-	console.log(str);
+	//console.log(str);
 }

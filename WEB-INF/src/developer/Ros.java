@@ -16,6 +16,7 @@ import autocrawler.*;
 public class Ros {
 
 	private static State state = State.getReference();
+	private static Settings settings = Settings.getReference();
 
 	// State keys
 	public enum navsystemstate {
@@ -25,7 +26,6 @@ public class Ros {
 	public static final long ROSSHUTDOWNDELAY = 2000; // was 15000
 
 	public static final String ROSGOALSTATUS_SUCCEEDED = "succeeded";
-    public static final String MAKE_MAP_GMAPPING = "make_map_gmapping"; // mapping launch file
 
 	private static File lockfile = new File("/run/shm/map.raw.lock");
 	private static BufferedImage map = null;
@@ -44,13 +44,18 @@ public class Ros {
 	// launch file name constants:
 	public static final String REMOTE_NAV = "remote_nav"; // nav
 	public static final String MAKE_MAP = "make_map"; // mapping
-	public static final String REALSENSE = "realsense"; // rgb and depthcam
+    public static final String MAKE_MAP_GMAPPING = "make_map_gmapping"; // mapping lidar + gmapping
+    public static final String MAKE_MAP_REALSENSE_GMAPPING = "make_map_realsense_gmapping"; // mapping realsense + gmapping
+	public static final String MAKE_MAP_REALSENSE_CARTOGRAPHER = "make_map_realsense_cartographer"; // mapping realsense + gmapping
+    public static final String REALSENSE = "realsense"; // rgb and depthcam
 	public static final String RGBPUBLISH = "rgbpublish"; // gstreamer rgb to rtmp (flash client)
 	public static final String RGBWEBRTC = "rgbwebrtc"; // gstreamer webrtc rgb
 	public static final String MICWEBRTC = "micwebrtc"; // gstreamer webrtc microphone
 	public static final String DOCKCAM = "dockcam"; // gstreamer dock cam to rtmp (flash client) and aruco detect
 	public static final String DOCKWEBRTC = "dockwebrtc"; // gstreamer dock cam webrtc and aruco detect
 
+	public static final String ROS1CMD = Settings.redhome+Util.sep+"ros1.sh";
+	public static final String ROS2CMD = Settings.redhome+Util.sep+"ros2.sh";
 
 	public static BufferedImage rosmapImg() {
 		if (!state.exists(State.values.rosmapinfo)) return null;
@@ -204,39 +209,39 @@ public class Ros {
 
         ProcessBuilder processBuilder = new ProcessBuilder();
 
-		args.set(0, args.get(0)+".launch");
-		args.add(0, ROSPACKAGE); // 3rd
-		args.add(0, "roslaunch"); // 2nd
+        if (settings.getBoolean(ManualSettings.ros2)) {
+			args.set(0, args.get(0) + ".launch.py");
+			args.add(0, ROSPACKAGE); // 4th
+			args.add(0, "launch"); // 3rd
+			args.add(0, "ros2"); // 2nd
+		}
+		else{
+			args.set(0, args.get(0) + ".launch");
+			args.add(0, ROSPACKAGE); // 3rd
+			args.add(0, "roslaunch"); // 2nd
+		}
 
         // return string should be file.launch + args
         String pstring = "";
-        int i = 0; // skip 0: 'ros.sh'
+        int i = 0;
         while (i < args.size()) {
             pstring += args.get(i)+" ";
             i++;
         }
         pstring = pstring.trim();
 
-		args.add(0, Settings.redhome + Util.sep + "ros.sh"); // 1st
+		if (settings.getBoolean(ManualSettings.ros2))
+			args.add(0, ROS2CMD); // 1st
+		else
+			args.add(0, ROS1CMD); // 1st
+
 		processBuilder.command(args);
 
         try {
 			Process proc = processBuilder.start();
-
-//			BufferedReader procReader = new BufferedReader(new InputStreamReader(proc.getInputStream()));
-//
-//			String line = null;
-//            long timeout = System.currentTimeMillis() + 10000;
-//            while ((line = procReader.readLine()) != null && System.currentTimeMillis() < timeout) {
-//				if (line.startsWith("PID:")) {
-//					long pid = Long.parseLong(line.replaceAll("\\D+", ""));
-//					break;
-//				}
-//			}
-
 		} catch (Exception e) { e.printStackTrace(); }
 
-		Util.debug("Roslaunch PString: "+pstring, "Ros.launch()");
+		Util.debug("Ros.launch PString: "+pstring, "Ros.launch()");
 		return pstring;
 
 	}
@@ -246,6 +251,7 @@ public class Ros {
         List<String> items = new ArrayList<>();
 
         items.add("pkill");
+        items.add("-2");  // signal 2=SIGINT instead of default 15=SIGTERM
         items.add("-f");
         items.add(str);
         Util.debug(items.get(2), "Ros.killlaunch()");
@@ -259,7 +265,11 @@ public class Ros {
 
 	public static void roscommand(String str) {
 	    Util.debug("Ros.java roscommand: "+str, null);
-		String cmd = Settings.redhome + Util.sep + "ros.sh"; // setup ros environment
+
+	    String cmd = ROS1CMD;
+		if (settings.getBoolean(ManualSettings.ros2))
+			cmd = ROS2CMD;
+
 		cmd += " " + str;
 		Util.systemCall(cmd);
     }
@@ -275,26 +285,23 @@ public class Ros {
 //		return proc;
 //	}
 
-
-	private static boolean checkIfRoslaunchRunning() {
-		try {
-			Process proc = Runtime.getRuntime().exec("ps xa");
-			BufferedReader procReader = new BufferedReader(new InputStreamReader(proc.getInputStream()));
-			String line;
-			while ((line = procReader.readLine()) != null) {
-//				Util.log("Ros.checkIfRoslaunchRunning(): "+line, null);
-				if (line.contains("roslaunch")) {
-//					Util.log("Ros.checkIfRoslaunchRunning(): found roslaunch!", null);
-					procReader.close();
-					return true;
-				}
-			}
-			procReader.close();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		return false;
-	}
+//	private static boolean checkIfRoslaunchRunning() {
+//		try {
+//			Process proc = Runtime.getRuntime().exec("ps xa");
+//			BufferedReader procReader = new BufferedReader(new InputStreamReader(proc.getInputStream()));
+//			String line;
+//			while ((line = procReader.readLine()) != null) {
+//				if (line.contains("roslaunch")) {
+//					procReader.close();
+//					return true;
+//				}
+//			}
+//			procReader.close();
+//		} catch (Exception e) {
+//			e.printStackTrace();
+//		}
+//		return false;
+//	}
 	
 	public static void savewaypoints(String str) {
 		if (str.trim().equals(""))

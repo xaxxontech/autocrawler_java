@@ -127,9 +127,48 @@ public class Navigation implements Observer {
         new Thread(new Runnable() { public void run() {
 
             if (str.equals("gmapping")) navpstring = Ros.launch(Ros.MAKE_MAP_GMAPPING);
+
+            else if (str.equals("realsensegmapping")) {
+                app.driverCallServer(PlayerCommands.cameracommand, Malg.cameramove.horiz.toString());
+
+                // stop any current video
+                String currentstream = videoRestartRequiredBlocking();
+
+                // launch remote_nav.launch
+                navpstring = Ros.launch(Ros.MAKE_MAP_REALSENSE_GMAPPING);
+
+                // launch realsense with RGB and depth
+                String vals[] = settings.readSetting(settings.readSetting(GUISettings.vset)).split("_");
+                app.video.realsensepstring = Ros.launch(new ArrayList<String>(Arrays.asList(Ros.REALSENSE,
+                        "color_width:=" + vals[0], "color_height:=" + vals[1], "color_fps:=" + vals[2],
+                        "enable_depth:=true", "initial_reset:=true")));
+
+                // re-launch stream-to-client if there was current video
+                if (currentstream != null) app.driverCallServer(PlayerCommands.publish, currentstream);
+            }
+
+			else if (str.equals("realsensecartographer")) {
+				app.driverCallServer(PlayerCommands.cameracommand, Malg.cameramove.horiz.toString());
+
+				// stop any current video
+				String currentstream = videoRestartRequiredBlocking();
+
+				// launch remote_nav.launch
+				navpstring = Ros.launch(Ros.MAKE_MAP_REALSENSE_CARTOGRAPHER);
+
+				// launch realsense with RGB and depth
+				String vals[] = settings.readSetting(settings.readSetting(GUISettings.vset)).split("_");
+				app.video.realsensepstring = Ros.launch(new ArrayList<String>(Arrays.asList(Ros.REALSENSE,
+						"color_width:=" + vals[0], "color_height:=" + vals[1], "color_fps:=" + vals[2],
+						"enable_depth:=true", "initial_reset:=true")));
+
+				// re-launch stream-to-client if there was current video
+				if (currentstream != null) app.driverCallServer(PlayerCommands.publish, currentstream);
+			}
+
             else navpstring = Ros.launch(Ros.MAKE_MAP);
 
-            app.driverCallServer(PlayerCommands.messageclients, "starting mapping, please wait");
+            app.driverCallServer(PlayerCommands.messageclients, "starting mapping "+str+" please wait");
             state.set(State.values.navsystemstatus, Ros.navsystemstate.starting.toString()); // set running by ROS node when ready
 
         }  }).start();
@@ -195,8 +234,11 @@ public class Navigation implements Observer {
 
         if (!state.get(values.navsystemstatus).equals(Ros.navsystemstate.mapping.toString())) {
             Ros.killlaunch(app.video.realsensepstring);
-            app.video.realsensepstring = null;
+            Ros.roscommand("rosnode kill /camera/realsense2_camera_manager");
         }
+        else { // mapping often requires ros restart after
+			Util.systemCall("pkill roscore");
+		}
 
         if (!state.get(values.stream).equals(Application.streamstate.stop.toString())
                 && !state.get(values.navsystemstatus).equals(Ros.navsystemstate.mapping.toString()))
@@ -208,7 +250,7 @@ public class Navigation implements Observer {
 
         if (navpstring !=null) Ros.killlaunch(navpstring);
         navpstring = null;
-        app.video.realsensepstring = null; // TODO: required?
+        app.video.realsensepstring = null;  
 
 //        Ros.roscommand("rosnode kill /remote_nav");
 //        Ros.roscommand("rosnode kill /map_remote");
@@ -604,18 +646,19 @@ public class Navigation implements Observer {
 				}
 
 				// skip route if battery low (settings.txt)  
-				if(batteryTooLow()){			
+				if(batteryTooLow()){
 					batteryskips++;
 					Util.log("battery too low: " + state.get(values.batterylife) + " skips: " + batteryskips, this);
 					if(batteryskips == 1){	// only log once !
 						navlog.newItem(NavigationLog.ALERTSTATUS, "Battery too low to start: " + state.get(values.batterylife), 0, null, name, consecutiveroute, 0);	
-					} else {
-						if( ! state.get(values.batterylife).contains("_charging")) {
-							Util.log("batteryTooLow(): not charging, powerreset: "+ state.get(values.batterylife), "Navigation.runRoute()");
-							app.driverCallServer(PlayerCommands.powerreset, null);
-						}
 					}
-					if( ! delayToNextRoute(navroute, name, id)) return; 
+
+                    if( ! state.get(values.batterylife).contains("_charging")) {
+                        Util.log("batteryTooLow(): not charging, powerreset: "+ state.get(values.batterylife), "Navigation.runRoute()");
+                        app.driverCallServer(PlayerCommands.powerreset, null);
+                    }
+
+					if( ! delayToNextRoute(navroute, name, id)) return;
 					continue;
 				} else { batteryskips = 0; }
 

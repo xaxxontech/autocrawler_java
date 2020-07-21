@@ -669,8 +669,6 @@ Settings and Calibration:
 <table><tr><td style="height: 7px"></td></tr></table>
 <a class="blackbg" href="javascript: drivingsettings();">motor settings</a> &gt;<br>
 <a class="blackbg" href="javascript: emailsettings();">email settings</a> &gt;<br>
-<a class="blackbg" href="javascript: autodock('calibrate');">calibrate auto-dock</a><br>
-<a class="blackbg" href="javascript: docklinecalibrate('start');">manual dock guide</a><br>
 login notify <a class="blackbg" href="javascript: writesetting('loginnotify true');">on</a> /
 <a class="blackbg" href="javascript: writesetting('loginnotify false');">off</a><br>
 reboot every 48 hrs <span style="font-size: 11px">(requires server restart)</span>
@@ -681,15 +679,7 @@ attempt auto re-dock if required
 writesetting('redock true'); }">yes</a> /
 <a class="blackbg" href="javascript: writesetting('redock false');">no</a><br>
 
-enable navigation menu <span style="font-size: 11px">(requires server restart)</span>
-	<a class="blackbg" href="javascript: writesetting('navigation true');">enable</a> /
-<a class="blackbg" href="javascript: writesetting('navigation false');">disable</a><br>
-
-enable telnet on port 4444 <span style="font-size: 11px">(requires server restart)</span>
-<a class="blackbg" href="javascript: writesetting('telnetport 4444');">enable</a> /
-<a class="blackbg" href="javascript: writesetting('telnetport disabled');">disable</a><br>
-
-	<a class="blackbg" href="javascript: saveopenwindowpositions();">save window positions</a><br>
+<a class="blackbg" href="javascript: saveopenwindowpositions();">save window positions</a><br>
 <a class="blackbg" href="javascript: defaultwindowpositions();">default window positions</a>
 <span style="font-size: 11px">(requires browser page refresh)</span><br>
 </div>

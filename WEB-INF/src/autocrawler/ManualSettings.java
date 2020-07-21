@@ -11,7 +11,7 @@ public enum ManualSettings {
 
 	// undocumented
 	lowbattery, timedshutdown, camhold, soundmaxthreshold, webrtcserver, webrtcport,
-    turnserverlogin, turnserverport,
+    turnserverlogin, turnserverport, ros2
 	
 	;
 	
@@ -43,6 +43,7 @@ public enum ManualSettings {
         config.setProperty(webrtcport.name(), "8443");
         config.setProperty(turnserverlogin.name(), "auto:robot");
         config.setProperty(turnserverport.name(), "3478");
+		config.setProperty(ros2.name(), Settings.FALSE);
         return config;
 	}
 	

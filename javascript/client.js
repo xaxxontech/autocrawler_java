@@ -35,7 +35,7 @@ var steeringmode;
 var cameramoving = false;
 var broadcasting = null;
 var broadcastmicon = false; 
-var clicksteeron = true;
+var clicksteeron = false;
 var maxmessagecontents = 50000; // was 150000
 var maxmessageboxsize = 4000;
 var relay = false;

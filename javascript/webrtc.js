@@ -49,7 +49,8 @@ function getVideoElement() {
 }
 
 function webrtcStatus(text) {
-    webrtc_log(text);
+    //webrtc_logdebug(text);
+    console.log(text);
 
     /*
     var span = document.getElementById("status")
@@ -96,7 +97,7 @@ function onIncomingSDP(sdp) {
 
 // Local description was set, send it to peer
 function onLocalDescription(desc) {
-    webrtc_log("Got local description: " + JSON.stringify(desc));
+    webrtc_logdebug("Got local description: " + JSON.stringify(desc));
     peer_connection.setLocalDescription(desc).then(function() {
         webrtcStatus("Sending SDP answer");
         sdp = {'sdp': peer_connection.localDescription}
@@ -111,7 +112,7 @@ function onIncomingICE(ice) {
 }
 
 function onServerMessage(event) {
-    webrtc_log("Received " + event.data);
+    webrtc_logdebug("Received " + event.data);
     switch (event.data) {
         case "HELLO":
             webrtcStatus("Registered with server, waiting for call");
@@ -177,7 +178,7 @@ function getLocalStream() {
         // setError('ERROR parsing constraints: ' + e.message + ', using default constraints');
         // constraints = default_constraints;
     // }
-    // webrtc_log(JSON.stringify(constraints));
+    // webrtc_logdebug(JSON.stringify(constraints));
 
 	constraints = default_constraints;
     // Add local stream
@@ -213,7 +214,7 @@ function websocketServerConnect() {
         // textarea.value = JSON.stringify(default_constraints);
     // Fetch the peer id to use
     peer_id = default_peer_id || getOurId();
-    webrtc_log("using peer id: "+peer_id);
+    webrtc_logdebug("using peer id: "+peer_id);
     ws_port = ws_port || '8443';
     if (window.location.protocol.startsWith ("file")) {
         ws_server = ws_server || "127.0.0.1";
@@ -245,7 +246,7 @@ function websocketServerDisconnect() {
 
 function onRemoteTrack(event) {
     if (getVideoElement().srcObject !== event.streams[0]) {
-        webrtc_log('Incoming stream');
+        webrtc_logdebug('Incoming stream');
         getVideoElement().srcObject = event.streams[0];
         videologo("off");
     }
@@ -256,19 +257,19 @@ function errorUserMediaHandler() {
 }
 
 const handleDataChannelOpen = (event) =>{
-    webrtc_log("dataChannel.OnOpen", event);
+    webrtc_logdebug("dataChannel.OnOpen", event);
 };
 
 // const handleDataChannelMessageReceived = (event) =>{
-    // webrtc_log("dataChannel.OnMessage:", event, event.data.type);
+    // webrtc_logdebug("dataChannel.OnMessage:", event, event.data.type);
 
     // webrtcStatus("Received data channel message");
     // if (typeof event.data === 'string' || event.data instanceof String) {
-        // webrtc_log('Incoming string message: ' + event.data);
+        // webrtc_logdebug('Incoming string message: ' + event.data);
         // textarea = document.getElementById("text")
         // textarea.value = textarea.value + '\n' + event.data
     // } else {
-        // webrtc_log('Incoming data message');
+        // webrtc_logdebug('Incoming data message');
     // }
     // send_channel.send("Hi! (from browser)");
 // };
@@ -278,7 +279,7 @@ const handleDataChannelOpen = (event) =>{
 // };
 
 // const handleDataChannelClose = (event) =>{
-    // webrtc_log("dataChannel.OnClose", event);
+    // webrtc_logdebug("dataChannel.OnClose", event);
 // };
 
 // function onDataChannel(event) {
@@ -294,7 +295,7 @@ function createCall(msg) {
     // Reset connection attempts because we connected successfully
     connect_attempts = 0;
 
-    webrtc_log('Creating RTCPeerConnection');
+    webrtc_logdebug('Creating RTCPeerConnection');
 
     peer_connection = new RTCPeerConnection(rtc_configuration);
     // send_channel = peer_connection.createDataChannel('label', null);
@@ -306,7 +307,7 @@ function createCall(msg) {
     peer_connection.ontrack = onRemoteTrack;
     /* Send our video/audio to the other peer */
     // local_stream_promise = getLocalStream().then((stream) => {
-        // webrtc_log('Adding local stream');
+        // webrtc_logdebug('Adding local stream');
         // peer_connection.addStream(stream);
         // return stream;
     // }).catch(setError);
@@ -319,7 +320,7 @@ function createCall(msg) {
 	// We have a candidate, send it to the remote party with the
 	// same uuid
 	if (event.candidate == null) {
-            webrtc_log("ICE Candidate was null, done");
+            webrtc_logdebug("ICE Candidate was null, done");
             return;
 	}
 	ws_conn.send(JSON.stringify({'ice': event.candidate}));
@@ -336,6 +337,6 @@ function setwebrtcServerConfig() {
 										  }]};
 }										  
 										  
-function webrtc_log(str) {
-	console.log(str);
+function webrtc_logdebug(str) {
+	// console.log(str);
 }

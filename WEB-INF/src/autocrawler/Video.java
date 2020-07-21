@@ -170,7 +170,7 @@ public class Video {
                             // TODO: assign rtmp port as param
                             realsensepstring = Ros.launch(new ArrayList<String>(Arrays.asList(Ros.REALSENSE,
                                 "color_width:=" + lastwidth, "color_height:=" + lastheight, "color_fps:=" + lastfps,
-                                "enable_depth:=false", "initial_reset:=false" )));
+                                "enable_depth:=false", "initial_reset:=true" )));
                         }
                         webrtcpstring = Ros.launch(Ros.RGBPUBLISH);
                     }
@@ -179,17 +179,18 @@ public class Video {
                         if (realsensepstring == null) {
                             realsensepstring = Ros.launch(new ArrayList<String>(Arrays.asList(Ros.REALSENSE,
                                 "color_width:="+lastwidth, "color_height:="+lastheight, "color_fps:="+lastfps,
-                                "enable_depth:=false", "initial_reset:=false" )));
+                                "enable_depth:=false", "initial_reset:=true" )));
                         }
 
                         if (state.exists(values.driverclientid)) {
                             webrtcpstring = Ros.launch(new ArrayList<String>(Arrays.asList(Ros.RGBWEBRTC,
-                                "peerid:=" + state.get(values.driverclientid),
-                                "webrtcserver:=wss://"+settings.readSetting(ManualSettings.webrtcserver)+":"
-                                        +settings.readSetting(ManualSettings.webrtcport),
-                                "videowidth:=" + lastwidth, "videoheight:=" + lastheight, "videobitrate:=" + lastbitrate,
-                                "turnserverport:="+settings.readSetting(ManualSettings.turnserverport),
-                                "turnserverlogin:="+settings.readSetting(ManualSettings.turnserverlogin)
+                                    "peerid:=--peer-id=" + state.get(values.driverclientid),
+                                    "webrtcserver:=--server=wss://"+settings.readSetting(ManualSettings.webrtcserver)+":"
+                                            +settings.readSetting(ManualSettings.webrtcport),
+                                    "videowidth:=--video-width=" + lastwidth, "videoheight:=--video-height=" + lastheight,
+                                    "videobitrate:=--video-bitrate=" + lastbitrate,
+                                    "turnserverport:=--turnserver-port="+settings.readSetting(ManualSettings.turnserverport),
+                                    "turnserverlogin:=--turnserver-login="+settings.readSetting(ManualSettings.turnserverlogin)
                             )));
                         }
                     }
@@ -206,18 +207,19 @@ public class Video {
                         if (realsensepstring == null) {
                             realsensepstring = Ros.launch(new ArrayList<String>(Arrays.asList(Ros.REALSENSE,
                                 "color_width:="+lastwidth, "color_height:="+lastheight, "color_fps:="+lastfps,
-                                "enable_depth:=false", "initial_reset:=false")));
+                                "enable_depth:=false", "initial_reset:=true")));
                         }
 
                         if (state.exists(values.driverclientid)) {
                             webrtcpstring = Ros.launch(new ArrayList<String>(Arrays.asList(Ros.RGBWEBRTC,
-                                "peerid:=" + state.get(values.driverclientid),
-                                "webrtcserver:=wss://"+settings.readSetting(ManualSettings.webrtcserver)+":"
+                                "peerid:=--peer-id=" + state.get(values.driverclientid),
+                                "webrtcserver:=--server=wss://"+settings.readSetting(ManualSettings.webrtcserver)+":"
                                         +settings.readSetting(ManualSettings.webrtcport),
                                 "audiodevice:=--audio-device=" + adevicenum,
-                                "videowidth:=" + lastwidth, "videoheight:=" + lastheight, "videobitrate:=" + lastbitrate,
-                                "turnserverport:="+settings.readSetting(ManualSettings.turnserverport),
-                                "turnserverlogin:="+settings.readSetting(ManualSettings.turnserverlogin)
+                                "videowidth:=--video-width=" + lastwidth, "videoheight:=--video-height=" + lastheight,
+                                "videobitrate:=--video-bitrate=" + lastbitrate,
+                                "turnserverport:=--turnserver-port="+settings.readSetting(ManualSettings.turnserverport),
+                                "turnserverlogin:=--turnserver-login="+settings.readSetting(ManualSettings.turnserverlogin)
                             )));
                         }
                     }
@@ -811,6 +813,7 @@ public class Video {
         if (realsensepstring != null && !state.get(State.values.navsystemstatus).equals(Ros.navsystemstate.running.toString())) {
             Ros.killlaunch(realsensepstring);
             realsensepstring = null;
+//            Ros.roscommand("rosnode kill /camera/realsense2_camera_manager");
         }
     }
 

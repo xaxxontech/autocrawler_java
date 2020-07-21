@@ -61,7 +61,7 @@ public class SystemWatchdog {
 			}
 			
 			// show AP mode enabled, if no driver
-			if(state.equals(values.ssid, AP)){ 
+			if(state.equals(values.ssid, AP)) {
 				if( ! state.getBoolean(State.values.autodocking) && ! state.exists(State.values.driver)) {
 					application.driverCallServer(PlayerCommands.strobeflash, "on 10 10");
 				}
@@ -142,6 +142,7 @@ public class SystemWatchdog {
             }
 
 			// navigation running, route running, undocked, low battery, next waypoint != dock, no driver, drive to dock
+            // TODO: flawed because route still running? need to cancel current route instance only, wait to next route
 			if (state.get(values.batterylife).matches(".*\\d+.*")) {  // make sure batterylife != 'TIMEOUT', throws error
 				if (!state.exists(State.values.driver) &&
 						Integer.parseInt(state.get(State.values.batterylife).replaceAll("[^0-9]", ""))

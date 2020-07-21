@@ -20,7 +20,7 @@ public class Malg implements jssc.SerialPortEventListener {
 	public enum speeds { slow, med, fast };  
 	public enum mode { on, off };
 
-	public static final double MALGDB_FIRMWARE_VERSION_REQUIRED = 1.15; // trailing zeros ignored!
+	public static final double MALGDB_FIRMWARE_VERSION_REQUIRED = 1.16; // trailing zeros ignored!
 	public static final String MALGDB_FIRMWARE_ID = "malgdb";
 	public static String boardid = "unknown";
 	public static final long DEAD_TIME_OUT = 20000;
@@ -100,7 +100,7 @@ public class Malg implements jssc.SerialPortEventListener {
     private long rotatestoptime = 0;
     private volatile double finalangle;
     public static final double ROTATETOLERANCE = 3.0;
-    public static final int ODOMBROADCASTDEFAULT = 250;
+    public static final int ODOMBROADCASTDEFAULT = 150;
     private static final long STOPBETWEENMOVESWAIT = 0;
 
 	// take from settings 
@@ -123,7 +123,7 @@ public class Malg implements jssc.SerialPortEventListener {
 
     private static final int TURNBOOST = 25;
 	public static final int speedfast = 255;
-	public static final Double METERSPERSEC = 0.35; // tested, this is just below max speed for motors--but, depends on comp!!!
+	public static final Double METERSPERSEC = 0.32; // 0.35 tested, this is just below max speed for motors--but, depends on comp!!!
 	public static final Double DEGPERMS = 0.0857; // max that gyro can keep up with
 
 	private volatile List<Byte> commandList = new ArrayList<>();
@@ -1295,7 +1295,7 @@ public class Malg implements jssc.SerialPortEventListener {
 			long now;
 			final double tolerance = state.getDouble(State.values.odomturndpms.toString())*0.08;
 			final int PWMINCR = 5; // was 5 for 30Hz
-			final int ACCEL = 500;
+			final int ACCEL = 300; // was 500 for odometrybroadcast=250
 			final double targetrate = state.getDouble(State.values.odomturndpms.toString());
 			double totalangle = 0;
 			boolean timecompd = false;
@@ -1472,8 +1472,8 @@ public class Malg implements jssc.SerialPortEventListener {
 			final long linearstart = System.currentTimeMillis();
 			long start = linearstart;
 			final double tolerance = state.getDouble(State.values.odomlinearmpms.toString()) * 0.05; //0.000015625; //  meters per ms --- 5% of target speed 0.32m/s (0.00032
-			final int pwmincr = 10;
-			final int accel = 480; // TODO: try lowering this (from 480), kind of useless for small linear moves during rosnav
+			final int PWMINCR = 10;
+			final int ACCEL = 300; // TODO: try lowering this (from 480), kind of useless for small linear moves during rosnav
 			final double targetrate = state.getDouble(State.values.odomlinearmpms.toString());
 			
 			while (currentMoveID == moveID)  {
@@ -1482,7 +1482,7 @@ public class Malg implements jssc.SerialPortEventListener {
                     odomlinearupdated=false;
 					
 					long now = System.currentTimeMillis();
-					if (now - linearstart < accel) {
+					if (now - linearstart < ACCEL) {
 						start = now;
 						continue; // throw away 1st during accel, assuming broadcast interval is around 250ms
 					}
@@ -1494,11 +1494,11 @@ public class Malg implements jssc.SerialPortEventListener {
 					int newpwm = currentpwm;
 
 					if (rate > targetrate + tolerance) {
-						newpwm = currentpwm - pwmincr;
+						newpwm = currentpwm - PWMINCR;
 						if (newpwm < speedslow) newpwm = speedslow;
 					}
 					else if (rate < targetrate - tolerance) {
-						newpwm = currentpwm + pwmincr;
+						newpwm = currentpwm + PWMINCR;
 						if (newpwm > 255) newpwm = 255;
 					}
 //					else // within tolerance, kill thread (save cpu)
