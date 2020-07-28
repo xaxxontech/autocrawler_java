@@ -45,8 +45,8 @@ public class Ros {
 	public static final String REMOTE_NAV = "remote_nav"; // nav
 	public static final String MAKE_MAP = "make_map"; // mapping
     public static final String MAKE_MAP_GMAPPING = "make_map_gmapping"; // mapping lidar + gmapping
-    public static final String MAKE_MAP_REALSENSE_GMAPPING = "make_map_realsense_gmapping"; // mapping realsense + gmapping
-	public static final String MAKE_MAP_REALSENSE_CARTOGRAPHER = "make_map_realsense_cartographer"; // mapping realsense + gmapping
+    public static final String MAKE_MAP_REALSENSE_GMAPPING = "make_map_realsense_gmapping"; // mapping realsense + gmapping TODO: NUKE
+	public static final String MAKE_MAP_REALSENSE_CARTOGRAPHER = "make_map_realsense_cartographer"; // mapping realsense + gmapping TODO: NUKE
     public static final String REALSENSE = "realsense"; // rgb and depthcam
 	public static final String RGBPUBLISH = "rgbpublish"; // gstreamer rgb to rtmp (flash client)
 	public static final String RGBWEBRTC = "rgbwebrtc"; // gstreamer webrtc rgb
@@ -205,7 +205,17 @@ public class Ros {
 		return launch(str);
 	}
 
-	public static String launch(List <String> args) {
+	public static String launch(List <String> strarray) {
+
+//		if(Settings.getReference().getBoolean(ManualSettings.debugenabled)) {
+//			int n=0;
+//			while (n < args.size()) {
+//				Util.debug("ros.launch: "+args.get(n), null);
+//				n++;
+//			}
+//		}
+
+		List <String> args = new ArrayList<>(strarray); // to prevent modifying original
 
         ProcessBuilder processBuilder = new ProcessBuilder();
 
@@ -375,7 +385,6 @@ public class Ros {
 			Process proc = Runtime.getRuntime().exec(cmd);
 			BufferedReader procReader = new BufferedReader(new InputStreamReader(proc.getInputStream()));
 			String str = procReader.readLine();
-//			proc.destroy();
 			return str;
 
 		} catch (Exception e) {
@@ -415,7 +424,7 @@ public class Ros {
 			if (Files.exists(sourcepath)) Files.delete(sourcepath);
 
 			// call ros map_saver
-			String cmd =  Settings.redhome+Util.sep+"ros.sh"; // setup ros environment
+			String cmd =  ROS1CMD; // Settings.redhome+Util.sep+"ros.sh"; // setup ros environment
 //			cmd += " rosrun map_server map_saver";
 			cmd += " rosrun map_server map_saver --occ "+OCCUPIEDTHRESHOLD+" --free "+FREETHRESHOLD;
 			Util.systemCall(cmd);

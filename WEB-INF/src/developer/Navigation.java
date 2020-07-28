@@ -128,7 +128,7 @@ public class Navigation implements Observer {
 
             if (str.equals("gmapping")) navpstring = Ros.launch(Ros.MAKE_MAP_GMAPPING);
 
-            else if (str.equals("realsensegmapping")) {
+            else if (str.equals("realsensegmapping")) { // TODO: nuke, sensor inadequate for mapping
                 app.driverCallServer(PlayerCommands.cameracommand, Malg.cameramove.horiz.toString());
 
                 // stop any current video
@@ -147,7 +147,7 @@ public class Navigation implements Observer {
                 if (currentstream != null) app.driverCallServer(PlayerCommands.publish, currentstream);
             }
 
-			else if (str.equals("realsensecartographer")) {
+			else if (str.equals("realsensecartographer")) { // TODO: nuke, sensor inadequate for mapping
 				app.driverCallServer(PlayerCommands.cameracommand, Malg.cameramove.horiz.toString());
 
 				// stop any current video
@@ -665,7 +665,7 @@ public class Navigation implements Observer {
                 //setup realsense cam TODO: change cam/mic/resolution depending on all actions in route
 //                app.driverCallServer(PlayerCommands.streamsettingsset, Application.camquality.med.toString()); // reduce crashes
                 app.driverCallServer(PlayerCommands.publish, Application.streamstate.camera.toString());
-                Util.delay(Video.STREAM_CONNECT_DELAY);
+                Util.delay(1000);  // TODO: was Video.STREAM_CONNECT_DELAY -- delay required at all?
 
                 // start ros nav system
 				if (!waitForNavSystem()) {

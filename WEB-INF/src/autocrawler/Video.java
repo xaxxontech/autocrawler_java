@@ -37,7 +37,7 @@ public class Video {
     public long lastbitrate = 0;
     private Application.streamstate lastmode = Application.streamstate.stop;
     private String avprog = "avconv"; // avconv or ffmpeg
-    public static long STREAM_CONNECT_DELAY = 2000;
+    public static long STREAM_CONNECT_DELAY = 5000;
     private static int dumpfps = 15;
     private static final String STREAMSPATH= "/autocrawler/streams/";
     public static final String FMTEXT = ".flv";
@@ -127,8 +127,10 @@ public class Video {
     public void publish (final Application.streamstate mode, final int w, final int h, final int fps, final long bitrate) {
         // todo: disallow unsafe custom values (device can be corrupted?)
 
-        if (System.currentTimeMillis() < lastvideocommand + STREAM_CONNECT_DELAY)
+        if (System.currentTimeMillis() < lastvideocommand + STREAM_CONNECT_DELAY) {
+            Util.debug("video command received too soon after last, dropped", this);
             return;
+        }
 
         lastvideocommand = System.currentTimeMillis();
 
@@ -183,7 +185,8 @@ public class Video {
                         }
 
                         if (state.exists(values.driverclientid)) {
-                            webrtcpstring = Ros.launch(new ArrayList<String>(Arrays.asList(Ros.RGBWEBRTC,
+
+                            final ArrayList<String> strarray = new ArrayList<String>(Arrays.asList(Ros.RGBWEBRTC,
                                     "peerid:=--peer-id=" + state.get(values.driverclientid),
                                     "webrtcserver:=--server=wss://"+settings.readSetting(ManualSettings.webrtcserver)+":"
                                             +settings.readSetting(ManualSettings.webrtcport),
@@ -191,7 +194,10 @@ public class Video {
                                     "videobitrate:=--video-bitrate=" + lastbitrate,
                                     "turnserverport:=--turnserver-port="+settings.readSetting(ManualSettings.turnserverport),
                                     "turnserverlogin:=--turnserver-login="+settings.readSetting(ManualSettings.turnserverlogin)
-                            )));
+                            ));
+
+                            webrtcStatusListener(strarray, mode.toString()); // copy because Ros.launch modifies strarray in mem! (even though final?)
+                            webrtcpstring = Ros.launch(strarray);
                         }
                     }
 
@@ -211,16 +217,20 @@ public class Video {
                         }
 
                         if (state.exists(values.driverclientid)) {
-                            webrtcpstring = Ros.launch(new ArrayList<String>(Arrays.asList(Ros.RGBWEBRTC,
-                                "peerid:=--peer-id=" + state.get(values.driverclientid),
-                                "webrtcserver:=--server=wss://"+settings.readSetting(ManualSettings.webrtcserver)+":"
-                                        +settings.readSetting(ManualSettings.webrtcport),
-                                "audiodevice:=--audio-device=" + adevicenum,
-                                "videowidth:=--video-width=" + lastwidth, "videoheight:=--video-height=" + lastheight,
-                                "videobitrate:=--video-bitrate=" + lastbitrate,
-                                "turnserverport:=--turnserver-port="+settings.readSetting(ManualSettings.turnserverport),
-                                "turnserverlogin:=--turnserver-login="+settings.readSetting(ManualSettings.turnserverlogin)
-                            )));
+
+                            final ArrayList<String> strarray = new ArrayList<String>(Arrays.asList(Ros.RGBWEBRTC,
+                                    "peerid:=--peer-id=" + state.get(values.driverclientid),
+                                    "webrtcserver:=--server=wss://"+settings.readSetting(ManualSettings.webrtcserver)+":"
+                                            +settings.readSetting(ManualSettings.webrtcport),
+                                    "audiodevice:=--audio-device=" + adevicenum,
+                                    "videowidth:=--video-width=" + lastwidth, "videoheight:=--video-height=" + lastheight,
+                                    "videobitrate:=--video-bitrate=" + lastbitrate,
+                                    "turnserverport:=--turnserver-port="+settings.readSetting(ManualSettings.turnserverport),
+                                    "turnserverlogin:=--turnserver-login="+settings.readSetting(ManualSettings.turnserverlogin)
+                            ));
+
+                            webrtcStatusListener(strarray, mode.toString()); // copy because Ros.launch modifies strarray in mem! (even though final?)
+                            webrtcpstring = Ros.launch(strarray);
                         }
                     }
 
@@ -297,6 +307,37 @@ public class Video {
 
     }
 
+    // checks if webrtcstatus == 'connected' after short time (successful connect to singnalling server)
+    // if not, kill roslaunch, relaunch
+    // ros2 only
+    private void webrtcStatusListener(final ArrayList<String> strarray, final String mode) {
+
+        if (!settings.getBoolean(ManualSettings.ros2)) return;
+
+        state.delete(values.webrtcstatus); // required because ros2 launch files don't send SIGINT to processes on shutdown
+
+        new Thread(new Runnable() { public void run() {
+
+            int attempts = 0;
+            while (mode.equals(state.get(values.stream)) && attempts < 5) {
+                if (state.block(values.webrtcstatus, "connected", 5000)) return;
+
+                if (!mode.equals(state.get(values.stream))) return;
+
+                Util.log("!connected, relaunching webrtcpstring", this);
+                killwebrtc();
+                Util.delay(5500);
+                state.delete(values.webrtcstatus);
+                Ros.launch(strarray); // this only works once! because launch modifies it in mem
+
+                attempts ++;
+            }
+
+            if (attempts >= 5) Util.log("webrtc signalling server connection attempt max reached, giving up", this);
+
+        } }).start();
+
+    }
 
     private void forceShutdownFrameGrabs() {
         if (state.exists(State.values.writingframegrabs)) {

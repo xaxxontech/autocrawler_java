@@ -34,7 +34,7 @@ public class State {
 		motiondetect, objectdetect, streamactivityenabled, jpgstream,
 		record, sounddetect,
 		// not typically used by scripts or undocumented:
-		writingframegrabs,
+		writingframegrabs, webrtcstatus,
 
 		// power
 		wallpower, batterylife, powerport, batteryinfo, batteryvolts,
@@ -146,12 +146,11 @@ public class State {
 			current = get(member); 
 			if(current!=null){
 				if(target.equals(current)) return true;
-//				if(target.startsWith(current)) return true;
 			}
 	
 			Util.delay(1); // no higher, used by motion, odometry
 			if (System.currentTimeMillis()-start > timeout){ 
-//				Util.debug("block() timeout: " + member.name(), this);
+				Util.debug("block() timeout: " + member.name(), this);
 				return false;
 			}
 		}
