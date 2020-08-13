@@ -84,14 +84,20 @@ public class OpenCVMotionDetect  {
 
                     boolean fg = app.frameGrab();
                     long waittime = System.currentTimeMillis() + 5000;
-                    while (state.getBoolean(State.values.framegrabbusy) && System.currentTimeMillis() < waittime) {
-                        Util.delay(1);
+                    while (!fg  && System.currentTimeMillis() < waittime) {
+
+                        Util.delay(100);
+                        fg = app.frameGrab();
+
                         if (!state.getBoolean(State.values.motiondetect)) return; // help reduce cpu quicker on shutdown
                     }
-                    if (state.getBoolean(State.values.framegrabbusy) || !fg) {
+
+                    if (!fg) {
                         Util.debug("OpenCVMotionDetect().motionDetectGo() frame unavailable", null);
+                        state.set(State.values.motiondetect, false);
                         return;
                     }
+
                     BufferedImage img = ImageUtils.toBufferedImageOfType(app.processedImage, BufferedImage.TYPE_3BYTE_BGR);
 
                     frame = OpenCVUtils.bufferedImageToMat(img);

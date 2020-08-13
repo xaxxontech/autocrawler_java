@@ -177,7 +177,7 @@ public class DashboardServlet extends HttpServlet implements Observer {
 				if(action.equalsIgnoreCase("debugoff"))   app.driverCallServer(PlayerCommands.writesetting, ManualSettings.debugenabled.name() + " false");
 				if(action.equalsIgnoreCase("startrec"))   app.driverCallServer(PlayerCommands.record, "true dashboard");
 				if(action.equalsIgnoreCase("dockcancel")) app.driverCallServer(PlayerCommands.autodock, "cancel");
-				if(action.equalsIgnoreCase("motor"))      app.driverCallServer(PlayerCommands.motorsreset, null);
+				if(action.equalsIgnoreCase("motor"))      app.driverCallServer(PlayerCommands.malgreset, null);
 				if(action.equalsIgnoreCase("gotodock"))   app.driverCallServer(PlayerCommands.gotodock, null);
 				if(action.equalsIgnoreCase("stoprec"))    app.driverCallServer(PlayerCommands.record, "false");
 				if(action.equalsIgnoreCase("startnav"))   app.driverCallServer(PlayerCommands.startnav, null);
@@ -565,7 +565,7 @@ public class DashboardServlet extends HttpServlet implements Observer {
 		String motor, power;
 		if(state.exists(values.powerport)) power = "<a href=\"dashboard?action=power\" >"+state.get(values.powerport)+"</a>";
 		else  power = "<a href=\"dashboard?action=power\" >connect power</a>";
-		if(state.exists(values.motorport)) motor = "<a href=\"dashboard?action=motor\" >"+state.get(values.motorport)+"</a>";
+		if(state.exists(values.malgport)) motor = "<a href=\"dashboard?action=motor\" >"+state.get(values.malgport)+"</a>";
 		else motor = "<a href=\"dashboard?action=motor\" >connect motors</a>";
 
 		String rec = state.get(values.record);

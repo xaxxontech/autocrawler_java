@@ -20,7 +20,7 @@ public class Malg implements jssc.SerialPortEventListener {
 	public enum speeds { slow, med, fast };  
 	public enum mode { on, off };
 
-	public static final double MALGDB_FIRMWARE_VERSION_REQUIRED = 1.16; // trailing zeros ignored!
+	public static final double MALGDB_FIRMWARE_VERSION_REQUIRED = 1.17; // trailing zeros ignored!
 	public static final String MALGDB_FIRMWARE_ID = "malgdb";
 	public static String boardid = "unknown";
 	public static final long DEAD_TIME_OUT = 20000;
@@ -152,7 +152,7 @@ public class Malg implements jssc.SerialPortEventListener {
 
 		state.set(State.values.odometrybroadcast, Malg.ODOMBROADCASTDEFAULT);
 
-		if(!settings.readSetting(ManualSettings.motorport).equals(Settings.DISABLED)) {
+		if(!settings.readSetting(ManualSettings.malgport).equals(Settings.DISABLED)) {
 			connect();
 			cs = new CommandSender();
 			cs.start();
@@ -265,7 +265,7 @@ public class Malg implements jssc.SerialPortEventListener {
 			}
 
 			Util.log("Required "+boardid+" firmware version is "+version_required+", attempting update...", this);
-			String port = state.get(State.values.motorport); // disconnect() nukes this state value
+			String port = state.get(State.values.malgport); // disconnect() nukes this state value
 			disconnect();
 
 			// TODO: do update here, blocking
@@ -458,7 +458,7 @@ public class Malg implements jssc.SerialPortEventListener {
     					Util.log(boardid + " connected to "+portNames[i], this);
     					
     					isconnected = true;
-    					state.set(State.values.motorport, portNames[i]);
+    					state.set(State.values.malgport, portNames[i]);
     		            serialPort.addEventListener(this, SerialPort.MASK_RXCHAR);//Add SerialPortEventListener
     					break; // don't read any more ports, time consuming
     				}
@@ -538,7 +538,7 @@ public class Malg implements jssc.SerialPortEventListener {
 		try {
 			isconnected = false;
 			serialPort.closePort();
-			state.delete(State.values.motorport);
+			state.delete(State.values.malgport);
 		} catch (Exception e) {
 			Util.log("error in disconnect(): " + e.getMessage(), this);
 		}

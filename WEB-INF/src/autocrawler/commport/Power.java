@@ -147,8 +147,8 @@ public class Power implements SerialPortEventListener  {
         }
         
         String otherdevice = "";
-        if (state.exists(State.values.motorport.toString())) 
-        	otherdevice = state.get(State.values.motorport);
+        if (state.exists(State.values.malgport.toString()))
+        	otherdevice = state.get(State.values.malgport);
         
         for (int i=0; i<portNames.length; i++) {
 //			if (portNames[i].matches("/dev/tty(USB|ACM).+") && !portNames[i].equals(otherdevice)) {

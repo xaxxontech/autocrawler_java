@@ -3,14 +3,14 @@
 import java.util.Properties;
 
 public enum ManualSettings {
-	
-	motorport, powerport, developer, debugenabled, wheeldiameter,
+
+	malgport, powerport, developer, debugenabled, wheeldiameter,
 	gyrocomp, alertsenabled, odomturnpwm, odomlinearpwm, checkaddresses,
 	motionthreshold, useflash, redockifweakconnection,
 	arcmovecomp, usearcmoves, arcpwmthreshold, undockdistance,
 
 	// undocumented
-	lowbattery, timedshutdown, camhold, soundmaxthreshold, webrtcserver, webrtcport,
+	lowbattery, timedshutdown, camhold, soundthreshold, webrtcserver, webrtcport,
     turnserverlogin, turnserverport, ros2
 	
 	;
@@ -20,7 +20,7 @@ public enum ManualSettings {
 		Properties config = new Properties();
 		config.setProperty(developer.name(), Settings.FALSE);
 		config.setProperty(debugenabled.name(), Settings.FALSE);
-		config.setProperty(motorport.name(), Settings.ENABLED);
+		config.setProperty(malgport.name(), Settings.ENABLED);
 		config.setProperty(powerport.name(), Settings.ENABLED);
 		config.setProperty(checkaddresses.name(), Settings.TRUE);
 		config.setProperty(wheeldiameter.name(), "106");
@@ -34,7 +34,7 @@ public enum ManualSettings {
 		config.setProperty(arcmovecomp.name(), "0.8");
 		config.setProperty(usearcmoves.name(), Settings.TRUE);
 		config.setProperty(arcpwmthreshold.name(), "200");
-		config.setProperty(soundmaxthreshold.name(), "-25");
+		config.setProperty(soundthreshold.name(), "-25");
 		config.setProperty(undockdistance.name(), "0.5");
 		config.setProperty(lowbattery.name(), "30");
         config.setProperty(timedshutdown.name(), Settings.TRUE);

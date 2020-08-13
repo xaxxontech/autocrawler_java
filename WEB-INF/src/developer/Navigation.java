@@ -265,11 +265,12 @@ public class Navigation implements Observer {
         if (state.equals(values.stream, Application.streamstate.camera.toString()) ||
                 state.equals(values.stream, Application.streamstate.camandmic.toString())) {
 
-            String currentstream = state.get(values.stream);
+			app.driverCallServer(PlayerCommands.messageclients, "restarting video");
 
-            app.driverCallServer(PlayerCommands.publish, Application.streamstate.stop.toString());
+			String currentstream = state.get(values.stream);
+			Util.delay(Video.STREAM_CONNECT_DELAY);
+			app.driverCallServer(PlayerCommands.publish, Application.streamstate.stop.toString());
             Util.delay(Video.STREAM_CONNECT_DELAY);
-            app.driverCallServer(PlayerCommands.messageclients, "restarting video");
 
             return currentstream;
         }
@@ -377,46 +378,6 @@ public class Navigation implements Observer {
 		navdockactive = false;
 	}
 
-	// dock detect, rotate if necessary
-	private boolean finddock(String resolution, boolean rotate) {
-		int rot = 0;
-
-		while (navdockactive) {
-			SystemWatchdog.waitForCpu();
-
-			app.driverCallServer(PlayerCommands.dockgrab, resolution);
-			long start = System.currentTimeMillis();
-			while (!state.exists(State.values.dockfound.toString()) && System.currentTimeMillis() - start < Util.ONE_MINUTE)
-				Util.delay(10);  // wait
-
-			if (state.getBoolean(State.values.dockfound)) break; // great, onwards
-			else if (!rotate) return false;
-			else { // rotate a bit
-				app.comport.checkisConnectedBlocking(); // just in case
-				app.driverCallServer(PlayerCommands.right, "25");
-				Util.delay(10); // thread safe
-
-				start = System.currentTimeMillis();
-				while(!state.get(State.values.direction).equals(Malg.direction.stop.toString())
-						&& System.currentTimeMillis() - start < 5000) { Util.delay(10); } // wait
-				Util.delay(Malg.TURNING_STOP_DELAY);
-			}
-			rot ++;
-
-			if (rot == 1) Util.log("error, rotation required", this);
-
-			if (rot == 21) { // failure give up
-//					callForHelp(subject, body);
-				app.driverCallServer(PlayerCommands.publish, Application.streamstate.stop.toString());
-				app.driverCallServer(PlayerCommands.floodlight, "0");
-				app.driverCallServer(PlayerCommands.messageclients, "Navigation.finddock() failed to find dock");
-				return false;
-			}
-		}
-		if (!navdockactive) return false;
-		return true;
-	}
-
 	public static void goalCancel() {
 		state.set(State.values.rosgoalcancel, true); // pass info to ros node
 		state.delete(State.values.roswaypoint);
@@ -483,7 +444,6 @@ public class Navigation implements Observer {
 	
 	public void runRoute(final String name) {
 
-		// build error checking into this (ignore duplicate waypoints, etc)
 		// assumes goto dock at the end, whether or not dock is a waypoint
 
 		if (state.getBoolean(State.values.autodocking)) {
@@ -618,14 +578,14 @@ public class Navigation implements Observer {
 
 						if (testday.getTimeInMillis() < System.currentTimeMillis()) { // same day, past route
 							nextdayindex ++;
-							if (nextdayindex >= daynums.length ) { //wrap around
+							if (nextdayindex >= daynums.length ) { // wrap around
 								adddays = 7-daynow + daynums[0];
 							}
 							else  adddays = daynums[nextdayindex] - daynow;
 							testday.set(calendarnow.get(Calendar.YEAR), calendarnow.get(Calendar.MONTH),
 									calendarnow.get(Calendar.DATE) + adddays, starthour, startmin);
 						}
-						else if (testday.getTimeInMillis() - System.currentTimeMillis() > Util.ONE_DAY*7) //wrap
+						else if (testday.getTimeInMillis() - System.currentTimeMillis() > Util.ONE_DAY*7) // wrap
 							testday.setTimeInMillis(testday.getTimeInMillis()-Util.ONE_DAY*7);
 
 						state.set(State.values.nextroutetime, testday.getTimeInMillis());
@@ -638,6 +598,7 @@ public class Navigation implements Observer {
 				if (!state.exists(State.values.navigationroute)) return;
 				if (!state.get(State.values.navigationrouteid).equals(id)) return;
 
+				// TODO: have roscore added to state, pass this check
 				if (state.get(State.values.dockstatus).equals(AutoDock.UNDOCKED) &&
 						!state.get(State.values.navsystemstatus).equals(Ros.navsystemstate.running.toString())) {
 					app.driverCallServer(PlayerCommands.messageclients, "Can't navigate route, location unknown");
@@ -645,7 +606,7 @@ public class Navigation implements Observer {
 					return;
 				}
 
-				// skip route if battery low (settings.txt)  
+				// skip route if battery low (settings.txt)
 				if(batteryTooLow()){
 					batteryskips++;
 					Util.log("battery too low: " + state.get(values.batterylife) + " skips: " + batteryskips, this);
@@ -661,11 +622,6 @@ public class Navigation implements Observer {
 					if( ! delayToNextRoute(navroute, name, id)) return;
 					continue;
 				} else { batteryskips = 0; }
-
-                //setup realsense cam TODO: change cam/mic/resolution depending on all actions in route
-//                app.driverCallServer(PlayerCommands.streamsettingsset, Application.camquality.med.toString()); // reduce crashes
-                app.driverCallServer(PlayerCommands.publish, Application.streamstate.camera.toString());
-                Util.delay(1000);  // TODO: was Video.STREAM_CONNECT_DELAY -- delay required at all?
 
                 // start ros nav system
 				if (!waitForNavSystem()) {
@@ -683,6 +639,13 @@ public class Navigation implements Observer {
 					if (!delayToNextRoute(navroute, name, id)) return;
 					continue;
 				}
+
+				// enable rgb cam
+                if (!(state.equals(values.stream, Application.streamstate.camera.toString()) ||
+                        state.equals(values.stream, Application.streamstate.camandmic.toString()))) {
+                    Util.delay(Video.STREAM_CONNECT_DELAY);
+                    app.driverCallServer(PlayerCommands.publish, Application.streamstate.camera.toString());
+                }
 
 				// check if cancelled while waiting
 				if (!state.exists(State.values.navigationroute)) return;

@@ -2,12 +2,7 @@ package autocrawler;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.channels.FileChannel;
 import java.util.Collection;
 import java.util.Set;
 
@@ -90,7 +85,7 @@ public class Application extends MultiThreadedApplicationAdapter {
 		super();
 
 		PowerLogger.append("==============Autocrawler Java Start===============\n", this); // extra newline on end
-		Util.log ("==============Autocrawler Java Start 1===============\n", this); // extra newline on end
+		Util.log ("==============Autocrawler Java Start 2===============\n", this); // extra newline on end
 		Util.log("Linux Version:"+Util.getUbuntuVersion()
 				+", Java Model:"+System.getProperty("sun.arch.data.model")
 				+", Java Arch:"+state.get(values.osarch), this);
@@ -413,21 +408,6 @@ public class Application extends MultiThreadedApplicationAdapter {
 	}
 	*/
 
-	public void grabber_launch(final String str) {
-		new Thread(new Runnable() {
-			public void run() {
-				try {
-
-					// stream = "stop";
-					String address = "127.0.0.1:" + state.get(State.values.httpport);
-					Runtime.getRuntime().exec("google-chrome " + address + "/autocrawler/server.html" +str);
-
-				} catch (Exception e) {
-					Util.printError(e);
-				}
-			}
-		}).start();
-	}
 
 	/**
 	 * called by remote flash
@@ -690,7 +670,6 @@ public class Application extends MultiThreadedApplicationAdapter {
 			if(str.startsWith("true ")) video.record("true", str.substring(4).trim().replace(" ", "_")); 
 			if(str.equals("true") || str.equals("false")) video.record(str); 
 			break;  
-		case autodockcalibrate: docker.autoDock("calibrate " + str); break;
 		case redock: watchdog.redock(str); break;
 
 		case restart: restart(); break;
@@ -701,7 +680,6 @@ public class Application extends MultiThreadedApplicationAdapter {
 		case softwareupdate: softwareUpdate(str); break;
 //		case muterovmiconmovetoggle: muteROVMicOnMoveToggle(); break;
 		case quitserver: shutdownApplication(); break;
-		case setstreamactivitythreshold: setStreamActivityThreshold(str); break;
 		case email: new SendMail(str, this); break;
 		case uptime:
 			// messageplayer("uptime: " + state.getUpTime() + " ms", null, null); 
@@ -711,16 +689,6 @@ public class Application extends MultiThreadedApplicationAdapter {
 		case memory: messageplayer(Util.memory(), null, null); break;
 		case who: messageplayer(loginRecords.who(), null, null); break;
 		case messageclients: messageplayer(str, null,null); Util.log("messageclients: "+str,this); break;
-		case dockgrab: 
-			if (str!=null) if (str.equals(AutoDock.HIGHRES)) docker.lowres = false;
-			docker.dockGrab(AutoDock.dockgrabmodes.start, 0, 0);
-			docker.lowres = true;
-			break;
-		case dockgrabtest:
-			if (str.equals(AutoDock.HIGHRES)) docker.lowres = false; // ?
-			docker.dockGrab(AutoDock.dockgrabmodes.test, 0, 0);
-			docker.lowres = true; // ?
-			break;
 		case rssadd: new RssFeed().newItem(str); break;
 		case nudge: nudge(str); break;
 		
@@ -833,16 +801,7 @@ public class Application extends MultiThreadedApplicationAdapter {
 			}
 			break;
 
-		case serverbrowser:
-			grabber_launch(str);
-			break;
-
-		case docklineposupdate:
-			settings.writeSettings(GUISettings.vidctroffset, str);
-			messageplayer("vidctroffset set to : " + str, null, null);
-			break;
-
-		case motorsreset:
+		case malgreset:
 			comport.reset();
 			messageplayer("resetting malg board", null, null);
 			break;
@@ -1132,65 +1091,6 @@ public class Application extends MultiThreadedApplicationAdapter {
 		}
 	}
 
-	/**
-	 * turn string input to command id
-	 * 
-	 * @param fn
-	 *            is the funct ion to call
-	 * @param str
-	 *            is the parameters to pass on to the function.
-	 */
-	public void grabberCallServer(String fn, String str) {
-		grabberCommands cmd = null;
-		try {
-			cmd = grabberCommands.valueOf(fn);
-		} catch (Exception e) {
-			return;
-		}
-
-		if (cmd == null) return;
-		else grabberCallServer(cmd, str);
-	}
-
-	/**
-	 * distribute commands from grabber
-	 * 
-	 * @param cmd
-	 *            is the function to call in xxxxxx.swf ???
-	 * @param str
-	 *            is the parameters to pass on to the function.
-	 */
-	@SuppressWarnings("incomplete-switch")
-	public void grabberCallServer(final grabberCommands cmd, final String str) {
-
-		switch (cmd) {
-			case streammode:
-				grabberSetStream(str);
-				break;
-			case systemcall:
-				Util.systemCall(str);
-				break;
-			case chat:
-				chat(str);
-				break;
-			case dockgrabbed:
-				docker.autoDock("dockgrabbed " + str);
-				state.set(State.values.dockgrabbusy.name(), false);
-				break;
-//			case autodock:
-//				docker.autoDock(str);
-//				break;
-			case restart:
-				restart();
-				break;
-			case shutdown:
-				shutdownApplication();
-				break;
-			case streamactivitydetected:
-				streamActivityDetected(str);
-				break;
-		}
-	}
 
 	/**
 	 * set state and message all connected clients with stream status
@@ -1340,14 +1240,8 @@ public class Application extends MultiThreadedApplicationAdapter {
 //		}
 //	}
 
-	public boolean frameGrab() {
-
-        return frameGrab("");
-
-	}
-
 	/**  */
-	public boolean frameGrab(String res) {
+	public boolean frameGrab() {
 
 		 if(state.getBoolean(State.values.framegrabbusy.name()) ||
                 !(state.get(State.values.stream).equals(Application.streamstate.camera.toString()) ||
@@ -1357,15 +1251,7 @@ public class Application extends MultiThreadedApplicationAdapter {
 			 return false;
 		 }
 
-		if (settings.getBoolean(ManualSettings.useflash)) {
-			if (grabber instanceof IServiceCapableConnection) {
-				IServiceCapableConnection sc = (IServiceCapableConnection) grabber;
-				if (res.equals(AutoDock.LOWRES)) sc.invoke("framegrabMedium", new Object[]{});
-				else sc.invoke("framegrab", new Object[]{});
-				state.set(State.values.framegrabbusy.name(), true);
-			}
-		}
-		else video.framegrab(res);
+		video.framegrab();
 
 //		Util.debug("framegrab start at: "+System.currentTimeMillis(), this);
 		return true;
@@ -1548,7 +1434,6 @@ public class Application extends MultiThreadedApplicationAdapter {
 
 			}
 
-			str += " vidctroffset " + settings.readSetting(GUISettings.vidctroffset);
 			str += " rovvolume " + settings.readSetting(GUISettings.volume);
 			str += " stream " + state.get(State.values.stream);
 			if (!state.get(values.driverstream).equals(driverstreamstate.disabled.toString()))
@@ -2326,72 +2211,7 @@ public class Application extends MultiThreadedApplicationAdapter {
 		restart();
 	}
 	
-	private void setStreamActivityThreshold(String str) {
 
-		String val[] = str.split("\\D+");
-		if (val.length != 2) { return; } 
-		Integer videoThreshold = Integer.parseInt(val[0]);
-		Integer audioThreshold = Integer.parseInt(val[1]);
-
-		String stream = state.get(State.values.stream);
-		state.delete(State.values.streamactivity);
-		state.set(State.values.streamactivitythreshold, str);
-		
-		if (videoThreshold != 0 || audioThreshold != 0) {
-			if (state.get(State.values.videosoundmode).equals(VIDEOSOUNDMODEHIGH)) {
-				setGrabberVideoSoundMode(VIDEOSOUNDMODELOW); // videosoundmode needs to be low to for activity threshold to work
-				if (stream != null) {
-					if (!stream.equals(streamstate.stop.toString())) { // if stream already running,
-						publish(streamstate.valueOf(stream)); // restart, in low mode
-					}
-				}
-			}
-			
-			if (stream != null) { 
-				if (stream.equals(streamstate.stop.toString())) {
-					if (audioThreshold == 0 && videoThreshold != 0) { publish(streamstate.camera); }
-					else if (audioThreshold != 0 && videoThreshold == 0) { publish(streamstate.mic); }
-					else { publish(streamstate.camandmic); }
-				}
-			}
-			state.set(State.values.streamactivityenabled.name(), System.currentTimeMillis());
-		}
-		else { // 0 0, disable streamActivityDetected()
-			state.delete(State.values.streamactivityenabled);
-			state.delete(State.values.streamactivitythreshold);
-		}
-
-		long timeout = System.currentTimeMillis() + GRABBERRELOADTIMEOUT;
-		while (!(grabber instanceof IServiceCapableConnection) && System.currentTimeMillis() < timeout ) { Util.delay(10); }
-		if (!(grabber instanceof IServiceCapableConnection))
-			Util.log("setStreamActivityThreshold() error grabber reload timeout", this);
-
-		IServiceCapableConnection sc = (IServiceCapableConnection) grabber;
-		sc.invoke("setActivityThreshold", new Object[]{videoThreshold, audioThreshold});
-		messageplayer("stream activity set to: " + str, null, null);
-
-	}
-	
-	private void streamActivityDetected(String str) {
-		if (! state.exists(State.values.streamactivityenabled)) return;
-
-		// to catch false audio detect on driver login... TODO: find root cause, not just this patch
-		if (str.split(" ")[0].equals("audio")) { // note: video deprecated
-			int audiodetected = Integer.valueOf(str.split(" ")[1]);
-			int audiothreshold = Integer.valueOf(state.get(values.streamactivitythreshold).split(" ")[1]);
-//			Util.log(audiodetected+ " "+audiothreshold, this);
-			if (audiodetected < audiothreshold) {
-				setStreamActivityThreshold(state.get(values.streamactivitythreshold)); // restarts stream
-				return;
-			}
-		}
-
-		if (System.currentTimeMillis() > state.getLong(State.values.streamactivityenabled) + 5000.0) {
-			messageplayer("streamactivity: "+str, "streamactivity", str);
-			setStreamActivityThreshold("0 0"); // disable
-			state.set(State.values.streamactivity, str); // needs to be after disable, method deletes state val
-		}
-	}
 
 
 

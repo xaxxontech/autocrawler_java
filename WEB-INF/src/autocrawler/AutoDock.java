@@ -23,19 +23,17 @@ public class AutoDock {
     public static final String HIGHRES = "highres";
     public static final String LOWRES = "lowres";
 
-    public enum autodockmodes {go, dockgrabbed, calibrate, cancel}
+    public enum autodockmodes {go, cancel}
 
     public enum dockgrabmodes {calibrate, start, find, test}
 
     private Settings settings = Settings.getReference();
-    private String docktarget = settings.readSetting(GUISettings.docktarget);
     private State state = State.getReference();
     private boolean autodockingcamctr = false;
     private int lastcamctr = 0;
     private Malg comport = null;
     private int autodockctrattempts = 0;
     private Application app = null;
-    private OculusImage oculusImage = new OculusImage();
     private int rescomp; // (multiplier - javascript sends clicksteer based on 640x480, autodock uses 320x240 images)
     private int allowforClickSteer = 500;
     private int dockattempts = 0;
@@ -53,7 +51,6 @@ public class AutoDock {
     public AutoDock(Application theapp, Malg com, Power powercom) {
         this.app = theapp;
         this.comport = com;
-        oculusImage.dockSettings(docktarget);
         state.set(State.values.autodocking, false);
         if (!settings.getBoolean(ManualSettings.useflash))
             allowforClickSteer = 1000; // may need to be higher for rpi... about 1000
@@ -473,7 +470,7 @@ public class AutoDock {
 
 	public void getLightLevel() {
 
-		if (!app.frameGrab(LOWRES)) return;
+		if (!app.frameGrab()) return;
 
 		new Thread(new Runnable() {
 			public void run() {
@@ -521,144 +518,12 @@ public class AutoDock {
 						}
 					}
 					avg = avg / n;
-					app.message("state lightlevel: " + Integer.toString(avg), null, null);
+                    app.driverCallServer(PlayerCommands.messageclients, "state lightlevel: " + Integer.toString(avg));
 					state.set(State.values.lightlevel, avg);
 					
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
-			}
-		}).start();
-	}
-
-	public void dockGrab(final dockgrabmodes mode, final int x, final int y) {
-
-		if (state.getBoolean(State.values.dockgrabbusy)) {
-			Util.log("dockGrab() error, dockgrabbusy", this);
-			return;
-		}
-
-		state.delete(autocrawler.State.values.dockfound);
-		state.delete(autocrawler.State.values.dockmetrics);
-
-		if (state.getBoolean(State.values.framegrabbusy)) {
-			app.message("framegrab busy", null, null);
-			Util.log("error, framegrab busy", this);
-			state.delete(State.values.framegrabbusy); // TODO: testing
-			return;
-		}
-
-		state.set(autocrawler.State.values.dockgrabbusy, true);
-
-		String res=HIGHRES;
-		if (lowres) res=LOWRES;
-
-		if (!app.frameGrab(res)) {
-			state.set(autocrawler.State.values.dockgrabbusy, false);
-			return; // performs stream availability check
-		}
-
-		new Thread(new Runnable() {
-			public void run() {
-				int n = 0;
-				while (state.getBoolean(State.values.framegrabbusy)) {
-					Util.delay(5);
-					n++;
-					if (n > 2000) { // give up after 10 seconds
-						Util.log("error, frame grab timed out", this);
-						state.set(State.values.framegrabbusy, false);
-						break;
-					}
-				}
-
-				BufferedImage img = null;
-//				if (Application.framegrabimg != null) { // TODO: unused?
-//
-//					ByteArrayInputStream in = new ByteArrayInputStream(Application.framegrabimg);
-//
-//					try {
-//						img = ImageIO.read(in);
-//						in.close();
-//					} catch (IOException e) {
-//						e.printStackTrace();
-//					}
-//
-//				}
-
-//				else
-                if (Application.processedImage != null) {
-					img = Application.processedImage;
-				}
-
-				else { Util.log("dockgrab() framegrab failure", this); return; }
-
-				imgwidth= img.getWidth();
-				imgheight= img.getHeight();
-				rescomp = 640/imgwidth; // for clicksteer gui 640 window
-
-				float[] matrix = { 0.111f, 0.111f, 0.111f, 0.111f,
-						0.111f, 0.111f, 0.111f, 0.111f, 0.111f, };
-
-				BufferedImageOp op = new ConvolveOp(new Kernel(3, 3, matrix));
-				img = op.filter(img, new BufferedImage(imgwidth, imgheight, BufferedImage.TYPE_INT_ARGB));
-
-				int[] argb = img.getRGB(0, 0, imgwidth, imgheight, null, 0, imgwidth);
-
-				String[] results;
-				String str;
-
-				switch (mode) {
-					case calibrate:
-						results = oculusImage.findBlobStart(x, y, img.getWidth(), img.getHeight(), argb);
-						autoDock(autodockmodes.dockgrabbed.toString() + " " + dockgrabmodes.calibrate.toString() + " " + results[0]
-								+ " " + results[1] + " " + results[2] + " "
-								+ results[3] + " " + results[4] + " "
-								+ results[5] + " " + results[6] + " "
-								+ results[7] + " " + results[8]);
-						break;
-
-					case start:
-						oculusImage.lastThreshhold = -1;
-						// break; purposefully omitted
-
-					case find:
-						results = oculusImage.findBlobs(argb, imgwidth, imgheight);
-						str = results[0] + " " + results[1] + " " + results[2] + " " +
-								results[3] + " " + results[4];
-						// results = x,y,width,height,slope
-						int width = Integer.parseInt(results[2]);
-
-						state.set(State.values.dockgrabbusy.name(), false); // also here because nav timer relys on dockfound
-
-						// interpret results
-						if (width < (int) (0.02*imgwidth) || width > (int) (0.875*imgwidth) || results[3].equals("0"))
-							state.set(State.values.dockfound, false); // failed to find target! unrealistic widths
-						else {
-							state.set(State.values.dockfound, true); // success!
-							state.set(State.values.dockmetrics, str);
-						}
-
-						if (state.getBoolean(State.values.autodocking))
-							autoDock(autodockmodes.dockgrabbed.toString()+" "+dockgrabmodes.find.toString()+" "+str);
-
-						break;
-
-					case test:
-						oculusImage.lastThreshhold = -1;
-						results = oculusImage.findBlobs(argb, imgwidth, imgheight);
-						int guix = Integer.parseInt(results[0])/(2/rescomp);
-						int guiy = Integer.parseInt(results[1])/(2/rescomp);
-						int guiw = Integer.parseInt(results[2])/(2/rescomp);
-						int guih = Integer.parseInt(results[3])/(2/rescomp);
-						str = guix + " " + guiy + " " + guiw + " " + guih + " " + results[4];
-						// results = x,y,width,height,slope
-
-						app.message(str, "autodocklock", str);
-						break;
-				}
-
-				state.set(State.values.dockgrabbusy, false);
-
 			}
 		}).start();
 	}

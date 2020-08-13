@@ -50,7 +50,6 @@ public class Ros {
     public static final String REALSENSE = "realsense"; // rgb and depthcam
 	public static final String RGBPUBLISH = "rgbpublish"; // gstreamer rgb to rtmp (flash client)
 	public static final String RGBWEBRTC = "rgbwebrtc"; // gstreamer webrtc rgb
-	public static final String MICWEBRTC = "micwebrtc"; // gstreamer webrtc microphone
 	public static final String DOCKCAM = "dockcam"; // gstreamer dock cam to rtmp (flash client) and aruco detect
 	public static final String DOCKWEBRTC = "dockwebrtc"; // gstreamer dock cam webrtc and aruco detect
 

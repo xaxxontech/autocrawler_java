@@ -167,7 +167,7 @@ public class FrameGrabHTTP extends HttpServlet {
 //			}
 //
 //			else {
-				if (Application.processedImage != null) {
+            if (Application.processedImage != null) {
 					ImageIO.write(Application.processedImage, "JPG", out);
 				}
 //			}

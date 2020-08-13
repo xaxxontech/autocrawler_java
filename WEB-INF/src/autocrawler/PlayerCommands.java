@@ -25,9 +25,7 @@ public enum PlayerCommands {
     new_user_add, user_list, delete_user, extrauser_password_update, username_update,
 
     //docking
-    dock, dockgrab, autodock,  redock,
-    // not typically used by scripts, undocumented:
-    docklineposupdate, autodockcalibrate, dockgrabtest,
+    dock, autodock,  redock,
 	// undocumented
 	dockcam,
 
@@ -41,33 +39,33 @@ public enum PlayerCommands {
     // video/audio
     streamsettingscustom, playerbroadcast, videosoundmode, publish,
     streamsettingsset, framegrabtofile,	record,
-	// experimental (undocumented):
+	// experimental, undocumented:
 	jpgstream, streammode,
     
     // malg board 
-    motorsreset, getdrivingsettings, drivingsettingsupdate, malgcommand,
+    malgreset, getdrivingsettings, drivingsettingsupdate, malgcommand,
     // wheels
     clicksteer, motionenabletoggle, speed, move, nudge, forward, backward, left, right, 
     odometrystart, odometryreport, odometrystop, lefttimed, righttimed, forwardtimed,
-	arcmove, calibraterotation,
+	arcmove, calibraterotation, rotate,
     // lights and camera tilt
     strobeflash, spotlight, floodlight, cameracommand, camtilt,
 	// undocumented (unused):
-    fwdflood, rotate,
+    fwdflood,
 
 	// navigation
 	roslaunch, savewaypoints, gotowaypoint, startnav, stopnav,
 	gotodock, saveroute, runroute, cancelroute, startmapping, savemap,
 
 	// sensing
-	getlightlevel, setstreamactivitythreshold,
+	getlightlevel,
 	objectdetect, objectdetectcancel,
 	motiondetect, motiondetectcancel, sounddetect,
 	// not typically used by scripts, undocumented:
 	objectdetectstream, motiondetectstream,
 
 	// un-categorized
-	speech, serverbrowser, email, state, rssadd,
+	speech, email, state, rssadd,
 
     // experimental (undocumented)
     opennisensor, clearmap, test,

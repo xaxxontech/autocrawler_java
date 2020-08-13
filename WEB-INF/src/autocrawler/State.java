@@ -12,10 +12,10 @@ public class State {
 	public enum values{
 
 		// motors
-		motionenabled, moving, movingforward, motorport, cameratilt, motorspeed,
+		motionenabled, moving, movingforward, malgport, cameratilt, motorspeed,
 
 		// dock
-		dockgrabbusy, docking, dockstatus, autodocking, dockfound, dockmetrics,
+		docking, dockstatus, autodocking, dockfound, dockmetrics,
         // undocumented:
         dockcamon, dockcamready,
 
@@ -30,8 +30,8 @@ public class State {
 		// audio video
 		videosoundmode, stream, driverstream, volume,
 		framegrabbusy, controlsinverted, lightlevel,
-		streamactivitythreshold, streamactivity,
-		motiondetect, objectdetect, streamactivityenabled, jpgstream,
+		streamactivity,
+		motiondetect, objectdetect, jpgstream,
 		record, sounddetect,
 		// not typically used by scripts or undocumented:
 		writingframegrabs, webrtcstatus,

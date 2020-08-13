@@ -2,7 +2,6 @@ package autocrawler;
 
 
 import developer.Ros;
-import developer.image.ImageUtils;
 import org.red5.server.api.IConnection;
 import org.red5.server.api.service.IServiceCapableConnection;
 import org.red5.server.stream.ClientBroadcastStream;
@@ -37,7 +36,7 @@ public class Video {
     public long lastbitrate = 0;
     private Application.streamstate lastmode = Application.streamstate.stop;
     private String avprog = "avconv"; // avconv or ffmpeg
-    public static long STREAM_CONNECT_DELAY = 5000;
+    public static long STREAM_CONNECT_DELAY = 3000; // 5000 for ros2...
     private static int dumpfps = 15;
     private static final String STREAMSPATH= "/autocrawler/streams/";
     public static final String FMTEXT = ".flv";
@@ -51,6 +50,9 @@ public class Video {
     private volatile long lastvideocommand = 0;
     private Settings settings = Settings.getReference();
     public final static String TURNLOG = Settings.redhome + "/log/turnserver.log";
+    public static final String MICWEBRTC = Settings.redhome+"/"+Settings.appsubdir+"/micwebrtc"; // gstreamer webrtc microphone c binary
+    public static final String SOUNDDETECT = Settings.redhome+"/"+Settings.appsubdir+"/sounddetect";
+
 
     public Video(Application a) {
         app = a;
@@ -67,6 +69,8 @@ public class Video {
         lastbitrate = Long.parseLong(vals[3]);
 
         state.set(State.values.stream, Application.streamstate.stop.toString());
+        if (settings.getBoolean(ManualSettings.ros2))
+            STREAM_CONNECT_DELAY = 5000;
     }
 
     private void setAudioDevice() {
@@ -74,7 +78,6 @@ public class Video {
             String cmd[] = new String[]{"arecord", "--list-devices"}; // arecord --list-devices
             Process proc = Runtime.getRuntime().exec(cmd);
             proc.waitFor();
-//            proc.waitFor();
 
             String line = null;
             BufferedReader procReader = new BufferedReader(new InputStreamReader(proc.getInputStream()));
@@ -128,7 +131,7 @@ public class Video {
         // todo: disallow unsafe custom values (device can be corrupted?)
 
         if (System.currentTimeMillis() < lastvideocommand + STREAM_CONNECT_DELAY) {
-            Util.debug("video command received too soon after last, dropped", this);
+            app.driverCallServer(PlayerCommands.messageclients, "video command received too soon after last, dropped");
             return;
         }
 
@@ -155,7 +158,6 @@ public class Video {
 
         new Thread(new Runnable() { public void run() {
 
-            // TODO: ????
             if (state.getBoolean(values.dockcamon) &&
                     (mode.equals(Application.streamstate.camera) || mode.equals(Application.streamstate.camandmic)) ) {
                 lastvideocommand = 0; // so next command not ignored
@@ -181,7 +183,7 @@ public class Video {
                         if (realsensepstring == null) {
                             realsensepstring = Ros.launch(new ArrayList<String>(Arrays.asList(Ros.REALSENSE,
                                 "color_width:="+lastwidth, "color_height:="+lastheight, "color_fps:="+lastfps,
-                                "enable_depth:=false", "initial_reset:=true" )));
+                                "enable_depth:=false", "initial_reset:=false" )));
                         }
 
                         if (state.exists(values.driverclientid)) {
@@ -196,7 +198,7 @@ public class Video {
                                     "turnserverlogin:=--turnserver-login="+settings.readSetting(ManualSettings.turnserverlogin)
                             ));
 
-                            webrtcStatusListener(strarray, mode.toString()); // copy because Ros.launch modifies strarray in mem! (even though final?)
+                            webrtcStatusListener(strarray, mode.toString());
                             webrtcpstring = Ros.launch(strarray);
                         }
                     }
@@ -229,7 +231,7 @@ public class Video {
                                     "turnserverlogin:=--turnserver-login="+settings.readSetting(ManualSettings.turnserverlogin)
                             ));
 
-                            webrtcStatusListener(strarray, mode.toString()); // copy because Ros.launch modifies strarray in mem! (even though final?)
+                            webrtcStatusListener(strarray, mode.toString()); 
                             webrtcpstring = Ros.launch(strarray);
                         }
                     }
@@ -248,7 +250,7 @@ public class Video {
                             ProcessBuilder processBuilder = new ProcessBuilder();
 
                             webrtcpstring = "micwebrtc";
-                            String cmd = Settings.redhome+"/"+Settings.appsubdir+"/"+Ros.MICWEBRTC+
+                            String cmd = MICWEBRTC+
                                 " --peer-id=" + state.get(values.driverclientid)+
                                 " --audio-device=" + adevicenum+
                                 " --server=wss://"+settings.readSetting(ManualSettings.webrtcserver)+":"
@@ -345,7 +347,7 @@ public class Video {
         }
     }
 
-    public void framegrab(final String res) {
+    public void framegrab() {
 
         state.set(State.values.framegrabbusy, true);
 
@@ -353,31 +355,29 @@ public class Video {
 
         new Thread(new Runnable() { public void run() {
 
+            if (!state.exists(values.writingframegrabs))
+                dumpframegrabs();
 
-            // resolution check: set to same as main stream params as default
-            int width = lastwidth;
-            // set lower resolution if required
-            if (res.equals(AutoDock.LOWRES)) {
-                width=lowreswidth;
+
+            File dir = new File(PATH);
+            long start = System.currentTimeMillis();
+            while (System.currentTimeMillis() - start < 5000) {
+                if (dir.isDirectory()) break;
+                Util.delay(100);
             }
 
-            if (!state.exists(values.writingframegrabs)) {
-                dumpframegrabs(res);
-                Util.delay(STREAM_CONNECT_DELAY);
+            if (!dir.isDirectory()) {
+                Util.log(PATH+" unavailable", this);
+                state.set(values.framegrabbusy, false);
+                return;
             }
-//            else if (state.getInteger(values.writingframegrabs) != width) {
-//                forceShutdownFrameGrabs();
-//                Util.delay(STREAM_CONNECT_DELAY);
-//                dumpframegrabs(res);
-//                Util.delay(STREAM_CONNECT_DELAY);
-//            }
 
             // determine latest image file -- use second latest to resolve incomplete file issues
             int attempts = 0;
             while (attempts < 15) {
-                File dir = new File(PATH);
+
                 File imgfile = null;
-                long start = System.currentTimeMillis();
+                start = System.currentTimeMillis();
                 while (imgfile == null && System.currentTimeMillis() - start < 10000) {
                     int highest = 0;
                     int secondhighest = 0;
@@ -432,8 +432,9 @@ public class Video {
         } }).start();
     }
 
-    public void dumpframegrabs(final String res) {
+    public void dumpframegrabs() {
 
+        Util.debug("dumpframegrabs()", this);
 
         new Thread(new Runnable() { public void run() {
 
@@ -442,19 +443,9 @@ public class Video {
                 Util.delay(STREAM_CONNECT_DELAY); // allow ros node time to exit
             }
 
-            // set to same as main stream params as default
-            int width = lastwidth;
-            int height = lastheight;
-
-            // set lower resolution if required
-            if (res.equals(AutoDock.LOWRES)) {
-                width=lowreswidth;
-                height=lowresheight;
-            }
-
             if (state.exists(values.writingframegrabs)) return; // just in case
 
-            state.set(State.values.writingframegrabs, width);
+            state.set(State.values.writingframegrabs, true);
 
             // run ros node
             String topic = "camera/color/image_raw";
@@ -684,7 +675,7 @@ public class Video {
                     return;
                 }
 
-                if (voldB > settings.getDouble(ManualSettings.soundmaxthreshold) && state.getBoolean(State.values.sounddetect)) {
+                if (voldB > settings.getDouble(ManualSettings.soundthreshold) && state.getBoolean(State.values.sounddetect)) {
                     state.set(State.values.streamactivity, "audio " + voldB+"dB");
                     state.set(State.values.sounddetect, false);
                     app.driverCallServer(PlayerCommands.messageclients, "sound detected: "+ voldB+"dB");
@@ -738,7 +729,7 @@ public class Video {
 
             ProcessBuilder processBuilder = new ProcessBuilder();
 
-            String cmd = Settings.redhome+"/"+Settings.appsubdir+"/sounddetect "+ adevicenum;
+            String cmd = SOUNDDETECT+" "+ adevicenum;
 
             List <String> args = new ArrayList<>();;
             String[] array = cmd.split(" ");
@@ -754,7 +745,7 @@ public class Video {
                 while ((line = reader.readLine()) != null && state.getBoolean(State.values.sounddetect)) {
                     double voldB = Double.parseDouble(line);
                     Util.debug("soundlevel: "+voldB, this);
-                    if (Double.parseDouble(line) > settings.getDouble(ManualSettings.soundmaxthreshold)) {
+                    if (Double.parseDouble(line) > settings.getDouble(ManualSettings.soundthreshold)) {
                         state.set(State.values.streamactivity, "audio " + voldB+"dB");
                         app.driverCallServer(PlayerCommands.messageclients, "sound detected: "+ voldB+" dB");
                         break;
