@@ -99,22 +99,21 @@ public class Downloader {
 	 */
 	public boolean unzipFolder( String zipFile, String destFolder ) {
 		
-		String sep = System.getProperty("file.separator");
-		final String zip = (System.getenv("RED5_HOME") + sep + zipFile).trim();
-		final String des = (System.getenv("RED5_HOME") + sep + destFolder).trim(); 
+		final String zip = (Settings.redhome + Util.sep + zipFile).trim();
+		final String des = (Settings.redhome + Util.sep + destFolder).trim();
 
 		if( ! new File(zip).exists()){	
 			Util.log("no zip file found: " + zip, this);
 			return false;
 		}
 				
-		Util.systemCallBlocking("unzip "+zip+" -d "+des);
+		Util.systemCallBlocking("unzip "+zip+" -d "+des, 30);
 			
 		// test if folders 
 		if(new File(des).exists())
 			if(new File(des).isDirectory())
-				if(new File(des+sep+"update").exists())
-					if(new File(des+sep+"update").isDirectory()) 
+				if(new File(des+Util.sep+"update").exists())
+					if(new File(des+Util.sep+"update").isDirectory())
 						return true;
 		
 		// error state

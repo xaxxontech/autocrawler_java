@@ -68,7 +68,7 @@ public enum PlayerCommands {
 	speech, email, state, rssadd,
 
     // experimental (undocumented)
-    opennisensor, clearmap, test,
+    test,
 
     // deprecated (kept for mobile client compatibility, undocumented)
     spotlightsetbrightness,

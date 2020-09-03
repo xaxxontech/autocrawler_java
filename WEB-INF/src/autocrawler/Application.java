@@ -20,7 +20,6 @@ import developer.Calibrate;
 import developer.Navigation;
 import developer.NavigationLog;
 import developer.Ros;
-import developer.depth.Mapper;
 import developer.image.OpenCVMotionDetect;
 import developer.image.OpenCVObjectDetect;
 import developer.image.OpenCVUtils;
@@ -67,8 +66,6 @@ public class Application extends MultiThreadedApplicationAdapter {
 	public Power powerport = null;
 	public TelnetServer commandServer = null;
 	
-	public static developer.depth.OpenNIRead openNIRead = null;
-	public static developer.depth.ScanUtils scanUtils = null;
 	private developer.Navigation navigation = null;
 
 //	public static byte[] framegrabimg  = null;
@@ -292,11 +289,6 @@ public class Application extends MultiThreadedApplicationAdapter {
 
 		if (!settings.readSetting(GUISettings.telnetport).equals(Settings.DISABLED.toString()))
 			commandServer = new TelnetServer(this);
-
-		if (settings.getBoolean(ManualSettings.developer.name())) {
-			openNIRead = new developer.depth.OpenNIRead();
-			scanUtils = new developer.depth.ScanUtils();
-		}
 
 		// OpenCV
 		OpenCVUtils ocv = new OpenCVUtils(this);
@@ -817,21 +809,6 @@ public class Application extends MultiThreadedApplicationAdapter {
 			messageplayer("ROV volume set to "+str+"%", null, null); 
 			state.set(State.values.volume, str);
 			break;		
-			
-		case opennisensor:
-			if(str.equals("on")) { 
-				if (openNIRead.startDepthCam()) {
-//					if (!state.getBoolean(State.values.odometry)) comport.odometryStart();
-				 }
-				else
-						messageplayer("roslaunch already running, abort", null, null);
-			}
-			else { 
-				openNIRead.stopDepthCam(); 
-//				if (state.getBoolean(State.values.odometry)) comport.odometryStop();
-			}			
-			messageplayer("openNI camera "+str, null, null);
-			break;
 
 		case videosoundmode:
 			setGrabberVideoSoundMode(str);
@@ -958,8 +935,7 @@ public class Application extends MultiThreadedApplicationAdapter {
 		case block:	banlist.addBlockedFile(str); break;
 		case log: Util.log("log: "+str, this); break;
 		case sounddetect: video.sounddetectgst(str); break;
-		case clearmap: Mapper.clearMap(); break; // TODO: old dev only maybe nuke
-		
+
 		case cpu:
 			String cpu = String.valueOf(Util.getCPU());
 			if(cpu != null) state.set(values.cpu, cpu);
@@ -1228,35 +1204,30 @@ public class Application extends MultiThreadedApplicationAdapter {
 
 	}
 
-//	private void muteROVMicOnMoveToggle() {
-//		if (settings.getBoolean(GUISettings.muteonrovmove)) {
-////			state.set(State.values.muteOnROVmove, false);
-//			settings.writeSettings(GUISettings.muteonrovmove.toString(), "false");
-//			messageplayer("mute ROV onmove off", null, null);
-//		} else {
-////			state.set(State.values.muteOnROVmove, true);
-//			settings.writeSettings(GUISettings.muteonrovmove.toString(), "true");
-//			messageplayer("mute ROV onmove on", null, null);
-//		}
-//	}
 
-	/**  */
 	public boolean frameGrab() {
 
-		 if(state.getBoolean(State.values.framegrabbusy.name()) ||
-                !(state.get(State.values.stream).equals(Application.streamstate.camera.toString()) ||
-						 state.get(State.values.stream).equals(Application.streamstate.camandmic.toString()))) {
-//			 messageplayer("stream unavailable or framegrab busy", null, null);
-             Util.log("stream unavailable or framegrab busy", this);
+		if (!(state.get(State.values.stream).equals(Application.streamstate.camera.toString()) ||
+					 state.get(State.values.stream).equals(Application.streamstate.camandmic.toString()))) {
+			 Util.log("stream unavailable", this);
 			 return false;
-		 }
+		}
+
+		// wait...?
+//		long start = System.currentTimeMillis();
+//		while(state.getBoolean(State.values.framegrabbusy) && System.currentTimeMillis() - start < 10000) {
+//			Util.delay(1);
+//		}
+
+		if(state.getBoolean(State.values.framegrabbusy)) {
+			Util.log("state framegrab busy", this);
+			return false;
+		}
 
 		video.framegrab();
 
-//		Util.debug("framegrab start at: "+System.currentTimeMillis(), this);
 		return true;
 	}
-
 
 	
 	public void messageplayer(String str, String status, String value) {

@@ -461,14 +461,6 @@ onmousedown="popupmenu('context', 'move');" > &nbsp; </div>
 <div id="context_menu_contents"  class="popupcontents" style="padding: 10px; padding-top: 7px;"></div>
 </div>
 
-<!--  radar_popup_menu -->
-<div id="radar_menu_under" class="popupmenu_underlay" style="position: absolute; display: none; z-index: 5;"></div>
-<div id="radar_menu_over" style="position: absolute; display: none; z-index: 5;">
-<div id="radar_menu_topbar" style="line-height: 18px; cursor: move;"
-	 onmousedown="popupmenu('radar', 'move');" > &nbsp; </div>
-<div id="radar_menu_contents"  class="popupcontents" style="padding: 10px; padding-top: 7px;"></div>
-</div>
-
 <!--  rosmap_popup_menu -->
 <div id="rosmap_menu_under" class="popupmenu_underlay" style="position: absolute; display: none; z-index: 5;"></div>
 <div id="rosmap_menu_over" style="position: absolute; display: none; z-index: 5; overflow: hidden">
@@ -1062,27 +1054,6 @@ href="javascript: callServer('state', 'delete objectdetect'); imgOverVideo('off'
 <table><tr><td style="height: 10px"></td></tr></table>
 Developer Menu:<br>
 <table><tr><td style="height: 7px"></td></tr></table>
-depth camera <a class="blackbg" href="javascript: radar('init');">on</a> /
-<a class="blackbg" href="javascript: radar('shutdown');">off</a><br>
-radar view <a class="blackbg" href="javascript: radar('on');">on</a> /
-<a class="blackbg" href="javascript: radar('off');">off</a><br>
-depth view <a class="blackbg" href="javascript: depthView('depthFrame');">on</a> /
-<a class="blackbg" href="javascript: depthView('off');">off</a><br>
-floor plane view <a class="blackbg" href="javascript: depthView('floorPlane');">on</a> /
-<a class="blackbg" href="javascript: depthView('off');">off</a><br>
-
-<!--
-floor plane top view <a class="blackbg" href="javascript: depthView('floorPlaneTop');">on</a> /
-<a class="blackbg" href="javascript: depthView('off');">off</a><br>
-<a class="blackbg" href="frameGrabHTTP?mode=map" target="_blank">map</a><br>
- <a class="blackbg" href="javascript: callServer('clearmap','');">clear map</a><br>
-
-processed image <a class="blackbg" href="javascript: processedImg('load');">load</a> /
-<a class="blackbg" href="javascript: processedImg('close');">off</a><br>
-
-jpg stream <a class="blackbg" href="javascript: imgOverVideo('on');">on</a> /
-<a class="blackbg" href="javascript: imgOverVideo('off');">off</a><br>
--->
 
 	processed image <a class="blackbg" href="javascript: processedImg('load');">load</a> /
 	<a class="blackbg" href="javascript: processedImg('close');">off</a><br>

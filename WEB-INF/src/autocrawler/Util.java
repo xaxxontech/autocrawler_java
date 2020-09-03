@@ -17,6 +17,7 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.Locale;
 import java.util.Vector;
+import java.util.concurrent.TimeUnit;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -147,18 +148,25 @@ public class Util {
 	/**
 	 * Run the given text string as a command on the host computer. 
 	 *
-	 * @param args is the command to run, like: "restart
+	 * @param cmd is the command to run, like: "restart
 	 *
 	 */
-	public static void systemCallBlocking(final String args) {
-		try {
+	public static void systemCallBlocking(final String cmd, final int timeoutseconds) {
+		debug("systemCallBlocking: " + cmd, "Util.systemCallBlocking");
 
-			Process proc = Runtime.getRuntime().exec(args);
-			proc.waitFor(); // required for linux else throws process hasn't terminated error
+		try {
+			Process proc = Runtime.getRuntime().exec(cmd);
+
+			// need to read the output or buffer might overflow and process won't exit
+            BufferedReader reader = new BufferedReader(new InputStreamReader(proc.getInputStream()));
+            while ((reader.readLine()) != null) {}
+
+			proc.waitFor(timeoutseconds, TimeUnit.SECONDS);
 
 		} catch (Exception e) {
 			printError(e);
 		}
+		debug("systemCallBlocking, done", "Util.systemCallBlocking");
 	}
 
 	public static boolean isInteger(String s) {

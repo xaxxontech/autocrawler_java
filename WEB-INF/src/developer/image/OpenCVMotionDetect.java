@@ -60,6 +60,12 @@ public class OpenCVMotionDetect  {
                 long timeout = System.currentTimeMillis() + TIMEOUT;
                 int f = 0;
                 int trigger = 0;
+
+                String port = "5080";
+                if (settings != null)
+                    port = settings.readRed5Setting("http.port");
+
+
                 while (state.getBoolean(State.values.motiondetect) && System.currentTimeMillis() < timeout) {
 
                     if (!state.getBoolean(State.values.motiondetect)) {
@@ -67,43 +73,44 @@ public class OpenCVMotionDetect  {
                         return;
                     }
 
-//                    BufferedImage img = null;
-//
-//                    try {
-//                        img = ImageIO.read(new URL("http://127.0.0.1:" +
-//                                settings.readRed5Setting("http.port") + "/autocrawler/frameGrabHTTP"));
-//                    } catch (IOException e) {
-//                        e.printStackTrace();
-//                    }
                     double threshold = settings.getDouble(ManualSettings.motionthreshold.toString());
+
+//                    app.processedImage = null;
+//                    boolean fg = app.frameGrab();
 //
-//                    if (img == null) {
-//                        Util.log("stream unavailable", this);
-//                        break;
+//                    long start = System.currentTimeMillis();
+//                    while (app.processedImage == null && System.currentTimeMillis() - start < 5000) Util.delay(1);
+//
+//                    if (app.processedImage == null) {
+//                        Util.debug("app.processedImage == null", this);
+//                        state.set(State.values.motiondetect, false);
+//                        return;
 //                    }
+//
+//                    BufferedImage img = ImageUtils.toBufferedImageOfType(app.processedImage, BufferedImage.TYPE_3BYTE_BGR);
+//
+//                    frame = OpenCVUtils.bufferedImageToMat(img);
 
-                    boolean fg = app.frameGrab();
-                    long waittime = System.currentTimeMillis() + 5000;
-                    while (!fg  && System.currentTimeMillis() < waittime) {
 
-                        Util.delay(100);
-                        fg = app.frameGrab();
+                    BufferedImage img = null;
 
-                        if (!state.getBoolean(State.values.motiondetect)) return; // help reduce cpu quicker on shutdown
+                    try {
+                        img = ImageIO.read(new URL("http://127.0.0.1:" + port + "/autocrawler/frameGrabHTTP"));
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                        break;
                     }
 
-                    if (!fg) {
-                        Util.debug("OpenCVMotionDetect().motionDetectGo() frame unavailable", null);
-                        state.set(State.values.motiondetect, false);
-                        return;
+                    if (img == null) {
+                        Util.log("stream unavailable", this);
+                        break;
                     }
-
-                    BufferedImage img = ImageUtils.toBufferedImageOfType(app.processedImage, BufferedImage.TYPE_3BYTE_BGR);
 
                     frame = OpenCVUtils.bufferedImageToMat(img);
 
+
+
                     mog.apply(frame, fore, 0);
-//                    mog.apply(frame, fore);
                     Imgproc.erode(fore, fore, new Mat());
                     Imgproc.dilate(fore, fore, new Mat());
 
@@ -197,10 +204,7 @@ public class OpenCVMotionDetect  {
 
                 frame = OpenCVUtils.bufferedImageToMat(img);
 
-//                frame = cv.bufferedImageToMat(ImageUtils.getImageFromStream());
-
                 mog.apply(frame, fore, 0.01);
-                //                    mog.apply(frame, fore);
                 Imgproc.erode(fore, fore, new Mat());
                 Imgproc.dilate(fore, fore, new Mat());
 

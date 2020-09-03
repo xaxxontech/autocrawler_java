@@ -358,7 +358,6 @@ public class Video {
             if (!state.exists(values.writingframegrabs))
                 dumpframegrabs();
 
-
             File dir = new File(PATH);
             long start = System.currentTimeMillis();
             while (System.currentTimeMillis() - start < 5000) {

@@ -73,7 +73,7 @@ var pingcountertimer;
 var pushtotalk;
 var lastcommand; 
 var maintopbarTimer = null;
-var subwindows = ["aux", "context", "menu", "main", "rosmap", "radar"];  // purposely skipped "error" window
+var subwindows = ["aux", "context", "menu", "main", "rosmap"];  // purposely skipped "error" window
 var windowpos = [null, null, null, null]; // needs same length as above
 var oculusPrimeplayerSWF = null;
 var recordmode = streammode;
@@ -2726,55 +2726,6 @@ var radartimer = null;
 var depthviewtimer = null;
 
 
-function radar(mode) {
-	if (mode=="init") {		
-		callServer("opennisensor", "on"); 
-		message("sending opennisensor on", sentcmdcolor);
-		lagtimer = new Date().getTime(); // has to be *after* message()
-	}
-	if (mode=="on") {	
-		var v = document.getElementById("video");
-		var xy = findpos(v);
-		var x = xy[0]+v.offsetWidth;
-		var y=xy[1];
-		var str ="<a href='javascript: radar(&quot;off&quot;);'>"
-		str += "<span class='cancelbox'><b>X</b></span> CLOSE</a><br>"
-		str +="<div style='height: 320px; line-height: 10px;'>";
-		str +="<img id='radarimg' src='frameGrabHTTP?mode=radar' alt='' onload='radarrepeat();' style='width: 240px'; height: 320px'>";
-		str += "<div style='position: relative; top: -184px; left: 17px; width: 50px;'>2.0</div>";
-		str += "<div style='position: relative; top: -194px; left: 200px; width: 50px;'>2.0</div>";
-		str += "<div style='position: relative; top: -114px; left: 55px; width: 50px;'>1.0</div>";
-		str += "<div style='position: relative; top: -124px; left: 165px; width: 50px;'>1.0</div>";
-		str += "<div style='position: relative; top: -300px; left: 2px; width: 50px;'>3</div>";
-		str += "<div style='position: relative; top: -310px; left: 230px; width: 50px;'>3</div>";
-		str += "<div style='position: relative; top: -70px; left: 107px; width: 75px;'>";
-		str +="<span style='background-color: #666666; color: #000000;'>ROV</span></div>";
-		str += "</div>"
-		popupmenu('radar', 'show', x, y, str, 240, 1, 0);
-	}
-	if (mode=="off") {
-		popupmenu("radar", "close");
-	}
-	if (mode=="shutdown") { 
-		callServer("opennisensor", "off");
-		message("sending opennisensor off", sentcmdcolor);
-	}
-}
-
-
-function radarrepeat() {
-	clearTimeout(radartimer);
-	radartimer = setTimeout("radarimagereload();", 50);
-}
-
-function radarimagereload() {
-	radartimer = null;
-	var img = document.getElementById('radarimg');
-	if (img == null) return;
-	img.src = "frameGrabHTTP?mode=radar&date="+new Date().getTime();
-	img.onload = function() { radarrepeat(); }
-}
-
 function processedImg(mode) {
 	if (mode=="load") {	
 		var v = document.getElementById("video");
@@ -2794,6 +2745,38 @@ function processedImg(mode) {
 	}
 
 }
+
+function imgOverVideo(mode) {
+	var img = document.getElementById("videologo");
+	if (mode == "on") {
+		// play("stop"); // will stop playing stream, and turn videologo on
+		// <img id="videologo" src="images/eye.gif" width="640" height="480"
+		videologo("on");
+		img.src = "frameGrabHTTP?mode=videoOverlayImg&date=" + new Date().getTime();
+		img.onload = function() { imgOverVideoRepeat(); }
+	}
+	else {
+		clearTimeout(radartimer);
+		radartimer = null;
+		img.onload = null;
+		img.src = "images/eye.gif";
+	}
+}
+
+function imgOverVideoRepeat() {
+	clearTimeout(radartimer);
+	radartimer = setTimeout("imgOverVideoReload();", 50);
+}
+
+
+
+function imgOverVideoReload() {
+	radartimer = null;
+	var img = document.getElementById("videologo");
+	img.src = "frameGrabHTTP?mode=videoOverlayImg&date=" + new Date().getTime();
+	img.onload = function() { imgOverVideoRepeat(); }
+}
+
 
 function depthView(mode) {
 	if (mode=="off")  { popupmenu("aux", "close"); }
@@ -2840,35 +2823,6 @@ function depthViewImgReload(mode) {
 	if (img==null) return;
 	img.src = "frameGrabHTTP?mode="+mode+"&date="+new Date().getTime();
 	img.onload = function() { depthViewRepeat(mode); }
-}
-
-function imgOverVideo(mode) {
-	var img = document.getElementById("videologo");
-	if (mode == "on") {
-		// play("stop"); // will stop playing stream, and turn videologo on
-		// <img id="videologo" src="images/eye.gif" width="640" height="480"
-		videologo("on");
-		img.src = "frameGrabHTTP?mode=videoOverlayImg&date=" + new Date().getTime();
-		img.onload = function() { imgOverVideoRepeat(); }
-	}
-	else {
-		clearTimeout(radartimer);
-		radartimer = null;
-		img.onload = null;
-		img.src = "images/eye.gif";
-	}
-}
-
-function imgOverVideoRepeat() {
-	clearTimeout(radartimer);
-	radartimer = setTimeout("imgOverVideoReload();", 50);
-}
-
-function imgOverVideoReload() {
-	radartimer = null;
-	var img = document.getElementById("videologo");
-	img.src = "frameGrabHTTP?mode=videoOverlayImg&date=" + new Date().getTime();
-	img.onload = function() { imgOverVideoRepeat(); }
 }
 
 function dockview(mode) {
