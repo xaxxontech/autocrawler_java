@@ -1055,21 +1055,46 @@ href="javascript: callServer('state', 'delete objectdetect'); imgOverVideo('off'
 Developer Menu:<br>
 <table><tr><td style="height: 7px"></td></tr></table>
 
-	processed image <a class="blackbg" href="javascript: processedImg('load');">load</a> /
-	<a class="blackbg" href="javascript: processedImg('close');">off</a><br>
+processed image <a class="blackbg" href="javascript: processedImg('load');">load</a> /
+<a class="blackbg" href="javascript: processedImg('close');">off</a><br>
 
-	<a class="blackbg" href="dashboard" target="_blank">dashboard</a><br>
+<a class="blackbg" href="dashboard" target="_blank">dashboard</a><br>
 
-	<!--
-    stereo cameras <a class="blackbg" href="javascript: callServer('stereo','on');">on</a> /
-    <a class="blackbg" href="javascript: callServer('stereo','off');">off</a><br>
-    stereo depth feed <a class="blackbg" href="javascript: depthView('stereo');">on</a> /
-    <a class="blackbg" href="javascript: depthView('off');">off</a><br>
-    stereo top view <a class="blackbg" href="javascript: depthView('stereotop');">on</a> /
-    <a class="blackbg" href="javascript: depthView('off');">off</a><br>
-    left camera feed <a class="blackbg" href="javascript: depthView('stereoleft');">on</a> /
-    <a class="blackbg" href="javascript: depthView('off');">off</a><br>
-     -->
+<table><tr><td style="height: 15px"></td></tr></table>
+
+OpenMANIPULATOR<br>
+<a class="blackbg" href="javascript: callServer('malgcommand','W'); callServer('roslaunch', 'autocrawler_openmanipulator');">arm power on</a><br>
+<a class="blackbg" href="javascript: callServer('state','arm off');">arm power off</a><br>
+<a class="blackbg" href="javascript: callServer('state','arm enable');">arm enable servos</a><br>
+<a class="blackbg" href="javascript: callServer('state','arm disable');">arm disable servos</a><br>
+<table><tr><td style="height: 7px"></td></tr></table>
+<a class="blackbg" href="javascript: callServer('state','arm record1');">arm record position 1</a><br>
+<a class="blackbg" href="javascript: callServer('state','arm record2');">arm record position 2</a><br>
+<a class="blackbg" href="javascript: callServer('state','arm record3');">arm record position 3</a><br>
+<table><tr><td style="height: 7px"></td></tr></table>
+<a class="blackbg" href="javascript: callServer('state','arm goto1');">arm goto position 1</a><br>
+<a class="blackbg" href="javascript: callServer('state','arm goto2');">arm goto position 2</a><br>
+<a class="blackbg" href="javascript: callServer('state','arm goto3');">arm goto position 3</a><br>
+<table><tr><td style="height: 7px"></td></tr></table>
+gripper <a class="blackbg" href="javascript: callServer('state','arm open');">open</a> /
+<a class="blackbg" href="javascript: callServer('state','arm close');">close</a><br>
+<a class="blackbg" href="javascript: callServer('state','arm floor');">arm floor</a><br>
+<a class="blackbg" href="javascript: callServer('state','arm forward');">arm forward</a><br>
+<a class="blackbg" href="javascript: callServer('state','arm home');">arm home</a><br>
+<a class="blackbg" href="javascript: callServer('state','arm rest');">arm rest</a><br>
+<table><tr><td style="height: 7px"></td></tr></table>
+<a class="blackbg" href="javascript: callServer('state','arm pickup');">arm pickup</a><br>	
+
+<!--
+stereo cameras <a class="blackbg" href="javascript: callServer('stereo','on');">on</a> /
+<a class="blackbg" href="javascript: callServer('stereo','off');">off</a><br>
+stereo depth feed <a class="blackbg" href="javascript: depthView('stereo');">on</a> /
+<a class="blackbg" href="javascript: depthView('off');">off</a><br>
+stereo top view <a class="blackbg" href="javascript: depthView('stereotop');">on</a> /
+<a class="blackbg" href="javascript: depthView('off');">off</a><br>
+left camera feed <a class="blackbg" href="javascript: depthView('stereoleft');">on</a> /
+<a class="blackbg" href="javascript: depthView('off');">off</a><br>
+ -->
 
 </div>
 

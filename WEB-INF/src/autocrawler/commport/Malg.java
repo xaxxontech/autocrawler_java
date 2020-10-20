@@ -20,7 +20,7 @@ public class Malg implements jssc.SerialPortEventListener {
 	public enum speeds { slow, med, fast };  
 	public enum mode { on, off };
 
-	public static final double MALGDB_FIRMWARE_VERSION_REQUIRED = 1.17; // trailing zeros ignored!
+	public static final double MALGDB_FIRMWARE_VERSION_REQUIRED = 1.18; // trailing zeros ignored!
 	public static final String MALGDB_FIRMWARE_ID = "malgdb";
 	public static String boardid = "unknown";
 	public static final long DEAD_TIME_OUT = 20000;
@@ -56,7 +56,9 @@ public class Malg implements jssc.SerialPortEventListener {
 	public static final byte ODOMETRY_STOP_AND_REPORT = 'j';
 	public static final byte ODOMETRY_REPORT = 'k';
 	public static final byte PING = 'c';
-		
+	public static final byte EEPROM_SET_TICKSPERREV = 'A';
+	public static final byte EEPROM_SET_STOPSTRESHOLD = 'B';
+
 	public static final int CAM_NUDGE = 3; // servo units
 	public static final long CAM_SMOOTH_DELAY = 50;
 	public static final long CAM_RELEASE_DELAY = 500;
@@ -358,13 +360,6 @@ public class Malg implements jssc.SerialPortEventListener {
 		for (int i = 0; i < buffSize; i++)
 			response += (char) buffer[i];
 
-//		if (!state.getBoolean(State.values.odometry)) Util.debug("serial in: " + response, this);
-		
-//		if(response.equals("reset")) {
-//			sendCommand(GET_VERSION);
-//			Util.debug(FIRMWARE_ID+" "+response, this);
-//		}
-		
 		if(response.startsWith("version:")) {
 			String versionstr = response.substring(response.indexOf("version:") + 8, response.length());
 			Util.log(boardid + " firmware version: "+versionstr, this);
@@ -560,15 +555,6 @@ public class Malg implements jssc.SerialPortEventListener {
 				case Malg.BACKWARDTIMED: cmd[0]= Malg.FORWARDTIMED;
 			}
 		}
-		
-		/*
-		if(settings.getBoolean(ManualSettings.debugenabled)) {
-			String text = "sendCommand(): " + (char)cmd[0] + " ";
-			for(int i = 1 ; i < cmd.length ; i++) 
-				text += ((byte)cmd[i] & 0xFF) + " ";  // & 0xFF converts to unsigned byte
-			
-			Util.log("DEBUG: "+ text, this);
-		}   // */
 
 		int n = 0;
 		while (commandlock) {
@@ -606,12 +592,6 @@ public class Malg implements jssc.SerialPortEventListener {
 			while (isconnected) {
 				if (commandList.size() > 1 &! commandlock) { // >1 because NL required
 
-//					if (!isconnected) {
-//						Util.log("error, not connected", this); // TODO: not needed (never see this)
-//						Util.delay(1);
-//						continue;
-//					}
-
 					if (commandList.size() > 15) { // buffer in firmware is now 32 (was 8) AVR is 64?
 						commandList.clear();
 						Util.log("error, command stack up, all dropped", this);
@@ -621,9 +601,6 @@ public class Malg implements jssc.SerialPortEventListener {
 
 					int EOLindex = commandList.indexOf((byte) 13);
 					if (EOLindex == -1) {
-//						String str = "";
-//						for (int i = 0; i < commandList.size(); i++) str += String.valueOf((int) commandList.get(i)) + ", ";
-//						Util.log("error, warning no EOL char: "+str, this); // nuke this, triggers sometimes as expected
 						Util.delay(1);
 						continue;
 					}
@@ -638,7 +615,6 @@ public class Malg implements jssc.SerialPortEventListener {
 					}  catch (Exception e) {
 						Util.log("sendCommand() error, dropped, continuing: ", this); // , attempting reset", this);
 						Util.printError(e);
-//						commandList.clear(); // TODO: Testing removal
 						Util.delay(1);
 						continue;
 					}
@@ -1544,11 +1520,32 @@ public class Malg implements jssc.SerialPortEventListener {
 		if (s.length == 0) return;
 		byte[] cmd = new byte[s.length];
 		cmd[0] = s[0].getBytes()[0];
+
+		if (cmd[0]==EEPROM_SET_TICKSPERREV || cmd[0]==EEPROM_SET_STOPSTRESHOLD) {
+			sendCmdContainingEOL(s);
+			return;
+		}
+
 		for (int i = 1; i<s.length; i++ ) {
 			cmd[i] = (byte) ((int) Integer.valueOf(s[i]));
 		}
 
 		sendCommand(cmd);
+	}
+
+	// bypass sendCommand function, in case dword value contains EOL char (which sendCommand filters)
+	private void sendCmdContainingEOL(String s[]) {
+		if (s.length != 2) return;
+		int val = Integer.parseInt(s[1]);
+
+		while (commandlock)  Util.delay(1);
+
+		commandlock = true;
+		commandList.add(s[0].getBytes()[0]);
+		commandList.add((byte) (val & 0xFF));
+		commandList.add((byte) ((val >> 8) & 0xFF));
+		commandList.add((byte) 13); // EOL (not required by board, but is required by CommandSender thread)
+		commandlock = false;
 	}
 
 	
