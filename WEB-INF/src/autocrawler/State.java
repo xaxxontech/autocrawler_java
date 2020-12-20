@@ -48,7 +48,7 @@ public class State {
 
 		// network
 		localaddress, externaladdress, ssid,
-		networksinrange, networksknown, gatewayaddress, relayserver, relayclient,
+		networksinrange, networksknown, gatewayaddress,
 
 		// odometry
 		distanceangle, direction, odometry, distanceanglettl, stopbetweenmoves, odometrybroadcast,

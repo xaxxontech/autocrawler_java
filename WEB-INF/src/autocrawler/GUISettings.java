@@ -10,7 +10,7 @@ public enum GUISettings {
 	maxclickcam, loginnotify, redock, navigation, telnetport,
 	email_smtp_server, email_smtp_port, email_username, email_password, email_from_address, email_to_address,
 	volume, reboot, camhoriz,
-	relayserver, relayserverauth, cammin, cammax, reversesteeringcomp // undocumented
+	cammin, cammax, reversesteeringcomp // undocumented
 	;
 	
 	/** get basic settings */
@@ -45,8 +45,6 @@ public enum GUISettings {
 		config.setProperty(email_from_address.name(), Settings.DISABLED);
 		config.setProperty(email_to_address.name(), Settings.DISABLED);
 		config.setProperty(telnetport.name(), "4444");
-		config.setProperty(relayserver.name(), Settings.DISABLED);
-		config.setProperty(relayserverauth.name(), Settings.DISABLED);
 
 		return config;
 	}

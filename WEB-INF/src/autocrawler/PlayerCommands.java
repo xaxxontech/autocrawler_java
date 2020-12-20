@@ -4,9 +4,8 @@ public enum PlayerCommands {
 	    
     // server
     uptime, restart, quitserver, showlog, writesetting, readsetting, settings, log,
-	relayconnect, relaydisable,
     // not typically used by scripts, undocumented:
-    softwareupdate, relaydisconnect,
+    softwareupdate,
     // undocumented
     clientjs,
 
@@ -93,28 +92,13 @@ public enum PlayerCommands {
 	    setstreamactivitythreshold, email, state, uptime, help, memory, who, 
 	    loginrecords, settings, messageclients, dockgrabtest, rssaddb, block, 
 	    unblock, powershutdown, reboot, systemshutdown, clearmap, erroracknowledged,
-		relayconnect, relaydisconnect, relaydisable, networksettings, networkconnect, test,
+		networksettings, networkconnect, test,
 
 		;
 
-	}
-
-	// sub-set of commands that are NOT to be passed thru to relay client, if acting as relay server
-	private enum nonRelayCommands {
-		record, relaydisconnect, chat, beapassenger, assumecontrol,
-		;
 	}
 
 	// @return true if given command is in the sub-set
-	public static boolean nonRelayCommands(final PlayerCommands cmd) {
-		try {
-			nonRelayCommands.valueOf(cmd.name());
-		} catch (Exception e) {return false;}
-
-		return true;
-	}
-
-	// @return true if given command is in the sub-set 
 	public static boolean requiresAdmin(final PlayerCommands cmd) {
 		try {
 			AdminCommands.valueOf(cmd.name());

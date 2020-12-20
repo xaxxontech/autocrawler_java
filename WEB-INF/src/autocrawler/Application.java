@@ -72,10 +72,7 @@ public class Application extends MultiThreadedApplicationAdapter {
 	public static BufferedImage processedImage = null;
 	public static BufferedImage videoOverlayImage = null;
 
-	private Red5Client red5client = null;
-	public IConnection relayclient = null;
 	public Network network = null;
-
 
 
 	public Application() {
@@ -116,20 +113,6 @@ public class Application extends MultiThreadedApplicationAdapter {
 			return true;
 		}
 
-		// always accept relayclient avconv/ffmpeg
-		if (params.length==0 && state.exists(values.relayclient)) {
-			if (connection.getRemoteAddress().equals(state.get(values.relayclient)) ) {
-				grabber = Red5.getConnectionLocal();
-
-				if (settings.getBoolean(ManualSettings.useflash)) {
-					driverCallServer(PlayerCommands.messageclients, "relay server in use, setting &quot;useflash&quot; to false");
-					Util.log("setting useflash false", this);
-					settings.writeSettings(ManualSettings.useflash, Settings.FALSE);
-				}
-
-				return true;
-			}
-		}
 
 		if (params.length==0) return false;
 
@@ -138,10 +121,7 @@ public class Application extends MultiThreadedApplicationAdapter {
 		// always accept local grabber (flash)
 		if ((connection.getRemoteAddress()).equals("127.0.0.1") && logininfo[0].equals("")) return true;
 
-		// disallow normal connection if relay server active
-		if (state.exists(values.relayserver)) return false;
-
-		// TODO: if banned, but cookie exists?? 
+		// TODO: if banned, but cookie exists??
 		if(banlist.isBanned(connection.getRemoteAddress())) return false;
 		
 		// test for cookie auth
@@ -221,10 +201,6 @@ public class Application extends MultiThreadedApplicationAdapter {
 			player = null;
 			connection.close();
 
-			if (state.exists(values.relayclient)) {
-				IServiceCapableConnection t = (IServiceCapableConnection) relayclient;
-				t.invoke("playerDisconnect");
-			}
 		}
 
 		/*
@@ -251,17 +227,6 @@ public class Application extends MultiThreadedApplicationAdapter {
 		}
 		*/
 
-		if (connection.equals(relayclient)) {
-			relayclient = null;
-			state.delete(values.relayclient);
-			Util.log("relay client disconnected", this);
-			if (state.exists(values.driver)) //messageplayer("relay client disconnected", "connection", "connected");
-				driverCallServer(PlayerCommands.driverexit, null);
-			if (!state.get(values.stream).equals(streamstate.stop.toString()))
-				driverCallServer(PlayerCommands.streammode, streamstate.stop.toString());
-			return;
-		}
-		
 		state.delete(State.values.pendinguserconnected);
 		//TODO: extend IConnection class, associate loginRecord  (to get passenger info)
 		// currently no username info when passenger disconnects
@@ -297,12 +262,6 @@ public class Application extends MultiThreadedApplicationAdapter {
 		Util.setSystemVolume(settings.getInteger(GUISettings.volume));
 		state.set(State.values.volume, settings.getInteger(GUISettings.volume));
 
-		// use relay server if set
-		if (!settings.readSetting(GUISettings.relayserver).equals(Settings.DISABLED)) {
-			red5client = new Red5Client(this); // connects to remote server
-			red5client.connectToRelay();
-		}
-
 		if(state.get(values.osarch).equals(ARM)) settings.writeSettings(ManualSettings.useflash, Settings.FALSE);
 		if( ! settings.getBoolean(ManualSettings.useflash)) state.set(values.driverstream, driverstreamstate.disabled.toString());
 		else state.set(State.values.driverstream, driverstreamstate.stop.toString());
@@ -324,81 +283,6 @@ public class Application extends MultiThreadedApplicationAdapter {
 
 		Util.debug("application initialize done", this);
 	}
-
-	// called by remote relay client
-	public void setRelayClient() {
-		IConnection c = Red5.getConnectionLocal();
-		if (c instanceof IServiceCapableConnection) {
-			relayclient = c;
-			state.set(values.relayclient, c.getRemoteAddress());
-			Util.log("relayclient connected from: " + state.get(values.relayclient), this);
-
-			if (authtoken != null) {
-				IServiceCapableConnection sc = (IServiceCapableConnection) relayclient;
-				sc.invoke("relayCallClient", new Object[] { "writesetting",
-						GUISettings.relayserverauth.toString()+" "+authtoken });
-			}
-
-			if (state.exists(values.driver)) {
-				player.close();
-				player = null;
-				loginRecords.signoutDriver();
-				driverCallServer(PlayerCommands.publish, streamstate.stop.toString());
-			}
-		}
-	}
-
-	// called by remote relayclient
-	public void relayPing() {
-		Util.debug("ping from relayclient", this); // TODO: testing
-		if (relayclient == null) {
-			Util.log("error,relayclient null", this); // TODO: testing
-			return;
-		}
-		IServiceCapableConnection sc = (IServiceCapableConnection) relayclient;
-		sc.invoke("relayPong", new Object[] { });
-	}
-
-	// called by remote Red5Client.sendToRelay()
-	public void fromRelayClient(Object[] params) {
-		if ( !Red5.getConnectionLocal().equals(relayclient)) return;
-		String[] s= new String[params.length-1];
-
-		switch (params[0].toString()) {
-			case "messageplayer":
-				for (int i=1; i<params.length; i++) if (params[i]!=null) s[i-1]=params[i].toString();
-				messageplayer(s[0],s[1],s[2]);
-				break;
-			case "sendplayerfunction":
-				for (int i=1; i<params.length; i++) if (params[i]!=null) s[i-1]=params[i].toString();
-				sendplayerfunction(s[0], s[1]);
-				break;
-			case "grabberSetStream":
-				grabberSetStream(params[1].toString());
-		}
-	}
-
-	/*
-	private void grabberInitialize() {
-
-//		String host = LOCALHOST;
-//		if (!settings.readSetting(ManualSettings.relayserver).equals(Settings.DISABLED))
-//			host = settings.readSetting(ManualSettings.relayserver);
-
-//		video = new Video(this);
-
-
-		// non flash, no gui
-		if (!settings.getBoolean(ManualSettings.useflash))   video.initAvconv();
-		else {
-//			if (host.equals(LOCALHOST)) grabber_launch("");
-//			else grabber_launch("?host="+host);
-
-			grabber_launch("");
-		}
-
-	}
-	*/
 
 
 	/**
@@ -436,7 +320,6 @@ public class Application extends MultiThreadedApplicationAdapter {
 			state.set(State.values.driver, state.get(State.values.pendinguserconnected));
 			state.delete(State.values.pendinguserconnected);
 			String conn = "connected";
-			if (state.exists(values.relayclient)) conn="relay";
 			String str = "connection "+conn+" user " + state.get(values.driver);
 			if (authtoken != null) {
 				str += " storecookie " + authtoken;
@@ -465,11 +348,6 @@ public class Application extends MultiThreadedApplicationAdapter {
 			
 //			state.delete(State.values.controlsinverted);
 			watchdog.lastpowererrornotify = null; // new driver not notified of any errors yet
-
-			if (state.exists(values.relayclient)) {
-				IServiceCapableConnection t = (IServiceCapableConnection) relayclient;
-				t.invoke("playerSignIn", new Object[] { state.get(values.driver)});
-			}
 
 		}
 	}
@@ -598,14 +476,8 @@ public class Application extends MultiThreadedApplicationAdapter {
 		if(fn != PlayerCommands.statuscheck && !passengerOverride)
 			state.set(State.values.lastusercommand, System.currentTimeMillis());
 
-		// if acting as relay server, forward commands
-		if (state.exists(values.relayclient) && !PlayerCommands.nonRelayCommands(fn)) {
-			IServiceCapableConnection sc = (IServiceCapableConnection) relayclient;
-			sc.invoke("relayCallClient", new Object[] { fn, str });
-			return;
-		}
 
-		String[] cmd = null;
+    	String[] cmd = null;
 		if(str!=null) cmd = str.split(" ");
 
 		switch (fn) {
@@ -1010,30 +882,6 @@ public class Application extends MultiThreadedApplicationAdapter {
 			new Calibrate(this).calibrateRotation(str);
 			break;
 
-		case relayconnect:
-			if (red5client == null) red5client = new Red5Client(this);
-			if (!str.equals("")) { red5client.connectToRelay(str); break; }
-			red5client.connectToRelay();
-			// TODO: stop any running streams
-			break;
-
-		case relaydisable:
-			driverCallServer(PlayerCommands.writesetting, GUISettings.relayserver.toString()+" "+Settings.DISABLED);
-			driverCallServer(PlayerCommands.writesetting, GUISettings.relayserverauth.toString()+" "+Settings.DISABLED);
-			// break omitted on purpose
-
-		case relaydisconnect:
-			driverCallServer(PlayerCommands.publish, Application.streamstate.stop.toString()); // TODO: server doesn't get stream stop
-			if (state.exists(values.relayserver))
-				red5client.relayDisconnect();
-			else if (state.exists(values.relayclient)) {
-				IServiceCapableConnection rc = (IServiceCapableConnection) relayclient;
-				rc.invoke("disconnect");
-				state.delete(values.relayclient);
-				driverCallServer(PlayerCommands.publish, Application.streamstate.stop.toString()); // TODO: server doesn't get stream stop
-			}
-			break;
-
 		case networksettings:
 			network.getNetworkSettings();
 			break;
@@ -1108,11 +956,6 @@ public class Application extends MultiThreadedApplicationAdapter {
 						}
 					}
 
-					// set stream on relayserver if necessary
-					if (state.exists(values.relayserver)) {
-						Util.delay(1000); // allow extra time for avconv to connect to remote server
-						red5client.sendToRelay("grabberSetStream", new Object[]{state.get(values.stream)});
-					}
 
 				} catch (Exception e) {
 					Util.printError(e);
@@ -1232,10 +1075,6 @@ public class Application extends MultiThreadedApplicationAdapter {
 	
 	public void messageplayer(String str, String status, String value) {
 
-		if (state.exists(values.relayserver)) {
-			red5client.sendToRelay("messageplayer", new Object[] {str, status, value});
-		}
-		
 		if (player instanceof IServiceCapableConnection) {
 			IServiceCapableConnection sc = (IServiceCapableConnection) player;
 			sc.invoke("message", new Object[] { str, "green", status, value });
@@ -1265,9 +1104,6 @@ public class Application extends MultiThreadedApplicationAdapter {
 		    CommServlet.sendToClientFunction(fn, params);
         }
 
-		if (state.exists(values.relayserver)) {
-			red5client.sendToRelay("sendplayerfunction", new Object[]{fn, params});
-		}
 	}
 
 	public void saySpeech(String str) {
@@ -1751,12 +1587,6 @@ public class Application extends MultiThreadedApplicationAdapter {
 		if(pendingplayer==null) { pendingplayerisnull = true; return; }
 
 		String con = "connected";
-
-		if (state.exists(values.relayclient)) {
-			IServiceCapableConnection t = (IServiceCapableConnection) relayclient;
-			t.invoke("playerSignIn", new Object[]{state.get(values.driver)});
-			con = "relay";
-		}
 
 		IConnection tmp = player;
 		player = pendingplayer;

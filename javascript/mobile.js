@@ -280,7 +280,7 @@ function videologo(state) {
 	mobilelog("videologo("+state+")");
 	
 	var pd = document.getElementById("pagediv");
-	if (pd.offsetWidth > pd.offsetHeight * 0.8) pd.style.width = Math.floor(pd.offsetHeight * 0.8) + "px";
+	// if (pd.offsetWidth > pd.offsetHeight * 0.8) pd.style.width = Math.floor(pd.offsetHeight * 0.8) + "px";
 
 	var vidlogo = document.getElementById("videologo");
 	var vid = document.getElementById("stream");
@@ -291,7 +291,7 @@ function videologo(state) {
 	vidlogo.style.left = xyvid[0] + "px";
 	vidlogo.style.width = vid.offsetWidth + "px";
 	vidlogo.style.height = vid.offsetHeight + "px";
-    
+
 	if (state=="on") {
 		vid.style.height=Math.ceil(vid.offsetWidth*9/16) + "px";
 		vidlogo.style.display = ""; 
