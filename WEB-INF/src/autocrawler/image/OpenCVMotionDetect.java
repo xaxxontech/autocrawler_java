@@ -1,4 +1,4 @@
-package developer.image;
+package autocrawler.image;
 
 
 import autocrawler.*;
@@ -63,7 +63,7 @@ public class OpenCVMotionDetect  {
 
                 String port = "5080";
                 if (settings != null)
-                    port = settings.readRed5Setting("http.port");
+                    port = settings.readHTTPport("http.port");
 
 
                 while (state.getBoolean(State.values.motiondetect) && System.currentTimeMillis() < timeout) {
@@ -172,7 +172,7 @@ public class OpenCVMotionDetect  {
 
             String port = "5080";
             if (settings != null) {
-                port = settings.readRed5Setting("http.port");
+                port = settings.readHTTPport("http.port");
             }
 
             while (true) {

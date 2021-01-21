@@ -5,7 +5,7 @@ import java.util.Iterator;
 import java.util.Set;
 import java.util.Vector;
 
-import developer.Ros.navsystemstate;
+import autocrawler.navigation.Ros.navsystemstate;
 
 public class State {
 	
@@ -56,7 +56,7 @@ public class State {
 		// not typically used by scripts, undocumented:
 		calibratingrotation, odomrotating, rotatetolerance,
 
-		// navigation
+		// autocrawler.navigation
 		rosmapinfo, rosamcl, rosglobalpath, rosscan,
 		roscurrentgoal, rosmapupdated, rosmapwaypoints, navsystemstatus,
 		rossetgoal, rosgoalstatus, rosgoalcancel, navigationroute, rosinitialpose,

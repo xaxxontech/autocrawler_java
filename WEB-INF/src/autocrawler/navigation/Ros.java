@@ -1,4 +1,4 @@
-package developer;
+package autocrawler.navigation;
 
 import java.awt.image.BufferedImage;
 import java.io.*;
@@ -31,12 +31,12 @@ public class Ros {
 	private static BufferedImage map = null;
 	private static double lastmapupdate = 0f;
 
-	public static File waypointsfile = new File(Settings.redhome + "/conf/waypoints.txt");
+	public static File waypointsfile = new File(Settings.tomcathome + "/conf/waypoints.txt");
 	public static String mapfilename = "map.pgm";
 	public static String mapyamlname = "map.yaml";
 
-	public static String rospackagedir;
 	public static final String ROSPACKAGE = "autocrawler";
+	public static String rospackagedir;
 
 	static final int OCCUPIEDTHRESHOLD = 60;
 	static final int FREETHRESHOLD = 25;
@@ -53,8 +53,8 @@ public class Ros {
 	public static final String DOCKCAM = "dockcam"; // gstreamer dock cam to rtmp (flash client) and aruco detect
 	public static final String DOCKWEBRTC = "dockwebrtc"; // gstreamer dock cam webrtc and aruco detect
 
-	public static final String ROS1CMD = Settings.redhome+Util.sep+"ros1.sh";
-	public static final String ROS2CMD = Settings.redhome+Util.sep+"ros2.sh";
+	public static final String ROS1CMD = Settings.tomcathome +Util.sep+"ros1.sh";
+	public static final String ROS2CMD = Settings.tomcathome +Util.sep+"ros2.sh";
 
 	public static BufferedImage rosmapImg() {
 		if (!state.exists(State.values.rosmapinfo)) return null;
@@ -112,7 +112,7 @@ public class Ros {
 			e.printStackTrace();
 		}
 
-		// generate image
+		// generate autocrawler.image
 		frameData.rewind();
 		for (int y = height - 1; y >= 0; y--) {
 			for (int x = 0; x < width; x++) {
@@ -377,21 +377,6 @@ public class Ros {
 		return result;
 	}
 
-	public static String getRosPackageDir() {
-		try {
-
-			String[] cmd = { "bash", "-ic", "roscd "+ROSPACKAGE+" ; pwd" };
-			Process proc = Runtime.getRuntime().exec(cmd);
-			BufferedReader procReader = new BufferedReader(new InputStreamReader(proc.getInputStream()));
-			String str = procReader.readLine();
-			return str;
-
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		return null;
-	}
-
 	public static String getMapFilePath() {
 		return Ros.rospackagedir + Util.sep + "maps" + Util.sep ;
 	}
@@ -417,9 +402,9 @@ public class Ros {
 	public static boolean saveMap() {
 		try {
 			// nuke any existing files in root dir
-			Path sourcepath = Paths.get( Settings.redhome+Util.sep+mapfilename);
+			Path sourcepath = Paths.get( Settings.tomcathome +Util.sep+mapfilename);
 			if (Files.exists(sourcepath)) Files.delete(sourcepath);
-			sourcepath = Paths.get( Settings.redhome+Util.sep+mapyamlname);
+			sourcepath = Paths.get( Settings.tomcathome +Util.sep+mapyamlname);
 			if (Files.exists(sourcepath)) Files.delete(sourcepath);
 
 			// call ros map_saver
@@ -433,7 +418,7 @@ public class Ros {
 			backUpYaml();
 
 			// move files from root to ros map dir
-			sourcepath = Paths.get( Settings.redhome+Util.sep+mapfilename);
+			sourcepath = Paths.get( Settings.tomcathome +Util.sep+mapfilename);
 			Path destinationpath = Paths.get(getMapFilePath()+mapfilename);
 
 			long timeout = System.currentTimeMillis() + 10000;
@@ -445,7 +430,7 @@ public class Ros {
 			Files.move(sourcepath, destinationpath, StandardCopyOption.REPLACE_EXISTING);
 //			Files.delete(sourcepath);
 
-			sourcepath = Paths.get( Settings.redhome+Util.sep+mapyamlname);
+			sourcepath = Paths.get( Settings.tomcathome +Util.sep+mapyamlname);
 			destinationpath = Paths.get(getMapFilePath()+mapyamlname);
 			timeout = System.currentTimeMillis() + 10000;
 			while (!Files.exists(sourcepath) && System.currentTimeMillis()< timeout) Util.delay(10);

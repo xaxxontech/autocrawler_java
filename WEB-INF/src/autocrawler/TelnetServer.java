@@ -153,7 +153,7 @@ public class TelnetServer implements Observer {
 			return;
 		}
 
-// TODO: maybe in developer mode? 
+// TODO: maybe in autocrawler.developer mode?
 //		if (player.equals(PlayerCommands.systemcall)) {
 //			sendToSocket("forbidden command, " + cmd[0], out);
 //			return;

@@ -1,4 +1,4 @@
-package developer;
+package autocrawler.developer;
 
 import java.io.RandomAccessFile;
 

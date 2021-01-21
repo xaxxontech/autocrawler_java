@@ -16,11 +16,11 @@ public enum PlayerCommands {
 	networksettings,
 
 	//user, accounts
-    who, chat, disconnectotherconnections, driverexit, messageclients,
+    who, chat, driverexit, messageclients,
 	logout, // undocumented
     
     //undocumented (not typically used by scripts):
-    password_update, beapassenger, assumecontrol,  
+    password_update,
     new_user_add, user_list, delete_user, extrauser_password_update, username_update,
 
     //docking
@@ -36,7 +36,7 @@ public enum PlayerCommands {
 	powershutdown, // added timed interval option
     
     // video/audio
-    streamsettingscustom, playerbroadcast, videosoundmode, publish,
+    streamsettingscustom, publish,
     streamsettingsset, framegrabtofile,	record,
 	// experimental, undocumented:
 	jpgstream, streammode,
@@ -52,7 +52,7 @@ public enum PlayerCommands {
 	// undocumented (unused):
     fwdflood,
 
-	// navigation
+	// autocrawler.navigation
 	roslaunch, savewaypoints, gotowaypoint, startnav, stopnav,
 	gotodock, saveroute, runroute, cancelroute, startmapping, savemap,
 
@@ -86,7 +86,7 @@ public enum PlayerCommands {
 		getdrivingsettings, drivingsettingsupdate,  
 		systemcall, 
 		new_user_add, user_list, delete_user, extrauser_password_update, username_update, 
-		disconnectotherconnections, showlog, softwareupdate,
+		showlog, softwareupdate,
 		arduinoreset, muterovmiconmovetoggle, 
 	    writesetting, holdservo, opennisensor, videosoundmode, restart, shutdown,
 	    setstreamactivitythreshold, email, state, uptime, help, memory, who, 

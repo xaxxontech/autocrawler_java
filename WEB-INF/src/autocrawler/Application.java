@@ -3,83 +3,67 @@ package autocrawler;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Set;
 
 import autocrawler.commport.Malg;
 import autocrawler.servlet.CommServlet;
 import autocrawler.servlet.DashboardServlet;
 import autocrawler.servlet.FrameGrabHTTP;
 import org.jasypt.util.password.ConfigurablePasswordEncryptor;
-import org.red5.server.adapter.MultiThreadedApplicationAdapter;
-import org.red5.server.api.IConnection;
-import org.red5.server.api.Red5;
-import org.red5.server.api.service.IServiceCapableConnection;
 
-import developer.Calibrate;
-import developer.Navigation;
-import developer.NavigationLog;
-import developer.Ros;
-import developer.image.OpenCVMotionDetect;
-import developer.image.OpenCVObjectDetect;
-import developer.image.OpenCVUtils;
+import autocrawler.navigation.Navigation;
+import autocrawler.navigation.NavigationLog;
+import autocrawler.navigation.Ros;
+import autocrawler.image.OpenCVMotionDetect;
+import autocrawler.image.OpenCVObjectDetect;
+import autocrawler.image.OpenCVUtils;
 import autocrawler.State.values;
 import autocrawler.commport.Power;
 import autocrawler.commport.PowerLogger;
 
+import javax.servlet.ServletContextEvent;
+import javax.servlet.ServletContextListener;
 
-/** red5 application */
-public class Application extends MultiThreadedApplicationAdapter {
+
+public class Application implements ServletContextListener {
 
 	public enum streamstate { stop, camera, camandmic, mic }
 	public enum camquality { low, med, high, custom }
 	public enum driverstreamstate { stop, mic, pending, disabled }
-	public static final String VIDEOSOUNDMODELOW = "low";
-	public static final String VIDEOSOUNDMODEHIGH = "high";
 	public static final int STREAM_CONNECT_DELAY = 2000;
-	private static final int GRABBERRELOADTIMEOUT = 5000;
-	public static final int GRABBERRESPAWN = 8000;
 	public static final String ARM = "arm";
 	public static final String UBUNTU1604 = "16.04";
 	public static final String UBUNTU1804 = "18.04";
 	public static final String LOCALHOST = "127.0.0.1";
 	private static final String SERVEROK = "serverok";
+	private static final String RESTARTFILE = "autocrawlerrestart"; // must match autocrawler.sh
+    private static final String HALTFILE = "autocrawlerhalt";       // must match autocrawler.sh
 
-	private ConfigurablePasswordEncryptor passwordEncryptor = new ConfigurablePasswordEncryptor();
+    private ConfigurablePasswordEncryptor passwordEncryptor = new ConfigurablePasswordEncryptor();
 	protected boolean initialstatuscalled = false;
-	private boolean pendingplayerisnull = true;
-	public IConnection grabber = null;   // flash client on robot, camera capture (optional)
-	protected IConnection player = null;   // client, typically remote flash plugin or air app
 	private String authtoken = null;
 	private String salt = null;
 	
 	private Settings settings = Settings.getReference();
 	private BanList banlist = BanList.getRefrence();
-	private State state = State.getReference();
+    private State state = State.getReference();
+
 	protected LoginRecords loginRecords = null;
-	private IConnection pendingplayer = null;
 	protected SystemWatchdog watchdog = null;
 	public AutoDock docker = null;
 	public Video video = null;
-
 	public Malg comport = null;
 	public Power powerport = null;
 	public TelnetServer commandServer = null;
-	
-	private developer.Navigation navigation = null;
-
-//	public static byte[] framegrabimg  = null;
+	private Navigation navigation = null;
 	public static BufferedImage processedImage = null;
 	public static BufferedImage videoOverlayImage = null;
-
 	public Network network = null;
 
+	public volatile boolean running = true;
 
 	public Application() {
-		super();
-
 		PowerLogger.append("==============Autocrawler Java Start===============\n", this); // extra newline on end
-		Util.log ("==============Autocrawler Java Start 2===============\n", this); // extra newline on end
+		Util.log ("==============Autocrawler Java Start===============\n", this); // extra newline on end
 		Util.log("Linux Version:"+Util.getUbuntuVersion()
 				+", Java Model:"+System.getProperty("sun.arch.data.model")
 				+", Java Arch:"+state.get(values.osarch), this);
@@ -94,148 +78,11 @@ public class Application extends MultiThreadedApplicationAdapter {
 
 	}
 
-
-	// flash connect
 	@Override
-	public boolean appConnect(IConnection connection, Object[] params) {
-
-		authtoken = null;
-
-// TODO: testing avconv/ffmpeg stream accept all non-auth LAN connections
-//		if (banlist.knownAddress(connection.getRemoteAddress()) && params.length==0) {
-//			Util.log("localhost/LAN/known netstream connect, no params", this);
-//			return true;
-//		}
-
-		// always accept local avconv/ffmpeg
-		if (params.length==0 && connection.getRemoteAddress().equals("127.0.0.1") ) {
-			grabber = Red5.getConnectionLocal(); // TODO: cause of unknown bug? dumpframegrabs sometimes connects after initial video source
-			return true;
-		}
-
-
-		if (params.length==0) return false;
-
-		String logininfo[] = ((String) params[0]).split(" ");
-
-		// always accept local grabber (flash)
-		if ((connection.getRemoteAddress()).equals("127.0.0.1") && logininfo[0].equals("")) return true;
-
-		// TODO: if banned, but cookie exists??
-		if(banlist.isBanned(connection.getRemoteAddress())) return false;
-		
-		// test for cookie auth
-		if (logininfo.length == 1) { 
-			String username = logintest("", logininfo[0]);
-			if (username != null) {
-				state.set(State.values.pendinguserconnected, username);
-				banlist.clearAddress(connection.getRemoteAddress());
-				return true;
-			}
-		}
-	
-		// test for user/pass/remember
-		if (logininfo.length > 1) {
-			String encryptedPassword = (passwordEncryptor.encryptPassword(logininfo[0] + salt + logininfo[1])).trim();
-			if (logintest(logininfo[0], encryptedPassword) != null) {
-				if (logininfo[2].equals("remember")) {
-					authtoken = encryptedPassword;
-				}
-				state.set(State.values.pendinguserconnected, logininfo[0]);
-				banlist.clearAddress(connection.getRemoteAddress());
-				return true;
-			}
-		}
-		
-		banlist.loginFailed(connection.getRemoteAddress(), logininfo[0]);
-		return false;
+	public void contextDestroyed(ServletContextEvent arg0) {
+		shutdownApplication();
 	}
 
-	@Override
-	public void appDisconnect(IConnection connection) {
-		if(connection==null) { return; }
-
-		if (connection.equals(player)) {
-			String str = state.get(State.values.driver) + " disconnected";
-			
-			Util.log("appDisconnect(): " + str,this); 
-
-			messageGrabber(str, "connection awaiting&nbsp;connection");
-			loginRecords.signoutDriver();
-
-			//if autodocking, keep autodocking
-			if (!state.getBoolean(State.values.autodocking) &&
-					!(state.exists(values.navigationroute) && !state.exists(values.nextroutetime)) ) {
-				
-				if (!state.get(State.values.driverstream).equals(driverstreamstate.pending.toString())) {
-				
-					if (state.get(State.values.stream) != null) {
-						if (!state.get(State.values.stream).equals(streamstate.stop.toString())) {
-							publish(streamstate.stop);
-						}
-					}
-	
-					if (comport.isConnected()) { 
-						comport.setSpotLightBrightness(0);
-						comport.floodLight(0);
-						comport.stopGoing();
-					}
-	
-					if (!state.get(State.values.driverstream).equals(driverstreamstate.stop.toString())
-							&& !state.get(values.driverstream).equals(driverstreamstate.disabled.toString())) {
-						state.set(State.values.driverstream, driverstreamstate.stop.toString());
-						grabberPlayPlayer(0);
-						messageGrabber("playerbroadcast", "0");
-					}
-					
-				}
-				
-				// this needs to be before player = null
-				if (state.get(State.values.pendinguserconnected) != null) {
-					assumeControl(state.get(State.values.pendinguserconnected));
-					state.delete(State.values.pendinguserconnected);
-					return;
-				}
-			}
-			
-			player = null;
-			connection.close();
-
-		}
-
-		/*
-		if (connection.equals(grabber)) {
-			grabber = null;
-
-			if (!settings.getBoolean(ManualSettings.useflash))  return;
-
-			// flash only
-			// wait a bit, see if still no grabber, THEN reload
-			new Thread(new Runnable() {
-				public void run() {
-					try {
-						Thread.sleep(GRABBERRESPAWN);
-						if (grabber == null) {
-							grabberInitialize();
-						}
-					} catch (Exception e) {
-						Util.printError(e);
-					}
-				}
-			}).start();
-			return;
-		}
-		*/
-
-		state.delete(State.values.pendinguserconnected);
-		//TODO: extend IConnection class, associate loginRecord  (to get passenger info)
-		// currently no username info when passenger disconnects
-	}
-
-	public void killGrabber() {
-		if (settings.getBoolean(ManualSettings.useflash)) Util.systemCall("pkill chrome");    // TODO: use PID
-	}
- 
 	/** */
 	public void initialize() {
 		settings.writeFile();
@@ -248,9 +95,8 @@ public class Application extends MultiThreadedApplicationAdapter {
 		comport = new Malg(this);   // note: blocking
 		powerport = new Power(this); // note: blocking
 
-		state.set(State.values.httpport, settings.readRed5Setting("http.port"));
+		state.set(State.values.httpport, settings.readHTTPport("http.port"));
 		initialstatuscalled = false;
-		pendingplayerisnull = true;
 
 		if (!settings.readSetting(GUISettings.telnetport).equals(Settings.DISABLED.toString()))
 			commandServer = new TelnetServer(this);
@@ -262,95 +108,26 @@ public class Application extends MultiThreadedApplicationAdapter {
 		Util.setSystemVolume(settings.getInteger(GUISettings.volume));
 		state.set(State.values.volume, settings.getInteger(GUISettings.volume));
 
-		if(state.get(values.osarch).equals(ARM)) settings.writeSettings(ManualSettings.useflash, Settings.FALSE);
-		if( ! settings.getBoolean(ManualSettings.useflash)) state.set(values.driverstream, driverstreamstate.disabled.toString());
-		else state.set(State.values.driverstream, driverstreamstate.stop.toString());
+		state.set(values.driverstream, driverstreamstate.disabled.toString());
 
 		video = new Video(this);
 
 		state.set(State.values.lastusercommand, System.currentTimeMillis()); // must be before watchdog
 		docker = new AutoDock(this, comport, powerport);
-		network = new Network(this);	
+        network = new Network(this);
 		watchdog = new SystemWatchdog(this);
 
         state.set(State.values.navsystemstatus, Ros.navsystemstate.stopped.toString());
+
         if(settings.getBoolean(GUISettings.navigation)) {
-			navigation = new developer.Navigation(this);
-			navigation.runAnyActiveRoute();
+			navigation = new Navigation(this);
+            navigation.runAnyActiveRoute();
 		}
 
-//		if(settings.getBoolean(ManualSettings.developer)) PyScripts.autostartPyScripts();
 
-		Util.debug("application initialize done", this);
+		Util.log("application initialize done", this);
 	}
 
-
-	/**
-	 * called by remote flash
-	 * */
-	public void playersignin() {		
-		// set video, audio quality mode in grabber flash, depending on server/client OS
-		String videosoundmode=VIDEOSOUNDMODELOW;
-
-		if (player != null) { // pending connection
-			pendingplayer = Red5.getConnectionLocal();
-			pendingplayerisnull = false;
-
-			if (pendingplayer instanceof IServiceCapableConnection) {
-				IServiceCapableConnection sc = (IServiceCapableConnection) pendingplayer;
-				String str = "connection PENDING user " + state.get(State.values.pendinguserconnected);
-				if (authtoken != null) {
-					// System.out.println("sending store cookie");
-					str += " storecookie " + authtoken;
-					authtoken =  null;
-				}
-				str += " someonealreadydriving " + state.get(State.values.driver);
-
-				// this has to be last to above variables are already set in java script
-				sc.invoke("message", new Object[] { null, "green", "multiple", str });
-				str = state.get(State.values.pendinguserconnected) + " pending connection from: "
-						+ pendingplayer.getRemoteAddress();
-				
-				Util.log("playersignin(): " + str,this);
-				messageGrabber(str, null);
-				sc.invoke("videoSoundMode", new Object[] { videosoundmode });
-			}
-		} else { // driver connected
-			player = Red5.getConnectionLocal();
-			state.set(State.values.driver, state.get(State.values.pendinguserconnected));
-			state.delete(State.values.pendinguserconnected);
-			String conn = "connected";
-			String str = "connection "+conn+" user " + state.get(values.driver);
-			if (authtoken != null) {
-				str += " storecookie " + authtoken;
-				authtoken = null;
-			}
-			str += " streamsettings " + streamSettings();
-
-            String vals[] = settings.readSetting(settings.readSetting(GUISettings.vset)).split("_");
-            str += " videowidth "+vals[0]+ " videoheight "+vals[1];
-
-			messageplayer(state.get(State.values.driver) + " connected to AUTOCRAWLER", "multiple", str);
-			initialstatuscalled = false;
-			
-			str = state.get(State.values.driver) + " connected from: " + player.getRemoteAddress();
-			messageGrabber(str, "connection " + state.get(State.values.driver) + "&nbsp;connected");
-			Util.log("playersignin(), " + str, this);
-			loginRecords.beDriver();
-			
-			if (settings.getBoolean(GUISettings.loginnotify)) {
-				saySpeech("lawg inn " + state.get(State.values.driver));
-			}
-			
-			IServiceCapableConnection sc = (IServiceCapableConnection) player;
-			sc.invoke("videoSoundMode", new Object[] { videosoundmode });
-			Util.log("player video sound mode = "+videosoundmode, this);
-			
-//			state.delete(State.values.controlsinverted);
-			watchdog.lastpowererrornotify = null; // new driver not notified of any errors yet
-
-		}
-	}
 
 	// nonflash xmlhttp clients only TODO: multiple clients + relay omitted, set xmlhttpclient flag here
 	public void driverSignIn(String username, long clientID) {
@@ -421,14 +198,6 @@ public class Application extends MultiThreadedApplicationAdapter {
                     comport.stopGoing();
                 }
 
-                // Todo: unused
-                if (!state.get(State.values.driverstream).equals(driverstreamstate.stop.toString())
-                        && !state.get(values.driverstream).equals(driverstreamstate.disabled.toString())) {
-                    state.set(State.values.driverstream, driverstreamstate.stop.toString());
-                    grabberPlayPlayer(0);
-                    messageGrabber("playerbroadcast", "0");
-                }
-
             }
         }
 
@@ -482,15 +251,6 @@ public class Application extends MultiThreadedApplicationAdapter {
 
 		switch (fn) {
 			case chat: chat(str) ;return;
-			case beapassenger: beAPassenger(str);return;
-			case assumecontrol: assumeControl(str); return;
-		}
-		
-		// must be driver/non-passenger for all commands below 
-
-		if (Red5.getConnectionLocal() != player && player != null && !passengerOverride) {
-			Util.log("passenger, command dropped: " + fn.toString(), this);
-			return;
 		}
 		
 		switch (fn) {
@@ -507,18 +267,11 @@ public class Application extends MultiThreadedApplicationAdapter {
 		case clicksteer:clickSteer(str);break;
 		case streamsettingscustom: streamSettingsCustom(str);break;
 		case streamsettingsset:streamSettingsSet(str);break;
-		case driverexit: if (player == null) driverSignOut();
-		        else appDisconnect(player);
-		        break;
+		case driverexit: driverSignOut(); break;
 		case logout:
 			Util.log("browser user logout", this);
-			if (player != null) {
-				banlist.removeAddress(player.getRemoteAddress());
-                appDisconnect(player);
-			}
-			else driverSignOut();
+			driverSignOut();
 			break;
-		case playerbroadcast: playerBroadCast(str); break;
 		case password_update: account("password_update", str); break;
 		case new_user_add: account("new_user_add", str); break;
 		case user_list: account("user_list", ""); break;
@@ -526,7 +279,6 @@ public class Application extends MultiThreadedApplicationAdapter {
 		case statuscheck: statusCheck(str); break;
 		case extrauser_password_update: account("extrauser_password_update", str); break;
 		case username_update: account("username_update", str); break;
-		case disconnectotherconnections: disconnectOtherConnections(); break;
 		case showlog: showlog(str); break;
 		case publish: publish(streamstate.valueOf(str)); break;
 		case record: // record [true | false] optionalfilename
@@ -672,7 +424,6 @@ public class Application extends MultiThreadedApplicationAdapter {
 
 		case speech:
 			messageplayer("synth voice: " + str, null, null);
-			messageGrabber("synth voice: " + str, null);
 			saySpeech(str);
 			break;
 		
@@ -682,10 +433,6 @@ public class Application extends MultiThreadedApplicationAdapter {
 			state.set(State.values.volume, str);
 			break;		
 
-		case videosoundmode:
-			setGrabberVideoSoundMode(str);
-			break;
-		
 		case spotlightsetbrightness: // deprecated, maintained for mobile client compatibility
 		case spotlight: 
 			comport.setSpotLightBrightness(Integer.parseInt(str));
@@ -869,13 +616,13 @@ public class Application extends MultiThreadedApplicationAdapter {
 			Util.archiveNavigation();
 			break;
 		
-		case truncmedia: // remove any frames or videos not currently linked in navigation log  
+		case truncmedia: // remove any frames or videos not currently linked in autocrawler.navigation log
 			Util.truncStaleFrames();
 			Util.truncStaleAudioVideo();
 			break;
 			
 		case streammode: // TODO: testing ffmpeg/avconv streaming
-			grabberSetStream(str);
+			setStreamMode(str);
 			break;
 
 		case calibraterotation:
@@ -887,8 +634,6 @@ public class Application extends MultiThreadedApplicationAdapter {
 			break;
 
 		case networkconnect:
-//			if (state.exists(values.relayserver) || state.exists(values.relayclient))
-//				driverCallServer(PlayerCommands.relaydisconnect, null);
 			network.connectNetwork(str);
 			break;
 
@@ -905,102 +650,28 @@ public class Application extends MultiThreadedApplicationAdapter {
 
 	}
 
-	/** put all commands here */
-	public enum grabberCommands {
-		streammode, saveandlaunch, populatesettings, systemcall, chat, dockgrabbed, autodock, 
-		restart, checkforbattery, factoryreset, shutdown, streamactivitydetected;
-		@Override
-		public String toString() {
-			return super.toString();
-		}
-	}
 
-
-	/**
-	 * set state and message all connected clients with stream status
-	 * @param str
-	 */
-	private void grabberSetStream(String str) {
+	private void setStreamMode(String str) {
 		state.set(State.values.stream, str);
-		if (!settings.getBoolean(ManualSettings.useflash) && str.equals(streamstate.camandmic.toString()))
+		if ( str.equals(streamstate.camandmic.toString()) )
 			str = str+"_2";
 		final String stream = str;
 
-		messageGrabber("streaming " + stream, "stream " + stream);
 		Util.log("streaming " + stream, this);
 
 		// message driver, incl flash and non flash clients
-        if (stream.equals(streamstate.camera.toString()) || stream.equals(streamstate.camandmic.toString()))
-            messageplayer("streaming " + stream, "multiple",
-                    "stream "+stream+" videowidth "+video.lastwidth+" videoheight "+video.lastheight);
-        else  messageplayer("streaming " + stream, "stream", stream);
-
-		// message passengers
-		new Thread(new Runnable() {
-			public void run() {
-				try {
-					// notify all passengers and driver
-					Thread.sleep(STREAM_CONNECT_DELAY);
-//					if (stream.equals(streamstate.camandmic)); Thread.sleep(STREAM_CONNECT_DELAY*2); // longer delay required doesn't help
-					Collection<Set<IConnection>> concollection = getConnections();
-					for (Set<IConnection> cc : concollection) {
-						for (IConnection con : cc) {
-							if (con instanceof IServiceCapableConnection
-									&& con != grabber
-									&& con != player
-									&& !(con == pendingplayer && !pendingplayerisnull)) {
-								IServiceCapableConnection n = (IServiceCapableConnection) con; // all CLIENTS
-								n.invoke("message", new Object[] { "streaming " + stream, "green", "stream", stream });
-								Util.debug("message all players: streaming " + stream +" stream " +stream,this);
-							}
-						}
-					}
-
-
-				} catch (Exception e) {
-					Util.printError(e);
-				}
-			}
-		}).start();
+		if (stream.equals(streamstate.camera.toString()) || stream.equals(streamstate.camandmic.toString()))
+			messageplayer("streaming " + stream, "multiple",
+					"stream "+stream+" videowidth "+video.lastwidth+" videoheight "+video.lastheight);
+		else  messageplayer("streaming " + stream, "stream", stream);
 	}
 
-	private void setGrabberVideoSoundMode(String str) {
-
-		if (!settings.getBoolean(ManualSettings.useflash)) return;
-		
-		if (state.getBoolean(State.values.autodocking.name())) {
-			messageplayer("command dropped, autodocking", null, null);
-			return;
-		}
-
-		if (state.get(State.values.stream) == null) {
-			messageplayer("stream control unavailable, server may be in setup mode", null, null);
-			return;
-		}
-
-		long timeout = System.currentTimeMillis() + GRABBERRELOADTIMEOUT;
-		while (!(grabber instanceof IServiceCapableConnection) && System.currentTimeMillis() < timeout ) { Util.delay(10); }
-		if (!(grabber instanceof IServiceCapableConnection))
-			Util.log("setGrabberVideoSoundMode() error grabber reload timeout", this);
-
-		IServiceCapableConnection sc = (IServiceCapableConnection) grabber;
-		sc.invoke("videoSoundMode", new Object[]{str});
-		state.set(State.values.videosoundmode, str);
-		Util.log("grabber video sound mode = " + str, this);
-	}
-	
 	public void publish(streamstate mode) {
 		
 		if (state.getBoolean(State.values.autodocking.name())) {
 			messageplayer("publish command dropped, autodocking", null, null);
 			return;
 		}
-
-		// TODO: not required
-//		if (state.get(State.values.stream)  == null) {
-//			messageplayer("stream control unavailable, server may be in setup mode", null, null);
-//			return;
-//		}
 
 		if (state.get(State.values.record) == null)
 			state.set(State.values.record, Application.streamstate.stop.toString());
@@ -1011,9 +682,6 @@ public class Application extends MultiThreadedApplicationAdapter {
 				video.record(Settings.FALSE);
 		}
 
-//		if (!state.get(values.navsystemstatus).equals(Ros.navsystemstate.stopped.toString()))
-//            driverCallServer(PlayerCommands.streamsettingsset, camquality.med.toString());
-
 		String current = settings.readSetting(GUISettings.vset);
 		String vals[] = (settings.readSetting(current)).split("_");
 		int width = Integer.parseInt(vals[0]);
@@ -1021,29 +689,7 @@ public class Application extends MultiThreadedApplicationAdapter {
 		int fps = Integer.parseInt(vals[2]);
 		long quality = Long.parseLong(vals[3]);
 
-        if (!settings.getBoolean(ManualSettings.useflash)) {
-			video.publish(mode, width, height, fps, quality);
-			return;
-		}
-
-		// flash TODO: nuke
-		try {
-			// commands: camandmic camera mic stop
-
-			long timeout = System.currentTimeMillis() + GRABBERRELOADTIMEOUT;
-			while (!(grabber instanceof IServiceCapableConnection) && System.currentTimeMillis() < timeout ) { Util.delay(10); }
-			if (!(grabber instanceof IServiceCapableConnection))
-				Util.log("publish() error grabber reload timeout", this);
-			IServiceCapableConnection sc = (IServiceCapableConnection) grabber;
-			sc.invoke("publish", new Object[] { mode.toString(), width, height, fps, quality });
-			messageplayer("command received: publish " + mode.toString(), null, null);
-			Util.log("publish: " + mode.toString(), this);
-
-		} catch (NumberFormatException e) {
-			Util.log("publish() error " + e.getMessage(),this);
-			Util.printError(e);
-		}
-
+		video.publish(mode, width, height, fps, quality);
 
 	}
 
@@ -1075,14 +721,8 @@ public class Application extends MultiThreadedApplicationAdapter {
 	
 	public void messageplayer(String str, String status, String value) {
 
-		if (player instanceof IServiceCapableConnection) {
-			IServiceCapableConnection sc = (IServiceCapableConnection) player;
-			sc.invoke("message", new Object[] { str, "green", status, value });
-		}
-		else {
-            CommServlet.sendToClient(str, "green", status, value );
-        }
-		
+		CommServlet.sendToClient(str, "green", status, value );
+
 		if(commandServer!=null) {
 			if(str!=null){
 				if(! str.equals(SERVEROK)) // basic ping from client, ignore
@@ -1096,14 +736,8 @@ public class Application extends MultiThreadedApplicationAdapter {
 	}
 
 	public void sendplayerfunction(String fn, String params) {
-		if (player instanceof IServiceCapableConnection) { // flash
-			IServiceCapableConnection sc = (IServiceCapableConnection) player;
-			sc.invoke("playerfunction", new Object[] { fn, params });
-		}
-		else { // webrtc
-		    CommServlet.sendToClientFunction(fn, params);
-        }
 
+		CommServlet.sendToClientFunction(fn, params);
 	}
 
 	public void saySpeech(String str) {
@@ -1252,7 +886,7 @@ public class Application extends MultiThreadedApplicationAdapter {
 			
 			
 			if (settings.getBoolean(ManualSettings.developer)) str += " developer true";
-			if (settings.getBoolean(GUISettings.navigation)) str += " navigation "+state.get(values.navsystemstatus);
+			if (settings.getBoolean(GUISettings.navigation)) str += " navigation " +state.get(values.navsystemstatus);
 
 			str += " battery " + state.get(State.values.batterylife);
 
@@ -1304,14 +938,12 @@ public class Application extends MultiThreadedApplicationAdapter {
 	// state.set(shuttingdown, true); 
 	public void restart() { 
 
-//		if(settings.getBoolean(ManualSettings.developer)) PyScripts.runShutdownPyScripts();
-				
 		Util.debug("Restart uptime was: "+ state.getUpTime(), this);	
 
 		messageplayer("restarting server application", null, null);	
 		
 		// write file as restart flag for script
-		File f = new File(Settings.redhome + Util.sep + "restart");
+		File f = new File(Settings.tomcathome + Util.sep + RESTARTFILE);
 		if (!f.exists()) try { f.createNewFile(); } catch (Exception e) {}
 		
 		shutdownApplication();
@@ -1322,7 +954,6 @@ public class Application extends MultiThreadedApplicationAdapter {
 		Util.log("rebooting system", this);
 		PowerLogger.append("rebooting system", this);
 		powerport.writeStatusToEeprom();
-		killGrabber(); // prevents error dialog on chrome startup
 
 		if (navigation != null) { // TODO: << condition required?
 			if (state.exists(values.odomlinearpwm)) {
@@ -1338,7 +969,7 @@ public class Application extends MultiThreadedApplicationAdapter {
 	
 		Util.delay(1000);
 		
-		Util.systemCall(Settings.redhome + Util.sep + "systemreboot.sh");
+		Util.systemCall(Settings.tomcathome + Util.sep + "systemreboot.sh");
 
 	}
 
@@ -1346,19 +977,22 @@ public class Application extends MultiThreadedApplicationAdapter {
 		Util.log("powering down system", this);
 		PowerLogger.append("powering down system", this);
 		powerport.writeStatusToEeprom();
-		killGrabber(); // prevents error dialog on chrome startup
 		Util.delay(1000);
 //		if (!state.get(values.osarch).equals(ARM)) {
 //			Util.systemCall(Settings.redhome + Util.sep + "systemshutdown.sh");
 //		}
 //		else Util.systemCall("/usr/bin/sudo /sbin/shutdown -h now");
-		Util.systemCall(Settings.redhome + Util.sep + "systemshutdown.sh");
+		Util.systemCall(Settings.tomcathome + Util.sep + "systemshutdown.sh");
 	}
 
 	private void shutdownApplication() {
+
+	    if (!running) return;
 		
 		Util.log("shutting down application", this);
 		PowerLogger.append("shutting down application", this);
+
+		running = false;
 
 		if(commandServer!=null) {
 			commandServer.sendToGroup(TelnetServer.TELNETTAG + " shutdown");
@@ -1382,16 +1016,17 @@ public class Application extends MultiThreadedApplicationAdapter {
 			}
 		}
 
-		if(! settings.getBoolean(ManualSettings.debugenabled)) killGrabber(); // TODO: nuke
-
         if (state.exists(values.driver)) {
             driverCallServer(PlayerCommands.driverexit, null);
-            Util.delay(1000);
         }
 
-		Util.systemCall(Settings.redhome + Util.sep + "red5-shutdown.sh");
+        Video.killTURNserver();
+        video.killSignallingServer();
 
-	}
+        File f = new File(Settings.tomcathome + Util.sep + HALTFILE);
+        if (!f.exists()) try { f.createNewFile(); } catch (Exception e) {}
+
+    }
 
 	private void move(final String str, boolean passengerOverride) {
 
@@ -1516,22 +1151,6 @@ public class Application extends MultiThreadedApplicationAdapter {
 		comport.clickSteer(Integer.parseInt(xy[0]), Integer.parseInt(xy[1]));
 	}
 
-	public void messageGrabber(String str, String status) {
-		if (!settings.getBoolean(ManualSettings.useflash)) return;
-		
-		Util.debug("TO grabber flash: " + str + ", " + status, this);
-
-		if (grabber instanceof IServiceCapableConnection) {
-			IServiceCapableConnection sc = (IServiceCapableConnection) grabber;
-			sc.invoke("message", new Object[] { str, status });
-		}
-		
-		if(commandServer != null) {
-			if(str!=null) commandServer.sendToGroup(TelnetServer.MSGGRABBERTAG + " " + str);
-			if (status != null) commandServer.sendToGroup(TelnetServer.MSGGRABBERTAG + " <status> " + status );
-		}
-	}
-
 	public String logintest(String user, String pass, String remember) {
         String encryptedPassword = (passwordEncryptor.encryptPassword(user + salt + pass)).trim();
 
@@ -1578,164 +1197,6 @@ public class Application extends MultiThreadedApplicationAdapter {
 			}
 		}
 		return returnvalue;
-	}
-
-	/** */
-	private void assumeControl(String user) { 
-		messageplayer("controls hijacked", "hijacked", user);
-		if(player==null) return;
-		if(pendingplayer==null) { pendingplayerisnull = true; return; }
-
-		String con = "connected";
-
-		IConnection tmp = player;
-		player = pendingplayer;
-		pendingplayer = tmp;
-		state.set(State.values.driver, user);
-		String str = "connection "+con+" streamsettings " + streamSettings();
-		messageplayer(state.get(State.values.driver) + " connected to AUTOCRAWLER", "multiple", str);
-		str = state.get(State.values.driver) + " connected from: " + player.getRemoteAddress();
-		Util.log("assumeControl(), " + str,this);
-		messageGrabber(str, null);
-		initialstatuscalled = false;
-		pendingplayerisnull = true;
-		loginRecords.beDriver();
-		
-		if (settings.getBoolean(GUISettings.loginnotify)) {
-			saySpeech("lawg inn " + state.get(State.values.driver));
-		}
-
-
-	}
-
-	/** */
-	private void beAPassenger(String user) {
-		String stream = state.get(State.values.stream);
-		pendingplayerisnull = true;
-		String str = user + " added as passenger";
-		messageplayer(str, null, null);
-		Util.log(str,this);
-		messageGrabber(str, null);
-		if (!stream.equals("stop")) {
-			Collection<Set<IConnection>> concollection = getConnections();
-			for (Set<IConnection> cc : concollection) {
-				for (IConnection con : cc) {
-					if (con instanceof IServiceCapableConnection
-							&& con != grabber && con != player) {
-						IServiceCapableConnection sc = (IServiceCapableConnection) con;
-						sc.invoke("message", new Object[] { "streaming " + stream, "green", "stream", stream }); }
-				}
-			}
-		}
-		loginRecords.bePassenger(user);
-		
-		if (settings.getBoolean(GUISettings.loginnotify)) {
-			saySpeech("passenger lawg inn f" + user);
-		}
-	}
-
-	/**
-	 * Broadcast remote web client microphone through robot speaker
-	 * @param str mode (stop, mic, pending)
-	 * 
-	 * need to reload webcam capture webpage on robot, and remote web page to enable 
-	 * enhanced mic, then reload both again when turning off mic
-	 * 
-	 * reload grabber, restart video stream if necessary
-	 * wait
-	 * reload remote client
-	 * 
-	 */
-	private void playerBroadCast(final String str) {
-		if (player instanceof IServiceCapableConnection) {
-			if (str.equals(driverstreamstate.mic.toString())) { // player mic
-				
-				if (state.get(State.values.driverstream).equals(driverstreamstate.mic.toString())) return;
-				
-				String vals[] = "320_240_8_85".split("_"); // TODO: nuke this, for audio only 
-				final int width = Integer.parseInt(vals[0]);
-				final int height = Integer.parseInt(vals[1]);
-				final int fps = Integer.parseInt(vals[2]);
-				final int quality = Integer.parseInt(vals[3]);
-
-				final streamstate mode = streamstate.valueOf(state.get(State.values.stream));
-				state.set(State.values.driverstream,  driverstreamstate.pending.toString());
-				
-				new Thread(new Runnable() {
-					public void run() {
-						try {
-							messageplayer("starting self mic, reloading page", null, null);
-
-							// reload grabber page with enhanced mic
-							messageGrabber("loadpage", "server.html?broadcast"); // reload page
-							Thread.sleep(STREAM_CONNECT_DELAY);
-							// restart stream if necessary
-							if (!mode.equals(streamstate.stop)) { 
-								publish(mode); 
-								Thread.sleep(STREAM_CONNECT_DELAY);
-							}
-														
-							// reload driver page with enhanced mic
-							messageplayer(null, "loadpage","?broadcast");
-							Thread.sleep(STREAM_CONNECT_DELAY*3);
-							
-							// start driver mic
-							IServiceCapableConnection sc = (IServiceCapableConnection) player;
-							sc.invoke("publish", new Object[] { str, width, height, fps, quality, false });
-							state.set(State.values.driverstream, driverstreamstate.mic.toString());
-							Thread.sleep(50);
-							messageplayer("self mic on", "selfstream",state.get(State.values.driverstream));
-							Thread.sleep(STREAM_CONNECT_DELAY);
-							grabberPlayPlayer(1);
-							
-							
-						} catch (Exception e) {
-							Util.printError(e);
-						}
-					}
-				}).start();
-				
-			} else { // player broadcast stop/off
-				
-				if (state.get(State.values.driverstream).equals(driverstreamstate.stop.toString())) return;
-
-				final streamstate mode = streamstate.valueOf(state.get(State.values.stream));
-				state.set(State.values.driverstream,  driverstreamstate.pending.toString());
-				
-				new Thread(new Runnable() {
-					public void run() {
-						try {
-
-							messageplayer("stopping self mic, reloading page", null, null);
-							
-							messageGrabber("loadpage", "server.html"); // reload page normal mic
-							Thread.sleep(STREAM_CONNECT_DELAY);
-							// restart stream if necessary
-							if (!mode.equals(streamstate.stop)) { 
-								publish(mode); 
-								Thread.sleep(STREAM_CONNECT_DELAY);
-							}
-							
-							messageplayer(null, "loadpage","?");
-							Thread.sleep(STREAM_CONNECT_DELAY);
-							state.set(State.values.driverstream, driverstreamstate.stop.toString());
-							messageplayer("self mic off", "selfstream",state.get(State.values.driverstream));
-
-				
-						} catch (Exception e) {
-							Util.printError(e);
-						}
-					}
-				}).start();
-			}
-		}
-	}
-
-	private void grabberPlayPlayer(int nostreams) {
-		if (grabber instanceof IServiceCapableConnection) {
-			IServiceCapableConnection sc = (IServiceCapableConnection) grabber;
-			sc.invoke("play", new Object[] { nostreams });
-		}
 	}
 
 	private void account(String fn, String str) {
@@ -1897,37 +1358,10 @@ public class Application extends MultiThreadedApplicationAdapter {
 		messageplayer(message, null, null);
 	}
 
-	private void disconnectOtherConnections() {
-		if (loginRecords.isAdmin()) {
-			int i = 0;
-			Collection<Set<IConnection>> concollection = getConnections();
-			for (Set<IConnection> cc : concollection) {
-				for (IConnection con : cc) {
-					if (con instanceof IServiceCapableConnection
-							&& con != grabber && con != player) {
-						con.close();
-						i++;
-					}
-				}
-			}
-			messageplayer(i + " passengers eliminated", null, null);
-		}
-	}
-
 	private void chat(String str) {
-		Collection<Set<IConnection>> concollection = getConnections();
-		for (Set<IConnection> cc : concollection) {
-			for (IConnection con : cc) {
-				if (con instanceof IServiceCapableConnection && con != grabber
-						&& !(con == pendingplayer && !pendingplayerisnull)) {
-					IServiceCapableConnection n = (IServiceCapableConnection) con;
-					n.invoke("message", new Object[] { str, "yellow", null, null });
-				}
-			}
-		}
+
 		Util.log("chat: " + str,this);
-		messageGrabber("<CHAT>" + str, null);
-		if(str!=null) if (commandServer != null) { 
+		if(str!=null) if (commandServer != null) {
 			str = str.replaceAll("</?i>", "");
 			commandServer.sendToGroup(TelnetServer.TELNETTAG+" chat from "+ str);
 		}
@@ -1980,7 +1414,7 @@ public class Application extends MultiThreadedApplicationAdapter {
 									"downloadcomplete");
 
 						// not needed now is unpacked
-						dl.deleteDir(new File(Settings.redhome+Util.sep+"download"));
+						dl.deleteDir(new File(Settings.tomcathome +Util.sep+"download"));
 
 					} else {
 						messageplayer("update download failed", null, null);
@@ -2011,10 +1445,6 @@ public class Application extends MultiThreadedApplicationAdapter {
 
 		restart();
 	}
-	
-
-
-
 
 }
 

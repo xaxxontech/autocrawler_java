@@ -146,7 +146,8 @@ public class CommServlet extends HttpServlet {
 //			Util.delay(1);
 
         // wait for msgFromServer
-        while (msgFromServer.isEmpty() && clID == clientID &&  msgid == clientRequestID && System.currentTimeMillis() < timeout)
+        while (msgFromServer.isEmpty() && clID == clientID &&  msgid == clientRequestID
+					&& System.currentTimeMillis() < timeout && app.running)
             Util.delay(1);
 
 		if (clID != clientID) {
@@ -219,7 +220,9 @@ public class CommServlet extends HttpServlet {
 
     public static void sendToClientFunction(String fn, String params) {
 
-		JSONObject obj = new JSONObject();
+//        if(params==null) params = "";
+
+        JSONObject obj = new JSONObject();
 		obj.put("fn", fn);
 		obj.put("params", params);
 		String msg = obj.toJSONString();

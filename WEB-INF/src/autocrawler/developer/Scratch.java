@@ -1,16 +1,14 @@
-package developer;
+package autocrawler.developer;
 
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import autocrawler.State;
-
 
 
 public class Scratch {
 
-    protected static State state = State.getReference();
-    static Process proc;
 
     public void regexp() {
         Pattern quality = Pattern.compile("^\\s*asdf asdf");
@@ -38,15 +36,14 @@ public class Scratch {
     public static void main(String[] args) {
 //        new Scratch().regexp();
 
-        String[] asdf = "zork blorl".split(" ");
-
         try {
-            ProcessBuilder p = new ProcessBuilder("xcalc");
-            p.start();
-        } catch (Exception e) {}
+            String[] cmd = {"/bin/bash", "-c", "roscd autocrawler ; pwd"};
+            Process proc = Runtime.getRuntime().exec(cmd);
+            BufferedReader procReader = new BufferedReader(new InputStreamReader(proc.getInputStream()));
+            String str = procReader.readLine();
+            System.out.println(str);
 
-
-        System.out.println("true");
+        } catch (Exception e) { e.printStackTrace(); }
 
 
     }

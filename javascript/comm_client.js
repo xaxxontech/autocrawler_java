@@ -70,6 +70,9 @@ function msgReceived(xhr) {
 
 					comm_client_log(msg.fn+"(\""+params+"\")");
 					eval(msg.fn+"(\""+params+"\")");
+				} else {
+					comm_client_log(msg.fn+"()");
+					eval(msg.fn+"()");
 				}
 			}
 			

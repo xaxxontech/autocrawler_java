@@ -17,8 +17,8 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import developer.Navigation;
-import developer.NavigationUtilities;
+import autocrawler.navigation.Navigation;
+import autocrawler.navigation.NavigationUtilities;
 import autocrawler.*;
 import autocrawler.State.values;
 import autocrawler.commport.PowerHistory;
@@ -26,7 +26,7 @@ import autocrawler.commport.PowerHistory;
 public class DashboardServlet extends HttpServlet implements Observer {
 
 	static final String viewslinks =
-			"<a href=\"navigationlog/index.html\" target=\"_blank\">navigation log</a>\n"+
+			"<a href=\"navigationlog/index.html\" target=\"_blank\">autocrawler.navigation log</a>\n"+
 					"<a href=\"/autocrawler/media\" target=\"_blank\">media files</a>" +
 					"<a href=\"dashboard?view=routes\" target=\"_blank\">route stats</a>\n" +
 					"<a href=\"dashboard?view=users\" target=\"_blank\">users</a>\n" +
@@ -39,7 +39,7 @@ public class DashboardServlet extends HttpServlet implements Observer {
 			"<a href=\"dashboard?action=save\">save snapshot</a>" +
 					"<a href=\"dashboard?action=archivelogs\">zip log folder</a>\n" +
 					"<a href=\"dashboard?action=archivemedia\">zip media</a>\n" +
-					"<a href=\"dashboard?action=archivenavigation\">zip navigation</a>\n" +
+					"<a href=\"dashboard?action=archivenavigation\">zip autocrawler.navigation</a>\n" +
 					"<a href=\"dashboard?action=email\">send email</a>\n" +
 					"<a href=\"dashboard?action=restart\">restart java</a>" +
 					"<a href=\"dashboard?action=reboot\">reboot linux</a>" ;
@@ -140,7 +140,7 @@ public class DashboardServlet extends HttpServlet implements Observer {
 	public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 
 		if( ! settings.getBoolean(ManualSettings.developer.name())){
-			Util.debug("dangerous.. not in developer mode: "+request.getRemoteAddr(), this);
+			Util.debug("dangerous.. not in autocrawler.developer mode: "+request.getRemoteAddr(), this);
 			response.sendRedirect("/autocrawler");
 			return;
 		}
@@ -654,7 +654,7 @@ public class DashboardServlet extends HttpServlet implements Observer {
 //		else str.append("<td class='menu'>&nbsp;&nbsp;up time<td class='busy'>&nbsp;&nbsp;" + (state.getUpTime()/1000)/60 + "</a> mins " + settings.getInteger(ManualSettings.restarted) + "");
 		str.append("<td class='menu'>&nbsp;&nbsp;archive<td>&nbsp;&nbsp;"+ archive + " mb</tr> \n" );
 
-		// navigation | cpu | logs
+		// autocrawler.navigation | cpu | logs
 		str.append("\n<tr>"+od);
 		String cpuvalue;
 		if(state.getBoolean(values.waitingforcpu)) cpuvalue = "<td class='busy'>&nbsp;&nbsp;" + state.get(values.cpu) + "%&nbsp;&nbsp;waiting..</td>";

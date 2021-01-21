@@ -1,4 +1,4 @@
-package developer;
+package autocrawler.navigation;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -19,7 +19,7 @@ import autocrawler.Util;
  */
 public class NavigationLog {
 
-    public static final String navigationlogpath =  Settings.redhome+Util.sep + "webapps" + Util.sep +
+    public static final String navigationlogpath =  Settings.tomcathome +Util.sep + "webapps" + Util.sep +
             "autocrawler" + Util.sep + "navigationlog" + Util.sep + "index.html";
 
     // testing:

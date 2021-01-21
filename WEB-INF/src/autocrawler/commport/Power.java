@@ -221,7 +221,7 @@ public class Power implements SerialPortEventListener  {
 			
 			lastHostHeartBeat = System.currentTimeMillis();
 			
-			while (true) {
+			while (application.running) {
 				long now = System.currentTimeMillis();
 				
 				// Util.debug("run....", this);
@@ -231,7 +231,6 @@ public class Power implements SerialPortEventListener  {
 				if (state.exists(autocrawler.State.values.powererror)) {
 					final String msg = "power PCB code: " + state.get(autocrawler.State.values.powererror);
 					application.message(msg, null, null);
-					application.messageGrabber(msg, "");	
 					Util.log(msg, this);
 					PowerLogger.append(msg, this);
 				}
@@ -288,7 +287,8 @@ public class Power implements SerialPortEventListener  {
 				}
 
 				Util.delay(WATCHDOG_DELAY);
-			}		
+			}
+			disconnect(); // application.running = false
 		}
 	}
 
@@ -686,7 +686,7 @@ public class Power implements SerialPortEventListener  {
 
 		public void run() {
 
-			while (true) {
+			while (application.running) {
 				if (commandList.size() > 0 &! commandlock) {
 
 					if (commandList.size() > 15) {

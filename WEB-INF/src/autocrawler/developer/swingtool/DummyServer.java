@@ -1,4 +1,4 @@
-package developer.swingtool;
+package autocrawler.developer.swingtool;
 
 import java.io.*;
 import java.net.ServerSocket;

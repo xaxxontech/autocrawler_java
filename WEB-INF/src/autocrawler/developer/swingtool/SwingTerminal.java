@@ -1,4 +1,4 @@
-package developer.swingtool;
+package autocrawler.developer.swingtool;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;

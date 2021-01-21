@@ -1,4 +1,4 @@
-package developer;
+package autocrawler.navigation;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -25,7 +25,7 @@ import org.xml.sax.InputSource;
 
 import autocrawler.Util;
 
-/** manage XML file for navigation */
+/** manage XML file for autocrawler.navigation */
 public class NavigationUtilities {
 
 	public static File navroutesfile = new File(System.getenv("RED5_HOME")+"/conf/navigationroutes.xml");
@@ -495,7 +495,7 @@ public class NavigationUtilities {
 	
 	//  screws up junit tests
 	//	NavigationLog.newItem(NavigationLog.ALERTSTATUS, "Utilities.resetAllRouteStats");
-	//	Util.log("NavigationUtilies.developer.NavigationUtilities.resetAllRouteStats(): " + XMLtoString(document));
+	//	Util.log("NavigationUtilies.autocrawler.navigation.NavigationUtilities.resetAllRouteStats(): " + XMLtoString(document));
 
 		saveRoute(XMLtoString(document));
 	}

@@ -1,4 +1,4 @@
-package developer.image;
+package autocrawler.image;
 
 import autocrawler.Util;
 import org.opencv.core.Core;

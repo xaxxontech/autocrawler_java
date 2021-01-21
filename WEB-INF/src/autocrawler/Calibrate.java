@@ -1,4 +1,4 @@
-package developer;
+package autocrawler;
 
 import autocrawler.*;
 import autocrawler.State.values;

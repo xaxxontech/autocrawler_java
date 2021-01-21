@@ -15,7 +15,7 @@ import java.util.regex.Pattern;
 
 public class RssFeed {
 	
-	private final String RSSFILE = Settings.redhome+ Util.sep+"webapps"+Util.sep+ "autocrawler" +Util.sep+"rss.xml";
+	private final String RSSFILE = Settings.tomcathome + Util.sep+"webapps"+Util.sep+ "autocrawler" +Util.sep+"rss.xml";
 	private static State state = State.getReference();
 	private static Settings settings = Settings.getReference();
 	private final static int LIMIT = 20; 
@@ -88,7 +88,7 @@ public class RssFeed {
 			fw.append("xmlns:dc=\"http://purl.org/dc/elements/1.1/\">\n");
 			fw.append("<channel>\n<title>Autocrawler RSS feed</title>\n");
 			fw.append("<link>http://"+state.get(State.values.externaladdress)+":"+
-					settings.readRed5Setting("http.port")+ "/autocrawler/rss.xml</link>\n");
+					settings.readHTTPport("http.port")+ "/autocrawler/rss.xml</link>\n");
 			fw.append("<description>Autocrawler events</description>\n");
 			for (int i=0; i<items.size(); i++) {
 				Item item = items.get(i);
@@ -98,7 +98,7 @@ public class RssFeed {
 				fw.append("<pubDate>"+item.pubDate+"</pubDate>\n</item>\n");
 			}
 //			fw.append("<atom:link href=\"http://"+state.get(State.values.externaladdress)+":"+
-//					settings.readRed5Setting("http.port")+
+//					settings.readHTTPport("http.port")+
 //					"/autocrawler/rss.xml\" rel=\"self\" type=\"application/rss+xml\" />\n");
 			fw.append("</channel></rss>");
 			fw.close();
@@ -126,7 +126,7 @@ public class RssFeed {
 			Calendar cal = Calendar.getInstance();
 			this.pubDate = dateFormat.format(cal.getTime());
 			this.link = "http://"+state.get(State.values.externaladdress)+":"+
-					settings.readRed5Setting("http.port")+ "/autocrawler/rss.xml?"
+					settings.readHTTPport("http.port")+ "/autocrawler/rss.xml?"
 					+ id; // make link unique
 			this.guid = this.link;
 		}

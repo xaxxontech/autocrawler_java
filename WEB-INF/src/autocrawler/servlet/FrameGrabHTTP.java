@@ -2,11 +2,8 @@ package autocrawler.servlet;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
-import java.awt.geom.Ellipse2D;
-import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.RenderedImage;
-import java.awt.image.WritableRaster;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -22,8 +19,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.Part;
 
-import developer.Navigation;
-import developer.Ros;
+import autocrawler.navigation.Navigation;
+import autocrawler.navigation.Ros;
 import autocrawler.*;
 import autocrawler.State.values;
 
@@ -66,7 +63,7 @@ public class FrameGrabHTTP extends HttpServlet {
             else if (mode.equals("rosmap")) {
             	Application.processedImage = Ros.rosmapImg();
 				if (!state.exists(State.values.rosmapinfo))
-					app.driverCallServer(PlayerCommands.messageclients, "map data unavailable, try starting navigation system");
+					app.driverCallServer(PlayerCommands.messageclients, "map data unavailable, try starting autocrawler.navigation system");
             	processedImg(req,res);
             }
             else if (mode.equals("rosmapinfo")) { // xmlhttp text
@@ -82,7 +79,7 @@ public class FrameGrabHTTP extends HttpServlet {
         		out.close();
             }
 			else if (mode.equals("rosmapdownload")) {
-				res.setContentType("image/x-portable-graymap");
+				res.setContentType("autocrawler/image/x-portable-graymap");
 				res.setHeader("Content-Disposition", "attachment; filename=\"map.pgm\"");
 				FileInputStream a = new FileInputStream(Ros.getMapFilePath()+Ros.mapfilename);
 				while(a.available() > 0)
@@ -91,7 +88,7 @@ public class FrameGrabHTTP extends HttpServlet {
 			}
 			else if (mode.equals("rosmapupload")) {
 				if (!state.get(State.values.navsystemstatus).equals(Ros.navsystemstate.stopped.toString())) {
-					app.message("unable to modify map while navigation running", null, null);
+					app.message("unable to modify map while autocrawler.navigation running", null, null);
 					return;
 				}
 				Part part = req.getParts().iterator().next();
@@ -114,7 +111,7 @@ public class FrameGrabHTTP extends HttpServlet {
 	
 	private void frameGrab(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
 		
-		res.setContentType("image/jpeg");
+		res.setContentType("autocrawler/image/jpeg");
 		OutputStream out = res.getOutputStream();
 
         if (!state.getBoolean(State.values.framegrabbusy)) {
@@ -152,7 +149,7 @@ public class FrameGrabHTTP extends HttpServlet {
 	// unused, using dockwebrtc ros topic fiducial_images instead
     private void dockFrameGrab(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
 
-        res.setContentType("image/jpeg");
+        res.setContentType("autocrawler/image/jpeg");
         OutputStream out = res.getOutputStream();
 
         if (!state.getBoolean(State.values.framegrabbusy))
@@ -184,8 +181,8 @@ public class FrameGrabHTTP extends HttpServlet {
 		
 		if (Application.processedImage == null) return;
 		
-		// send image
-		res.setContentType("image/gif");
+		// send autocrawler.image
+		res.setContentType("autocrawler/image/gif");
 		OutputStream out = res.getOutputStream();
 		ImageIO.write(Application.processedImage, "GIF", out);
 	}
@@ -194,8 +191,8 @@ public class FrameGrabHTTP extends HttpServlet {
 
 		if (Application.processedImage == null) return;
 
-		// send image
-		res.setContentType("image/jpg");
+		// send autocrawler.image
+		res.setContentType("autocrawler/image/jpg");
 		OutputStream out = res.getOutputStream();
 		ImageIO.write(Application.processedImage, "JPG", out);
 	}
@@ -205,22 +202,22 @@ public class FrameGrabHTTP extends HttpServlet {
 		if (Application.videoOverlayImage == null)
 			Application.videoOverlayImage= new BufferedImage(640, 480, BufferedImage.TYPE_INT_RGB);
 
-		// send image
-		res.setContentType("image/jpg");
+		// send autocrawler.image
+		res.setContentType("autocrawler/image/jpg");
 		OutputStream out = res.getOutputStream();
 		ImageIO.write(Application.videoOverlayImage, "JPG", out);
 	}
 
 	private void batteryGrab(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
 		generateBatteryImage();
-		res.setContentType("image/gif");
+		res.setContentType("autocrawler/image/gif");
 		OutputStream out = res.getOutputStream();
 		ImageIO.write(batteryImage, "GIF", out);
 	}
 	
 	private void cpuGrab(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
 		generateCpuImagemage();
-		res.setContentType("image/gif");
+		res.setContentType("autocrawler/image/gif");
 		OutputStream out = res.getOutputStream();
 		ImageIO.write(cpuImage, "GIF", out);
 	} 
@@ -286,7 +283,7 @@ public class FrameGrabHTTP extends HttpServlet {
 	
 	/**
 	 * @param args download url params, can be null
-	 * @return returns download url of saved image
+	 * @return returns download url of saved autocrawler.image
 	 */
 	public static String saveToFile(String args) {	
 		String urlString = "http://127.0.0.1:" + state.get(State.values.httpport) + "/autocrawler/frameGrabHTTP";

@@ -99,17 +99,17 @@ public class Downloader {
 	 */
 	public boolean unzipFolder( String zipFile, String destFolder ) {
 		
-		final String zip = (Settings.redhome + Util.sep + zipFile).trim();
-		final String des = (Settings.redhome + Util.sep + destFolder).trim();
+		final String zip = (Settings.tomcathome + Util.sep + zipFile).trim();
+		final String des = (Settings.tomcathome + Util.sep + destFolder).trim();
 
 		if( ! new File(zip).exists()){	
 			Util.log("no zip file found: " + zip, this);
 			return false;
 		}
 				
-		Util.systemCallBlocking("unzip "+zip+" -d "+des, 30);
+		Util.systemCallBlocking("unzip "+zip+" -d "+des); // , 30);
 			
-		// test if folders 
+		// test if folders
 		if(new File(des).exists())
 			if(new File(des).isDirectory())
 				if(new File(des+Util.sep+"update").exists())

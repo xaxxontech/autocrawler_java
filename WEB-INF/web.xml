@@ -10,20 +10,11 @@
 		<param-name>webAppRootKey</param-name>
 		<param-value>/autocrawler</param-value>
 	</context-param>
-	
-	<servlet>
-		<servlet-name>rtmpPortRequest</servlet-name>
-		<servlet-class>
-            autocrawler.servlet.RtmpPortRequest
-        </servlet-class>
-		<load-on-startup>3</load-on-startup>
-	</servlet>
-	
-	<servlet-mapping>
-		<servlet-name>rtmpPortRequest</servlet-name>
-		<url-pattern>/rtmpPortRequest</url-pattern>
-	</servlet-mapping>
-	 
+
+    <listener>
+        <listener-class>autocrawler.Application</listener-class>
+    </listener>
+
 	<servlet>
 		<servlet-name>frameGrabHTTP</servlet-name>
 		<servlet-class>

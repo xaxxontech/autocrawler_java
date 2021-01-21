@@ -1,7 +1,7 @@
 package autocrawler;
 
-import developer.Navigation;
-import developer.Ros;
+import autocrawler.navigation.Navigation;
+import autocrawler.navigation.Ros;
 import autocrawler.AutoDock.autodockmodes;
 import autocrawler.State.values;
 import autocrawler.commport.Power;
@@ -36,7 +36,7 @@ public class SystemWatchdog {
 	public boolean redocking = false;
 	private boolean lowbattredock = false;
 	private long lowbattredockstart = 0;
-    private static final File TIMEDSHUTDOWNFILE = new File(Settings.redhome + Util.sep + "timedshutdown");
+    private static final File TIMEDSHUTDOWNFILE = new File(Settings.tomcathome + Util.sep + "timedshutdown");
 
 	SystemWatchdog(Application a){ 
 		application = a;
@@ -45,6 +45,8 @@ public class SystemWatchdog {
 
 	private class Task extends TimerTask {
 		public void run() {
+
+			if (!application.running) this.cancel();
 
 			// regular reboot if set 
 			if (System.currentTimeMillis() - state.getLong(values.linuxboot) > STALE
@@ -85,7 +87,6 @@ public class SystemWatchdog {
                     System.currentTimeMillis() - state.getLong(State.values.lastusercommand) > ABANDONDEDLOGIN
                     && !(state.exists(values.navigationroute) && !state.exists(values.nextroutetime))  ) {
 
-				application.driverCallServer(PlayerCommands.disconnectotherconnections, null);
 				application.driverCallServer(PlayerCommands.driverexit, null);
 				if (state.get(State.values.dockstatus).equals(AutoDock.UNDOCKED) && 
 						settings.getBoolean(GUISettings.redock)) {
@@ -141,7 +142,7 @@ public class SystemWatchdog {
                 }
             }
 
-			// navigation running, route running, undocked, low battery, next waypoint != dock, no driver, drive to dock
+			// autocrawler.navigation running, route running, undocked, low battery, next waypoint != dock, no driver, drive to dock
             // TODO: flawed because route still running? need to cancel current route instance only, wait to next route
 			if (state.get(values.batterylife).matches(".*\\d+.*")) {  // make sure batterylife != 'TIMEOUT', throws error
 				if (!state.exists(State.values.driver) &&
@@ -198,7 +199,7 @@ public class SystemWatchdog {
 			if (c > Power.FORCE_UNDOCK_ABOVE) state.set(State.values.forceundock, true);
 		}
 
-		// cancel any navigation routes (TODO: and other autonomous functions ??)
+		// cancel any autocrawler.navigation routes (TODO: and other autonomous functions ??)
 		if (!warningonly) application.driverCallServer(PlayerCommands.cancelroute, null);
 		
 		if (state.exists(State.values.driver.toString())) {
@@ -244,7 +245,7 @@ public class SystemWatchdog {
 		if (settings.getBoolean(GUISettings.navigation) && !str.equals(NOFORWARD) ) {
 			if ( !state.get(values.navsystemstatus).equals(Ros.navsystemstate.stopping.toString()) &&
 					!state.get(values.navsystemstatus).equals(Ros.navsystemstate.stopped.toString())) {
-				Util.log("warning: redock skipped, navigation running", this);
+				Util.log("warning: redock skipped, autocrawler.navigation running", this);
 				return;
 			}
 			if (state.exists(values.nextroutetime)) {
@@ -321,7 +322,7 @@ public class SystemWatchdog {
 		PowerLogger.append("callForHelp() " + subject + " " + body, this);
 
 		body += "\nhttp://"+state.get(State.values.externaladdress)+":"+
-				settings.readRed5Setting("http.port")+ "/autocrawler/";
+				settings.readHTTPport("http.port")+ "/autocrawler/";
 		String emailto = settings.readSetting(GUISettings.email_to_address);
 		if (!emailto.equals(Settings.DISABLED))
 			application.driverCallServer(PlayerCommands.email, emailto+" ["+subject+"] "+body);

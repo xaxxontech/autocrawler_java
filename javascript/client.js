@@ -454,7 +454,6 @@ function setstatus(status, value) {
 		keyboard("enable");
 		setTimeout("videomouseaction = true;",30); // firefox screen glitch fix
 		clearTimeout(logintimer);
-		callServer("videosoundmode", "high");
 		if (value == "relay") { relay = true; }
 	}
 	else if (status == "storecookie") {

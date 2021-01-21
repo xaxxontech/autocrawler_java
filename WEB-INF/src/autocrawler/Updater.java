@@ -15,7 +15,7 @@ public class Updater {
 		double currentVersion = -1;
 
 		// get current version info from txt file in root folder
-		String filename =  Settings.redhome+Util.sep+"version.nfo";
+		String filename =  Settings.tomcathome +Util.sep+"version.nfo";
 		
 		FileInputStream filein;
 		try {
@@ -132,11 +132,11 @@ public class Updater {
 
 		try {
 
-			Process proc = Runtime.getRuntime().exec( Settings.redhome+Util.sep+folder+Util.sep+"run "+cmd+" "+args);
+			Process proc = Runtime.getRuntime().exec( Settings.tomcathome +Util.sep+folder+Util.sep+"run "+cmd+" "+args);
 			proc.waitFor();
 
 			// cleanup
-			File file = new File( Settings.redhome+Util.sep+folder+Util.sep+filename);
+			File file = new File( Settings.tomcathome +Util.sep+folder+Util.sep+filename);
 			Util.log("Updater.updateFirmware(): deleting file "+file.getAbsolutePath(), null);
 			file.delete();
 

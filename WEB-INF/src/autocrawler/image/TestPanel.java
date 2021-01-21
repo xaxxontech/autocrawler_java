@@ -1,4 +1,4 @@
-package developer.image;
+package autocrawler.image;
 
 import java.awt.EventQueue;
 

@@ -1,17 +1,17 @@
 /*
  * need to:
  * port findcenter to java
- * implement image savecenter
- * implement image findcenter
+ * implement autocrawler.image savecenter
+ * implement autocrawler.image findcenter
  * try savecenter/findcenter using edge detect instead
- * make image toolkit class: edge detect, blur, convert to grey
+ * make autocrawler.image toolkit class: edge detect, blur, convert to grey
  * 
  * interface: swing (so don't have to compile/run red5 every time)
  * need 2-3 320x240 images, series of buttons
  */
 
 
-package developer.image;
+package autocrawler.image;
  
  
 import java.awt.*;

@@ -1,4 +1,4 @@
-package developer;
+package autocrawler.navigation;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -17,7 +17,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
-import developer.image.OpenCVObjectDetect;
+import autocrawler.image.OpenCVObjectDetect;
 import autocrawler.AutoDock.autodockmodes;
 import autocrawler.State.values;
 import autocrawler.servlet.FrameGrabHTTP;
@@ -46,7 +46,7 @@ public class Navigation implements Observer {
     /** Constructor */
 	public Navigation(Application a) {
 		Ros.loadwaypoints();
-		Ros.rospackagedir = Ros.getRosPackageDir(); // required for map saving
+        Ros.rospackagedir = settings.readSetting(ManualSettings.rosworkspace)+Util.sep+"src"+Util.sep+Ros.ROSPACKAGE;
 		navlog = new NavigationLog();
 		state.addObserver(this);
 		app = a;
@@ -99,7 +99,7 @@ public class Navigation implements Observer {
 
 		if (state.get(State.values.navsystemstatus).equals(Ros.navsystemstate.mapping.toString()) ||
 				state.get(State.values.navsystemstatus).equals(Ros.navsystemstate.stopping.toString())) {
-			app.driverCallServer(PlayerCommands.messageclients, "Navigation.waitForNavSystem(): can't start navigation");
+			app.driverCallServer(PlayerCommands.messageclients, "Navigation.waitForNavSystem(): can't start autocrawler.navigation");
 			return false;
 		}
 
@@ -110,7 +110,7 @@ public class Navigation implements Observer {
 				&& System.currentTimeMillis() - start < NAVSTARTTIMEOUT*3) { Util.delay(50);  } // wait
 
 		if (!state.get(State.values.navsystemstatus).equals(Ros.navsystemstate.running.toString())) {
-			app.driverCallServer(PlayerCommands.messageclients, "Navigation.waitForNavSystem(): navigation start failure");
+			app.driverCallServer(PlayerCommands.messageclients, "Navigation.waitForNavSystem(): autocrawler.navigation start failure");
 			return false;
 		}
 
@@ -183,7 +183,7 @@ public class Navigation implements Observer {
         }
 
 		new Thread(new Runnable() { public void run() {
-			app.driverCallServer(PlayerCommands.messageclients, "starting navigation, please wait");
+			app.driverCallServer(PlayerCommands.messageclients, "starting autocrawler.navigation, please wait");
 
             app.driverCallServer(PlayerCommands.cameracommand, Malg.cameramove.horiz.toString());
 
@@ -245,7 +245,7 @@ public class Navigation implements Observer {
             app.driverCallServer(PlayerCommands.publish, Application.streamstate.stop.toString());
 
         state.set(State.values.navsystemstatus, Ros.navsystemstate.stopped.toString());
-        Util.log("stopping navigation", this);
+        Util.log("stopping autocrawler.navigation", this);
         app.driverCallServer(PlayerCommands.messageclients, "navigation stopped");
 
         if (navpstring !=null) Ros.killlaunch(navpstring);
@@ -560,7 +560,7 @@ public class Navigation implements Observer {
 						else if (daynow > daynums[i]) nextdayindex = i+1;
 					}
 
-					if (startroute) break;
+					if (startroute || !app.running) break;
 
 					// determine seconds to next route
 					if (!state.exists(State.values.nextroutetime)) { // only set once
@@ -595,6 +595,7 @@ public class Navigation implements Observer {
 				}
 
 				// check if cancelled while waiting
+                if (!app.running) return;
 				if (!state.exists(State.values.navigationroute)) return;
 				if (!state.get(State.values.navigationrouteid).equals(id)) return;
 
@@ -629,7 +630,7 @@ public class Navigation implements Observer {
 					if (!state.exists(State.values.navigationroute)) return;
 					if (!state.get(State.values.navigationrouteid).equals(id)) return;
 
-					navlog.newItem(NavigationLog.ERRORSTATUS, "unable to start navigation system", routestarttime, null, name, consecutiveroute, 0);
+					navlog.newItem(NavigationLog.ERRORSTATUS, "unable to start autocrawler.navigation system", routestarttime, null, name, consecutiveroute, 0);
 
 					if (state.getUpTime() > Util.TEN_MINUTES) {
 						app.driverCallServer(PlayerCommands.reboot, null);
@@ -1043,20 +1044,20 @@ public class Navigation implements Observer {
 				String link = "";
 				if (streamactivity.contains("video") || streamactivity.contains(OpenCVObjectDetect.HUMAN)) {
 					link = FrameGrabHTTP.saveToFile("?mode=processedImgJPG");
-					navlogmsg += "<br><a href='" + link + "' target='_blank'>image link</a>";
+					navlogmsg += "<br><a href='" + link + "' target='_blank'>autocrawler.image link</a>";
 				}
 
 				if (email || rss) {
 
 					if (streamactivity.contains(OpenCVObjectDetect.HUMAN)) {
 						msg = "[Autocrawler Detected "+streamactivity+"] " + msg;
-						msg += "\nimage link: " + link + "\n";
-						Util.delay(3000); // allow time for download thread to capture image before turning off camera
+						msg += "\nautocrawler.image link: " + link + "\n";
+						Util.delay(3000); // allow time for download thread to capture autocrawler.image before turning off camera
 					}
 					if (streamactivity.contains("video")) {
 						msg = "[Autocrawler Detected Motion] " + msg;
-						msg += "\nimage link: " + link + "\n";
-						Util.delay(3000); // allow time for download thread to capture image before turning off camera
+						msg += "\nautocrawler.image link: " + link + "\n";
+						Util.delay(3000); // allow time for download thread to capture autocrawler.image before turning off camera
 					}
 					else if (streamactivity.contains("audio")) {
 						msg = "[Autocrawler Sound Detection] Sound " + msg;
@@ -1146,8 +1147,7 @@ public class Navigation implements Observer {
 		if (record && recordlink != null) {
 
 			String navlogmsg = "<a href='" + recordlink + "_video.flv' target='_blank'>Video</a>";
-			if (!settings.getBoolean(ManualSettings.useflash))
-				navlogmsg += "<br><a href='" + recordlink + "_audio.flv' target='_blank'>Audio</a>";
+			navlogmsg += "<br><a href='" + recordlink + "_audio.flv' target='_blank'>Audio</a>";
 			String msg = "[Autocrawler Video] ";
 			msg += navlogmsg+", time: "+
 					Util.getTime()+", at waypoint: " + wpname + ", route: " + name;

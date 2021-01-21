@@ -17,7 +17,6 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.Locale;
 import java.util.Vector;
-import java.util.concurrent.TimeUnit;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -31,9 +30,9 @@ import org.w3c.dom.Document;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXParseException;
 
-import developer.Navigation;
-import developer.NavigationLog;
-import developer.NavigationUtilities;
+import autocrawler.navigation.Navigation;
+import autocrawler.navigation.NavigationLog;
+import autocrawler.navigation.NavigationUtilities;
 import autocrawler.State.values;
 
 public class Util {
@@ -69,7 +68,7 @@ public class Util {
 	public static void delay(long delay) {
 		try { Thread.sleep(delay); }
 		catch (Exception e){ printError(e); }
-	}
+    }
 
 	public static void delay(int delay) {
 		try { Thread.sleep(delay); }
@@ -151,7 +150,7 @@ public class Util {
 	 * @param cmd is the command to run, like: "restart
 	 *
 	 */
-	public static void systemCallBlocking(final String cmd, final int timeoutseconds) {
+	public static void systemCallBlocking(final String cmd) { //, final int timeoutseconds) {
 		debug("systemCallBlocking: " + cmd, "Util.systemCallBlocking");
 
 		try {
@@ -161,7 +160,8 @@ public class Util {
             BufferedReader reader = new BufferedReader(new InputStreamReader(proc.getInputStream()));
             while ((reader.readLine()) != null) {}
 
-			proc.waitFor(timeoutseconds, TimeUnit.SECONDS);
+//			proc.waitFor(timeoutseconds, TimeUnit.SECONDS);  // << TODO: timeout should be in while{} above
+            proc.waitFor();
 
 		} catch (Exception e) {
 			printError(e);
@@ -444,194 +444,6 @@ public class Util {
 		return currentSSID;
 	}
 
-	// top -bn 2 -d 0.1 | grep '^%Cpu' | tail -n 1 | awk '{print $2+$4+$6}'
-	// http://askubuntu.com/questions/274349/getting-cpu-usage-realtime
-	/*
-	public static String getCPUTop(){
-		try {
-
-			String[] cmd = { "/bin/sh", "-c", "top -bn 2 -d 5 | grep '^%Cpu' | tail -n 1 | awk \'{print $2+$4+$6}\'" };
-			Process proc = Runtime.getRuntime().exec(cmd);
-			BufferedReader procReader = new BufferedReader(new InputStreamReader(proc.getInputStream()));
-			return procReader.readLine();
-
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-
-		return null;
-	}
-
-	public static boolean testHTTP(){
-
-		final String ext = State.getReference().get(values.externaladdress);
-		final String http = State.getReference().get(State.values.httpport);
-		final String url = "http://"+ext+":"+ http +"/autocrawler";
-
-		if(ext == null || http == null) return false;
-
-		try {
-
-			log("testPortForwarding(): "+url, "testHTTP()");
-			URLConnection connection = (URLConnection) new URL(url).openConnection();
-			BufferedReader procReader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-			log("testPortForwarding(): "+procReader.readLine(), "testHTTP()");
-
-		} catch (Exception e) {
-			 log("testPortForwarding(): failed: " + url, "testHTTP()");
-			return false;
-		}
-
-		return true;
-	}
-
-	public static boolean testTelnetRouter(){
-		try {
-
-			// "127.0.0.1"; //
-			final String port = Settings.getReference().readSetting(GUISettings.telnetport);
-			final String ext =State.getReference().get(values.externaladdress);
-			log("...telnet test: " +ext +" "+ port, null);
-			Process proc = Runtime.getRuntime().exec("telnet " + ext + " " + port);
-			BufferedReader procReader = new BufferedReader(new InputStreamReader(proc.getInputStream()));
-
-			String line = procReader.readLine();
-			if(line.toLowerCase().contains("trying")){
-				line = procReader.readLine();
-				if(line.toLowerCase().contains("connected")){
-					log("telnet test pass...", null);
-					return true;
-				}
-			}
-		} catch (Exception e) {
-			log("telnet test fail..."+e.getLocalizedMessage(), null);
-			return false;
-		}
-		log("telnet test fail...", null);
-		return false;
-	}
-
-
-	public static boolean testRTMP(){
-		try {
-
-			final String ext = "127.0.0.1"; //State.getReference().get(values.externaladdress); //
-			final String rtmp = Settings.getReference().readRed5Setting("rtmp.port");
-
-			log("testRTMP(): http = " +ext, null);
-
-			Process proc = Runtime.getRuntime().exec("telnet " + ext + " " + rtmp);
-			BufferedReader procReader = new BufferedReader(new InputStreamReader(proc.getInputStream()));
-
-			String line = procReader.readLine();
-			log("testRTMP(): " + line, null);
-			line = procReader.readLine();
-			log("testRTMP():" + line, null);
-			log("testRTMP(): process exit value = " + proc.exitValue(), null);
-
-			if(line == null) return false;
-			else if(line.contains("Connected")) return true;
-
-		} catch (Exception e) {
-			return false;
-		}
-
-		return true;
-	}
-
-	public static String getJavaStatus(){
-
-		if(redPID==null) return "jetty not running";
-
-		String line = null;
-		try {
-
-			BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream("/proc/"+ redPID +"/stat")));
-			line = reader.readLine();
-			reader.close();
-			log("getJavaStatus:" + line, null);
-
-		} catch (Exception e) {
-			printError(e);
-		}
-
-		return line;
-	}
-
-	public static String getRed5PID(){
-
-		if(redPID!=null) return redPID;
-
-		String[] cmd = { "/bin/sh", "-c", "ps -fC java" };
-
-		Process proc = null;
-		try {
-			proc = Runtime.getRuntime().exec(cmd);
-			proc.waitFor();
-		} catch (Exception e) {
-			Util.log("getRed5PID(): "+ e.getMessage(), null);
-			return null;
-		}
-
-		String line = null;
-		String[] tokens = null;
-		BufferedReader procReader = new BufferedReader(new InputStreamReader(proc.getInputStream()));
-
-		try {
-			while ((line = procReader.readLine()) != null){
-				if(line.contains("red5")) {
-					tokens = line.split(" ");
-					for(int i = 1 ; i < tokens.length ; i++) {
-						if(tokens[i].trim().length() > 0) {
-							if(redPID==null) redPID = tokens[i].trim();
-						}
-					}
-				}
-			}
-		} catch (IOException e) {
-			Util.log("getRed5PID(): ", e.getMessage());
-		}
-
-		return redPID;
-	}
-
-
-	public static String pingWIFI(final String addr){
-		if(addr==null) return null;
-		String[] cmd = new String[]{"ping", "-c1", "-W1", addr};
-		long start = System.currentTimeMillis();
-		Process proc = null;
-		try {
-			proc = Runtime.getRuntime().exec(cmd);
-			proc.waitFor();
-		} catch (Exception e) {
-			Util.log("pingWIFI(): "+ e.getMessage(), null);
-			return null;
-		}
-
-		String line = null;
-		String time = null;
-		BufferedReader procReader = new BufferedReader(new InputStreamReader(proc.getInputStream()));
-
-		try {
-			while ((line = procReader.readLine()) != null){
-				if(line.contains("time=")) {
-					time = line.substring(line.indexOf("time=")+5, line.indexOf(" ms"));
-					break;
-				}
-			}
-		} catch (IOException e) {
-			Util.log("pingWIFI(): ", e.getMessage());
-		}
-
-		if(proc.exitValue() != 0 ) Util.debug("pingWIFI(): exit code: " + proc.exitValue(), null);
-		if(time == null) Util.log("pingWIFI(): null result for address: " + addr, null);
-		if((System.currentTimeMillis()-start) > 1100)
-			Util.debug("pingWIFI(): ping timed out, took over a second: " + (System.currentTimeMillis()-start));
-
-		return time;
-	}
-	*/
 
 	public static boolean updateLocalIPAddress(){
 		State state = State.getReference();
@@ -858,7 +670,7 @@ public class Util {
 				+ NavigationLog.navigationlogpath + " "
 				+ Navigation.navroutesfile };
 
-		new File(Settings.redhome + sep + "./log/archive").mkdir(); // make sure its there
+		new File(Settings.tomcathome + sep + "./log/archive").mkdir(); // make sure its there
 		new Thread(new Runnable() { public void run() {
 			try {
 				Runtime.getRuntime().exec(cmd);
@@ -883,7 +695,7 @@ public class Util {
 
 		// log("[tar -jcf " + PATH + list+"]");
 
-		new File(Settings.redhome + sep + "./log/archive").mkdir(); // make sure its there
+		new File(Settings.tomcathome + sep + "./log/archive").mkdir(); // make sure its there
 		new Thread(new Runnable() { public void run() {
 			try {
 				Runtime.getRuntime().exec(cmd);
@@ -896,7 +708,7 @@ public class Util {
 	public static String archiveImages(){
 		final String path = "./log/archive/frames_" + System.currentTimeMillis() + ".tar";
 		final String[] cmd = new String[]{"/bin/sh", "-c", "tar -cf " + path + " " + Settings.framefolder};
-		new File(Settings.redhome + sep + "./log/archive").mkdir();
+		new File(Settings.tomcathome + sep + "./log/archive").mkdir();
 		new Thread(new Runnable() { public void run() {
 			try { Runtime.getRuntime().exec(cmd); } catch (Exception e){printError(e);}
 		}}).start();
@@ -906,7 +718,7 @@ public class Util {
 	public static String archiveStreams(){
 		final String path = "./log/archive/streams_" + System.currentTimeMillis() + ".tar";
 		final String[] cmd = new String[]{"/bin/sh", "-c", "tar -cf " + path + " " + Settings.streamfolder};
-		new File(Settings.redhome + sep + "./log/archive").mkdir();
+		new File(Settings.tomcathome + sep + "./log/archive").mkdir();
 		new Thread(new Runnable() { public void run() {
 			try { Runtime.getRuntime().exec(cmd); } catch (Exception e){printError(e);}
 		}}).start();
@@ -1042,7 +854,7 @@ public class Util {
 				autocrawler.commport.PowerLogger.append("shutting down application", this);
 				autocrawler.commport.PowerLogger.close();
 				delay(5000);
-				systemCall(Settings.redhome + Util.sep + "systemreboot.sh");
+				systemCall(Settings.tomcathome + Util.sep + "systemreboot.sh");
 			} catch (Exception e){printError(e);}
 		} }).start();
 

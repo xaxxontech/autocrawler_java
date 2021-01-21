@@ -3,7 +3,7 @@ package autocrawler.commport;
 import java.util.ArrayList;
 import java.util.List;
 
-import developer.Ros;
+import autocrawler.navigation.Ros;
 import jssc.SerialPort;
 import jssc.SerialPortEvent;
 import jssc.SerialPortException;
@@ -192,7 +192,7 @@ public class Malg implements jssc.SerialPortEventListener {
 			
 //			Util.delay(Util.ONE_MINUTE);
 			
-			while (true) {
+			while (application.running) {
 				long now = System.currentTimeMillis();
 				
 //				if (now - lastReset > RESET_DELAY && isconnected) Util.debug(FIRMWARE_ID+" PCB past reset delay", this);
@@ -237,7 +237,8 @@ public class Malg implements jssc.SerialPortEventListener {
 				sendCommand(PING); // expect "" response
 
 				Util.delay(WATCHDOG_DELAY);
-			}		
+			}
+			disconnect(); // application.running = false
 		}
 	}
 
@@ -589,7 +590,7 @@ public class Malg implements jssc.SerialPortEventListener {
 
 		public void run() {
 
-			while (isconnected) {
+			while (isconnected && application.running) {
 				if (commandList.size() > 1 &! commandlock) { // >1 because NL required
 
 					if (commandList.size() > 15) { // buffer in firmware is now 32 (was 8) AVR is 64?
@@ -1677,7 +1678,7 @@ public class Malg implements jssc.SerialPortEventListener {
             state.set(autocrawler.State.values.cameratilt, camTargetPosition-1); // force horiz position move on startup
             boolean released = false;
 
-            while (true) {
+            while (isconnected && application.running) {
 
                 int currentpos = state.getInteger(autocrawler.State.values.cameratilt);
 

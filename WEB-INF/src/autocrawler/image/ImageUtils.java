@@ -1,4 +1,4 @@
-package developer.image;
+package autocrawler.image;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -24,7 +24,7 @@ public class ImageUtils {
 		return img;
 	}
 	
-	public int[] convertToGrey(BufferedImage img) { // convert image to 8bit greyscale int array
+	public int[] convertToGrey(BufferedImage img) { // convert autocrawler.image to 8bit greyscale int array
 		int[] pixelRGB = img.getRGB(0, 0, img.getWidth(), img.getHeight(), null, 0, img.getWidth());
 		
 		int p; 
@@ -240,10 +240,10 @@ public class ImageUtils {
 			return original;
 		}
 
-		// Create a buffered image
+		// Create a buffered autocrawler.image
 		BufferedImage image = new BufferedImage(original.getWidth(), original.getHeight(), type);
 
-		// Draw the image onto the new buffer
+		// Draw the autocrawler.image onto the new buffer
 		Graphics2D g = image.createGraphics();
 		try {
 			g.setComposite(AlphaComposite.Src);

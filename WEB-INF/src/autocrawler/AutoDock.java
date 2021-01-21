@@ -1,15 +1,8 @@
 package autocrawler;
 
 import java.awt.image.BufferedImage;
-import java.awt.image.BufferedImageOp;
-import java.awt.image.ConvolveOp;
-import java.awt.image.Kernel;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
 
-import javax.imageio.ImageIO;
-
-import developer.Ros;
+import autocrawler.navigation.Ros;
 import autocrawler.commport.Power;
 import autocrawler.commport.Malg;
 import autocrawler.commport.PowerLogger;
@@ -52,9 +45,7 @@ public class AutoDock {
         this.app = theapp;
         this.comport = com;
         state.set(State.values.autodocking, false);
-        if (!settings.getBoolean(ManualSettings.useflash))
-            allowforClickSteer = 1000; // may need to be higher for rpi... about 1000
-//		if (state.get(State.values.osarch).equals(Application.ARM)) allowforClickSteer = 1000; // raspberry pi, other low power boards
+        allowforClickSteer = 1000; // may need to be higher for rpi... about 1000
     }
 
     public void autoDock(String mode) {
@@ -488,7 +479,7 @@ public class AutoDock {
 					BufferedImage img = null;
 //					if (Application.framegrabimg != null) {
 //
-//						// convert bytes to image
+//						// convert bytes to autocrawler.image
 //						ByteArrayInputStream in = new ByteArrayInputStream(Application.framegrabimg);
 //						img = ImageIO.read(in);
 //						in.close();

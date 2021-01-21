@@ -7,7 +7,7 @@ import java.util.Date;
 
 public class PowerLogger {
 
-	public final static String powerlog = Settings.redhome + "/log/power.log";
+	public final static String powerlog = Settings.logfolder + "/power.log";
 	private static RandomAccessFile logger = null;
 	
 	private static void init() {		

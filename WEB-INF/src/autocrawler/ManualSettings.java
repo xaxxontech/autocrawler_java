@@ -6,12 +6,12 @@ public enum ManualSettings {
 
 	malgport, powerport, developer, debugenabled, wheeldiameter,
 	gyrocomp, alertsenabled, odomturnpwm, odomlinearpwm, checkaddresses,
-	motionthreshold, useflash, redockifweakconnection,
+	motionthreshold, redockifweakconnection,
 	arcmovecomp, usearcmoves, arcpwmthreshold, undockdistance,
 
 	// undocumented
 	lowbattery, timedshutdown, camhold, soundthreshold, webrtcserver, webrtcport,
-    turnserverlogin, turnserverport, ros2
+    turnserverlogin, turnserverport, ros2, rosworkspace
 	
 	;
 	
@@ -30,7 +30,6 @@ public enum ManualSettings {
 		config.setProperty(odomlinearpwm.name(), "150");
 		config.setProperty(odomturnpwm.name(), "110");
 		config.setProperty(redockifweakconnection.name(), Settings.TRUE);   
-		config.setProperty(useflash.name(), Settings.FALSE);
 		config.setProperty(arcmovecomp.name(), "0.8");
 		config.setProperty(usearcmoves.name(), Settings.TRUE);
 		config.setProperty(arcpwmthreshold.name(), "200");
@@ -44,6 +43,7 @@ public enum ManualSettings {
         config.setProperty(turnserverlogin.name(), "auto:robot");
         config.setProperty(turnserverport.name(), "3478");
 		config.setProperty(ros2.name(), Settings.FALSE);
+		config.setProperty(rosworkspace.name(), "/home/auto/catkin_ws");
         return config;
 	}
 	
