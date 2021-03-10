@@ -154,18 +154,16 @@ public class Malg implements jssc.SerialPortEventListener {
 
 		state.set(State.values.odometrybroadcast, Malg.ODOMBROADCASTDEFAULT);
 
-		if(!settings.readSetting(ManualSettings.malgport).equals(Settings.DISABLED)) {
-			connect();
+		if(!settings.readSetting(ManualSettings.malgport).equals(Settings.DISABLED)) connect();
+
+		if (isconnected) {
 			cs = new CommandSender();
 			cs.start();
 			checkFirmWareVersion();
+			initialize();
+			new CameraTilterThread().start();
+			new WatchDog().start();
 		}
-
-		initialize();
-
-        new CameraTilterThread().start();
-
-        new WatchDog().start();
 	}
 	
 	public void initialize() {
@@ -189,9 +187,7 @@ public class Malg implements jssc.SerialPortEventListener {
 		}
 
 		public void run() {
-			
-//			Util.delay(Util.ONE_MINUTE);
-			
+
 			while (application.running) {
 				long now = System.currentTimeMillis();
 				
@@ -272,7 +268,7 @@ public class Malg implements jssc.SerialPortEventListener {
 			disconnect();
 
 			// TODO: do update here, blocking
-			Updater.updateFirmware(boardid, version_required, port);
+			new Updater().updateFirmware(boardid, version_required, port);
 
 			connect();
 			if (cs.isAlive())  Util.log("error, CommmandSender still alive", this);
@@ -455,7 +451,9 @@ public class Malg implements jssc.SerialPortEventListener {
     					
     					isconnected = true;
     					state.set(State.values.malgport, portNames[i]);
-    		            serialPort.addEventListener(this, SerialPort.MASK_RXCHAR);//Add SerialPortEventListener
+//						serialPort.addEventListener(this, SerialPort.MASK_RXCHAR);
+						new SerialInputPoller().start();
+
     					break; // don't read any more ports, time consuming
     				}
     				serialPort.closePort();
@@ -510,6 +508,47 @@ public class Malg implements jssc.SerialPortEventListener {
 			e.printStackTrace();
 		}
 		
+	}
+
+	private class SerialInputPoller extends Thread {
+
+		public SerialInputPoller() {
+			this.setDaemon(true);
+		}
+
+		public void run() {
+
+			boolean incoming = false;
+
+			while (application.running && isconnected) {
+
+				try {
+					byte[] input = serialPort.readBytes();
+
+					if (input != null) {
+						for (int j = 0; j < input.length; j++) {
+							if ((input[j] == '>') || (input[j] == 13) || (input[j] == 10)) {
+								if (buffSize > 0) execute();
+								buffSize = 0; // reset
+								lastRead = System.currentTimeMillis();    // last command from board
+								incoming = false;
+
+							} else if (input[j] == '<') {  // start of message
+								buffSize = 0;
+								incoming = true;
+							} else {
+								buffer[buffSize++] = input[j];   // buffer until ready to parse
+							}
+						}
+					}
+					if (!incoming)  Util.delay(1);
+
+				} catch (SerialPortException e) {
+					e.printStackTrace();
+				}
+
+			}
+		}
 	}
 
 	public void reset() {
@@ -1678,7 +1717,7 @@ public class Malg implements jssc.SerialPortEventListener {
             state.set(autocrawler.State.values.cameratilt, camTargetPosition-1); // force horiz position move on startup
             boolean released = false;
 
-            while (isconnected && application.running) {
+            while (application.running) {
 
                 int currentpos = state.getInteger(autocrawler.State.values.cameratilt);
 

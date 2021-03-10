@@ -263,7 +263,7 @@ public class Ros {
         items.add("-2");  // signal 2=SIGINT instead of default 15=SIGTERM
         items.add("-f");
         items.add(str);
-        Util.debug(items.get(2), "Ros.killlaunch()");
+        Util.debug(items.get(3), "Ros.killlaunch()");
 
         ProcessBuilder processBuilder = new ProcessBuilder();
         processBuilder.command(items);

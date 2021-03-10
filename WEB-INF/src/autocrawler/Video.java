@@ -46,8 +46,9 @@ public class Video {
     private String webrtcpstring = null;
     private volatile long lastvideocommand = 0;
     private Settings settings = Settings.getReference();
-    public final static String TURNLOG = Settings.tomcathome + "/log/turnserver.log";
-    public static final String MICWEBRTC = Settings.tomcathome +"/"+Settings.appsubdir+"/micwebrtc"; // gstreamer webrtc microphone c binary
+    public final static String TURNLOG = Settings.tomcathome + "/log/turnserver.log"; // not working
+    public final static String MICWEBRTCPSTRING = "micwebrtc";
+    public static final String MICWEBRTC = Settings.tomcathome +"/"+Settings.appsubdir+"/"+MICWEBRTCPSTRING; // gstreamer webrtc microphone c binary
     public static final String SOUNDDETECT = Settings.tomcathome +"/"+Settings.appsubdir+"/sounddetect";
     private String signallingserverpstring = "python3 ./simple-server.py";
 
@@ -242,8 +243,8 @@ public class Video {
 
                         ProcessBuilder processBuilder = new ProcessBuilder();
 
-                        webrtcpstring = "micwebrtc";
-                        String cmd = MICWEBRTC+
+//                        webrtcpstring = "micwebrtc";
+                        webrtcpstring = MICWEBRTC+
                             " --peer-id=" + state.get(values.driverclientid)+
                             " --audio-device=" + adevicenum+
                             " --server=wss://"+settings.readSetting(ManualSettings.webrtcserver)+":"
@@ -253,15 +254,16 @@ public class Video {
                             ;
 
                         List <String> args = new ArrayList<>();
-                        String[] array = cmd.split(" ");
+                        String[] array = webrtcpstring.split(" ");
                         for (String t : array) args.add(t);
                         processBuilder.command(args);
+                        Process proc = null;
 
                         try{
                             int attempts = 0;
                             while (attempts<10) {
                                 Util.debug("mic webrtc signalling server attempt #"+attempts, this);
-                                Process proc = processBuilder.start();
+                                proc = processBuilder.start();
                                 int exitcode = (proc.waitFor());
                                 if (exitcode == 0) break;
                                 else {
@@ -292,6 +294,7 @@ public class Video {
 
                     killrealsense();
                     killwebrtc();
+                    Util.systemCall("pkill "+MICWEBRTCPSTRING);
 
                     break;
 
@@ -334,9 +337,8 @@ public class Video {
     }
 
     private void forceShutdownFrameGrabs() {
-        if (state.exists(State.values.writingframegrabs)) {
+        if (state.exists(State.values.writingframegrabs))
             state.delete(State.values.writingframegrabs);
-        }
     }
 
     public void framegrab() {

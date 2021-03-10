@@ -88,7 +88,7 @@ public enum PlayerCommands {
 		new_user_add, user_list, delete_user, extrauser_password_update, username_update, 
 		showlog, softwareupdate,
 		arduinoreset, muterovmiconmovetoggle, 
-	    writesetting, holdservo, opennisensor, videosoundmode, restart, shutdown,
+	    writesetting, holdservo, opennisensor,  restart, shutdown,
 	    setstreamactivitythreshold, email, state, uptime, help, memory, who, 
 	    loginrecords, settings, messageclients, dockgrabtest, rssaddb, block, 
 	    unblock, powershutdown, reboot, systemshutdown, clearmap, erroracknowledged,

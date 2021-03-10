@@ -263,37 +263,9 @@ function connectionlost() {
 }
 
 function callServer(fn, str) {
-	
-	if (oculusPrimeplayerSWF == null) {
-		callServerComm(fn, str);
-		sendcommandtimelast = new Date().getTime();
-		lastcommandsent = fn+str;
-		return;
-	}
-	
-	// client flash code below
-	
-	if (pingcountdownaftercheck != null) {
-		message("command delayed 10ms", sentcmdcolor);
-		setTimeout("callServer('"+fn+"','"+str+"');",10);
-	}
-	else {
-		if (pingcountdown != null) {
-			clearTimeout(pingcountdown);
-			countdowntostatuscheck();
-		}
-		//var sendcommandtimelast = 0;
-		//var lastcommandsent;
-
-		
-		var nowtime = new Date().getTime();
-		if (!(lastcommandsent == fn+str && nowtime - sendcommandtimelast < 200)) {
-			oculusPrimeplayerSWF.flashCallServer(fn,str); 
-		}
-		else message("rapid succession command dropped",sentcmdcolor);
-		sendcommandtimelast = nowtime;
-		lastcommandsent = fn+str;
-	}
+	callServerComm(fn, str);
+	sendcommandtimelast = new Date().getTime();
+	lastcommandsent = fn+str;
 }
 
 function play(str) { // called by javascript only?
@@ -969,9 +941,6 @@ function streamdetailspopulate() {
 		a= document.getElementById("high_specs");
 		a.innerHTML = "size:"+s[i]+"x"+s[i+1]+" fps:"+s[i+2]+" kbps:"+s[i+3];
 		i = 13;
-		a= document.getElementById("full_specs");
-		a.innerHTML = "size:"+s[i]+"x"+s[i+1]+" fps:"+s[i+2]+" kbps:"+s[i+3];
-		i = 17;
 		a= document.getElementById("custom_specs");
 		a.innerHTML = "size:"+s[i]+"x"+s[i+1]+" fps:"+s[i+2]+" kbps:"+s[i+3];
 //		a = document.getElementById(streamdetails[0].slice(1)+"_bull");
@@ -993,7 +962,7 @@ function streamdetailspopulate() {
 }
 
 function streamSettingsBullSet(str) {
-	var settings = ["low", "med", "high", "full", "custom"];
+	var settings = ["low", "med", "high", "custom"];
 	for (var i = 0; i < settings.length; i++) {
 //		debug(setting);
 		document.getElementById(settings[i]+"_bull").style.visibility = "hidden";
@@ -2550,27 +2519,28 @@ function streamset(str) {
 	if (str=="setcustom") {
 		var str = document.getElementById("customstreamsettings").innerHTML;		
 		popupmenu("menu", "show", null, null, str, null);
-		document.getElementById('vwidth').value = streamdetails[17];
-		document.getElementById('vheight').value = streamdetails[18];
-		document.getElementById('vfps').value = streamdetails[19];
-		document.getElementById('vquality').value = streamdetails[20];
+		var i=13;
+		document.getElementById('vwidth').value = streamdetails[i];
+		document.getElementById('vheight').value = streamdetails[i+1];
+		document.getElementById('vfps').value = streamdetails[i+2];
+		document.getElementById('vquality').value = streamdetails[i+3];
 	}
 	else if (str=="customupdate") {
 		streamdetails[0] = "vcustom";
-		streamdetails[17] = document.getElementById('vwidth').value;
-		streamdetails[18] = document.getElementById('vheight').value;
-		streamdetails[19] = document.getElementById('vfps').value;
-		streamdetails[20] = document.getElementById('vquality').value;
-		// if (parseInt(streamdetails[20]) > 100) { streamdetails[20] = "100"; }
-		if (parseInt(streamdetails[20]) < 0) { streamdetails[20] = "0"; }
-		if (parseInt(streamdetails[19]) < 1) { streamdetails[19] = "1"; }
-		if (parseInt(streamdetails[18]) < 1) { streamdetails[18] = "1"; }
-		if (parseInt(streamdetails[17]) < 1) { streamdetails[17] = "1"; }
-		var s = streamdetails[17] +"_"+ streamdetails[18] +"_"+ streamdetails[19] +"_"+ streamdetails[20];
+		var i=13;
+		streamdetails[i] = document.getElementById('vwidth').value;
+		streamdetails[i+1] = document.getElementById('vheight').value;
+		streamdetails[i+2] = document.getElementById('vfps').value;
+		streamdetails[i+3] = document.getElementById('vquality').value;
+		if (parseInt(streamdetails[i+3]) < 0) { streamdetails[i+3] = "0"; }
+		if (parseInt(streamdetails[i+2]) < 1) { streamdetails[i+2] = "1"; }
+		if (parseInt(streamdetails[i+1]) < 1) { streamdetails[i+1] = "1"; }
+		if (parseInt(streamdetails[i]) < 1) { streamdetails[i] = "1"; }
+		var s = streamdetails[i] +"_"+ streamdetails[i+1] +"_"+ streamdetails[i+2] +"_"+ streamdetails[i+3];
 		callServer("streamsettingscustom", s);
 		message("sending custom stream values: " + s, sentcmdcolor);
 		lagtimer = new Date().getTime(); // has to be *after* message()
-		document.getElementById("extendedsettingsbox").style.display = "none";
+		// document.getElementById("extendedsettingsbox").style.display = "none";
 		overlay("off");
 	}
 	else {
@@ -2748,8 +2718,6 @@ function processedImg(mode) {
 function imgOverVideo(mode) {
 	var img = document.getElementById("videologo");
 	if (mode == "on") {
-		// play("stop"); // will stop playing stream, and turn videologo on
-		// <img id="videologo" src="images/eye.gif" width="640" height="480"
 		videologo("on");
 		img.src = "frameGrabHTTP?mode=videoOverlayImg&date=" + new Date().getTime();
 		img.onload = function() { imgOverVideoRepeat(); }

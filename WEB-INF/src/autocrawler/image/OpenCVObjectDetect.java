@@ -168,7 +168,7 @@ public class OpenCVObjectDetect {
 
             String port = "5080";
             if (settings != null) {
-                port = settings.readHTTPport("http.port");
+                port = settings.readHTTPport();
             }
 
             int trigger = 0;

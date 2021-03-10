@@ -63,7 +63,7 @@ public class OpenCVMotionDetect  {
 
                 String port = "5080";
                 if (settings != null)
-                    port = settings.readHTTPport("http.port");
+                    port = settings.readHTTPport();
 
 
                 while (state.getBoolean(State.values.motiondetect) && System.currentTimeMillis() < timeout) {
@@ -172,7 +172,7 @@ public class OpenCVMotionDetect  {
 
             String port = "5080";
             if (settings != null) {
-                port = settings.readHTTPport("http.port");
+                port = settings.readHTTPport();
             }
 
             while (true) {

@@ -28,6 +28,7 @@ var ws_conn;
 // Promise for local stream after constraints are approved by the user
 var local_stream_promise;
 var ws_conn_close_forever = false;
+var webrtcdebug = false;
 
 function getOurId() {
 	if (commclientid) return commclientid;
@@ -338,5 +339,5 @@ function setwebrtcServerConfig() {
 }										  
 										  
 function webrtc_logdebug(str) {
-	// console.log(str);
+	if (webrtcdebug) console.log(str);
 }

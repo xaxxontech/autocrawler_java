@@ -79,7 +79,7 @@ public class FrameGrabHTTP extends HttpServlet {
         		out.close();
             }
 			else if (mode.equals("rosmapdownload")) {
-				res.setContentType("autocrawler/image/x-portable-graymap");
+				res.setContentType("image/x-portable-graymap");
 				res.setHeader("Content-Disposition", "attachment; filename=\"map.pgm\"");
 				FileInputStream a = new FileInputStream(Ros.getMapFilePath()+Ros.mapfilename);
 				while(a.available() > 0)
@@ -111,7 +111,7 @@ public class FrameGrabHTTP extends HttpServlet {
 	
 	private void frameGrab(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
 		
-		res.setContentType("autocrawler/image/jpeg");
+		res.setContentType("image/jpeg");
 		OutputStream out = res.getOutputStream();
 
         if (!state.getBoolean(State.values.framegrabbusy)) {
@@ -130,18 +130,10 @@ public class FrameGrabHTTP extends HttpServlet {
 				}
 			}
 
-//			if (Application.framegrabimg != null) { // TODO: unused?
-//				for (int i=0; i<Application.framegrabimg.length; i++) {
-//					out.write(Application.framegrabimg[i]);
-//				}
-//			}
-//
-//			else {
             if (Application.processedImage != null) {
 					ImageIO.write(Application.processedImage, "JPG", out);
-				}
-//			}
-			
+            }
+
 		    out.close();
 		}
 	}
@@ -149,7 +141,7 @@ public class FrameGrabHTTP extends HttpServlet {
 	// unused, using dockwebrtc ros topic fiducial_images instead
     private void dockFrameGrab(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
 
-        res.setContentType("autocrawler/image/jpeg");
+        res.setContentType("image/jpeg");
         OutputStream out = res.getOutputStream();
 
         if (!state.getBoolean(State.values.framegrabbusy))
@@ -182,7 +174,7 @@ public class FrameGrabHTTP extends HttpServlet {
 		if (Application.processedImage == null) return;
 		
 		// send autocrawler.image
-		res.setContentType("autocrawler/image/gif");
+		res.setContentType("image/gif");
 		OutputStream out = res.getOutputStream();
 		ImageIO.write(Application.processedImage, "GIF", out);
 	}
@@ -192,7 +184,7 @@ public class FrameGrabHTTP extends HttpServlet {
 		if (Application.processedImage == null) return;
 
 		// send autocrawler.image
-		res.setContentType("autocrawler/image/jpg");
+		res.setContentType("image/jpg");
 		OutputStream out = res.getOutputStream();
 		ImageIO.write(Application.processedImage, "JPG", out);
 	}
@@ -203,21 +195,21 @@ public class FrameGrabHTTP extends HttpServlet {
 			Application.videoOverlayImage= new BufferedImage(640, 480, BufferedImage.TYPE_INT_RGB);
 
 		// send autocrawler.image
-		res.setContentType("autocrawler/image/jpg");
+		res.setContentType("image/jpg");
 		OutputStream out = res.getOutputStream();
 		ImageIO.write(Application.videoOverlayImage, "JPG", out);
 	}
 
 	private void batteryGrab(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
 		generateBatteryImage();
-		res.setContentType("autocrawler/image/gif");
+		res.setContentType("image/gif");
 		OutputStream out = res.getOutputStream();
 		ImageIO.write(batteryImage, "GIF", out);
 	}
 	
 	private void cpuGrab(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
 		generateCpuImagemage();
-		res.setContentType("autocrawler/image/gif");
+		res.setContentType("image/gif");
 		OutputStream out = res.getOutputStream();
 		ImageIO.write(cpuImage, "GIF", out);
 	} 

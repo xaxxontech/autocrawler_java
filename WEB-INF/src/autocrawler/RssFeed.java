@@ -88,7 +88,7 @@ public class RssFeed {
 			fw.append("xmlns:dc=\"http://purl.org/dc/elements/1.1/\">\n");
 			fw.append("<channel>\n<title>Autocrawler RSS feed</title>\n");
 			fw.append("<link>http://"+state.get(State.values.externaladdress)+":"+
-					settings.readHTTPport("http.port")+ "/autocrawler/rss.xml</link>\n");
+					settings.readHTTPport()+ "/autocrawler/rss.xml</link>\n");
 			fw.append("<description>Autocrawler events</description>\n");
 			for (int i=0; i<items.size(); i++) {
 				Item item = items.get(i);
@@ -126,7 +126,7 @@ public class RssFeed {
 			Calendar cal = Calendar.getInstance();
 			this.pubDate = dateFormat.format(cal.getTime());
 			this.link = "http://"+state.get(State.values.externaladdress)+":"+
-					settings.readHTTPport("http.port")+ "/autocrawler/rss.xml?"
+					settings.readHTTPport()+ "/autocrawler/rss.xml?"
 					+ id; // make link unique
 			this.guid = this.link;
 		}

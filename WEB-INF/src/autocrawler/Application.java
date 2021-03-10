@@ -31,9 +31,6 @@ public class Application implements ServletContextListener {
 	public enum driverstreamstate { stop, mic, pending, disabled }
 	public static final int STREAM_CONNECT_DELAY = 2000;
 	public static final String ARM = "arm";
-	public static final String UBUNTU1604 = "16.04";
-	public static final String UBUNTU1804 = "18.04";
-	public static final String LOCALHOST = "127.0.0.1";
 	private static final String SERVEROK = "serverok";
 	private static final String RESTARTFILE = "autocrawlerrestart"; // must match autocrawler.sh
     private static final String HALTFILE = "autocrawlerhalt";       // must match autocrawler.sh
@@ -95,7 +92,7 @@ public class Application implements ServletContextListener {
 		comport = new Malg(this);   // note: blocking
 		powerport = new Power(this); // note: blocking
 
-		state.set(State.values.httpport, settings.readHTTPport("http.port"));
+		state.set(State.values.httpport, settings.readHTTPport());
 		initialstatuscalled = false;
 
 		if (!settings.readSetting(GUISettings.telnetport).equals(Settings.DISABLED.toString()))
@@ -123,7 +120,6 @@ public class Application implements ServletContextListener {
 			navigation = new Navigation(this);
             navigation.runAnyActiveRoute();
 		}
-
 
 		Util.log("application initialize done", this);
 	}
@@ -163,7 +159,7 @@ public class Application implements ServletContextListener {
         state.set(State.values.lastusercommand, System.currentTimeMillis());
     }
 
-    // nonflash xmlhttp clients only
+    // xmlhttp clients only
     public void driverSignOut() {
 
 	    if (!state.exists(values.driver)) return;
@@ -235,7 +231,7 @@ public class Application implements ServletContextListener {
 //	    Util.debug("playerCallServer "+fn.toString()+" "+str, this);
 
 		if (PlayerCommands.requiresAdmin(fn) && !passengerOverride) {
-			if ( ! loginRecords.isAdmin()){ 
+			if ( ! loginRecords.isAdmin()) {
 				Util.debug("playerCallServer(), must be an admin to do: " + fn.name() + " curent driver: " + state.get(State.values.driver), this);
 				return;
 			}
@@ -659,7 +655,7 @@ public class Application implements ServletContextListener {
 
 		Util.log("streaming " + stream, this);
 
-		// message driver, incl flash and non flash clients
+		// message driver
 		if (stream.equals(streamstate.camera.toString()) || stream.equals(streamstate.camandmic.toString()))
 			messageplayer("streaming " + stream, "multiple",
 					"stream "+stream+" videowidth "+video.lastwidth+" videoheight "+video.lastheight);
@@ -701,12 +697,6 @@ public class Application implements ServletContextListener {
 			 Util.log("stream unavailable", this);
 			 return false;
 		}
-
-		// wait...?
-//		long start = System.currentTimeMillis();
-//		while(state.getBoolean(State.values.framegrabbusy) && System.currentTimeMillis() - start < 10000) {
-//			Util.delay(1);
-//		}
 
 		if(state.getBoolean(State.values.framegrabbusy)) {
 			Util.log("state framegrab busy", this);
@@ -929,9 +919,40 @@ public class Application implements ServletContextListener {
 		String result = "";
 		result += settings.readSetting("vset") + "_";
 		result += settings.readSetting("vlow") + "_" + settings.readSetting("vmed") + "_";
-		result += settings.readSetting("vhigh") + "_" + settings.readSetting("vfull") + "_";
+		result += settings.readSetting("vhigh") + "_";
 		result += settings.readSetting("vcustom");
 		return result;
+	}
+
+	private void shutdownCommonTasks() {
+
+		if(commandServer!=null) {
+			commandServer.sendToGroup(TelnetServer.TELNETTAG + " shutdown");
+			commandServer.close();
+		}
+
+		if (powerport.isConnected()) powerport.writeStatusToEeprom();
+		PowerLogger.close();
+
+		if (navigation != null) {
+			if (!state.get(State.values.navsystemstatus).equals(Ros.navsystemstate.stopped.toString()))
+				navigation.stopNavigation();
+		}
+
+
+		if (state.exists(values.odomlinearpwm)) {
+			settings.writeSettings(ManualSettings.odomlinearpwm,
+					String.valueOf((int) comport.unVoltsComp(state.getDouble(values.odomlinearpwm))));
+		}
+		if (state.exists(values.odomturnpwm)) {
+			settings.writeSettings(ManualSettings.odomturnpwm,
+					String.valueOf((int) comport.unVoltsComp(state.getDouble(values.odomturnpwm))));
+		}
+
+		if (state.exists(values.driver))  driverCallServer(PlayerCommands.driverexit, null);
+
+		running = false;
+
 	}
 
 	// TODO: ALLOW TO ONLY BE CALLED ONCE?
@@ -939,8 +960,7 @@ public class Application implements ServletContextListener {
 	public void restart() { 
 
 		Util.debug("Restart uptime was: "+ state.getUpTime(), this);	
-
-		messageplayer("restarting server application", null, null);	
+		messageplayer("restarting server application", null, null);
 		
 		// write file as restart flag for script
 		File f = new File(Settings.tomcathome + Util.sep + RESTARTFILE);
@@ -953,22 +973,11 @@ public class Application implements ServletContextListener {
 
 		Util.log("rebooting system", this);
 		PowerLogger.append("rebooting system", this);
-		powerport.writeStatusToEeprom();
 
-		if (navigation != null) { // TODO: << condition required?
-			if (state.exists(values.odomlinearpwm)) {
-				settings.writeSettings(ManualSettings.odomlinearpwm,
-						String.valueOf((int) comport.unVoltsComp(state.getDouble(values.odomlinearpwm))));
-			}
-			if (state.exists(values.odomturnpwm)) {
-				settings.writeSettings(ManualSettings.odomturnpwm,
-						String.valueOf((int) comport.unVoltsComp(state.getDouble(values.odomturnpwm))));
-			}
-		}
+		shutdownCommonTasks();
 
-	
 		Util.delay(1000);
-		
+
 		Util.systemCall(Settings.tomcathome + Util.sep + "systemreboot.sh");
 
 	}
@@ -978,10 +987,7 @@ public class Application implements ServletContextListener {
 		PowerLogger.append("powering down system", this);
 		powerport.writeStatusToEeprom();
 		Util.delay(1000);
-//		if (!state.get(values.osarch).equals(ARM)) {
-//			Util.systemCall(Settings.redhome + Util.sep + "systemshutdown.sh");
-//		}
-//		else Util.systemCall("/usr/bin/sudo /sbin/shutdown -h now");
+
 		Util.systemCall(Settings.tomcathome + Util.sep + "systemshutdown.sh");
 	}
 
@@ -992,33 +998,7 @@ public class Application implements ServletContextListener {
 		Util.log("shutting down application", this);
 		PowerLogger.append("shutting down application", this);
 
-		running = false;
-
-		if(commandServer!=null) {
-			commandServer.sendToGroup(TelnetServer.TELNETTAG + " shutdown");
-			commandServer.close();
-		}
-		
-		if (powerport.isConnected()) powerport.writeStatusToEeprom();
-		PowerLogger.close();
-		
-		if (navigation != null) {
-			if (!state.get(State.values.navsystemstatus).equals(Ros.navsystemstate.stopped.toString()))
-				navigation.stopNavigation();
-
-			if (state.exists(values.odomlinearpwm)) {
-				settings.writeSettings(ManualSettings.odomlinearpwm,
-						String.valueOf((int) comport.unVoltsComp(state.getDouble(values.odomlinearpwm))));
-			}
-			if (state.exists(values.odomturnpwm)) {
-				settings.writeSettings(ManualSettings.odomturnpwm,
-						String.valueOf((int) comport.unVoltsComp(state.getDouble(values.odomturnpwm))));
-			}
-		}
-
-        if (state.exists(values.driver)) {
-            driverCallServer(PlayerCommands.driverexit, null);
-        }
+		shutdownCommonTasks();
 
         Video.killTURNserver();
         video.killSignallingServer();

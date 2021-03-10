@@ -540,12 +540,6 @@ video settings:<br>
 <a class="blackbg" href="javascript: streamset('high');">high</a>
 <span id="high_specs" style="font-size: 11px; color: #666666;"></span><br>
 
-<div style="display: none">
-<span id="full_bull" style="visibility: hidden; color: #ffffff"> &bull; </span>
-<a class="blackbg" href="javascript: streamset('full');">full</a>
-<span id="full_specs" style="font-size: 11px; color: #666666;"></span><br>
-</div>
-
 <span id="custom_bull" style="visibility: hidden; color: #ffffff"> &bull; </span>
 <a class="blackbg" href="javascript: streamset('custom');">custom</a>
 <span id="custom_specs" style="font-size: 11px; color: #666666;"></span>&nbsp;<a
@@ -1064,15 +1058,19 @@ OpenMANIPULATOR<br>
 <a class="blackbg" href="javascript: callServer('malgcommand','W'); callServer('roslaunch', 'autocrawler_openmanipulator');">arm power on</a><br>
 <a class="blackbg" href="javascript: callServer('state','arm off');">arm power off</a><br>
 <a class="blackbg" href="javascript: callServer('state','arm enable');">arm enable servos</a><br>
-<a class="blackbg" href="javascript: callServer('state','arm disable');">arm disable servos</a><br>
+<a class="blackbg" href="javascript: if(confirm('this could cause arm to crash. Are you sure?')) {callServer('state','arm disable');}">arm disable servos</a><br>
 <table><tr><td style="height: 7px"></td></tr></table>
 <a class="blackbg" href="javascript: callServer('state','arm record1');">arm record position 1</a><br>
 <a class="blackbg" href="javascript: callServer('state','arm record2');">arm record position 2</a><br>
 <a class="blackbg" href="javascript: callServer('state','arm record3');">arm record position 3</a><br>
+<a class="blackbg" href="javascript: callServer('state','arm record4');">arm record position 4</a><br>
+<a class="blackbg" href="javascript: callServer('state','arm record5');">arm record position 5</a><br>
 <table><tr><td style="height: 7px"></td></tr></table>
 <a class="blackbg" href="javascript: callServer('state','arm goto1');">arm goto position 1</a><br>
 <a class="blackbg" href="javascript: callServer('state','arm goto2');">arm goto position 2</a><br>
 <a class="blackbg" href="javascript: callServer('state','arm goto3');">arm goto position 3</a><br>
+<a class="blackbg" href="javascript: callServer('state','arm goto4');">arm goto position 4</a><br>
+<a class="blackbg" href="javascript: callServer('state','arm goto5');">arm goto position 5</a><br>
 <table><tr><td style="height: 7px"></td></tr></table>
 gripper <a class="blackbg" href="javascript: callServer('state','arm open');">open</a> /
 <a class="blackbg" href="javascript: callServer('state','arm close');">close</a><br>

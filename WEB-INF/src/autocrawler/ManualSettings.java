@@ -7,7 +7,7 @@ public enum ManualSettings {
 	malgport, powerport, developer, debugenabled, wheeldiameter,
 	gyrocomp, alertsenabled, odomturnpwm, odomlinearpwm, checkaddresses,
 	motionthreshold, redockifweakconnection,
-	arcmovecomp, usearcmoves, arcpwmthreshold, undockdistance,
+	arcmovecomp, usearcmoves, arcpwmthreshold, undockdistance, updatelocation,
 
 	// undocumented
 	lowbattery, timedshutdown, camhold, soundthreshold, webrtcserver, webrtcport,
@@ -44,6 +44,7 @@ public enum ManualSettings {
         config.setProperty(turnserverport.name(), "3478");
 		config.setProperty(ros2.name(), Settings.FALSE);
 		config.setProperty(rosworkspace.name(), "/home/auto/catkin_ws");
+		config.setProperty(updatelocation.name(), "https://www.xaxxon.com/downloads/"); // trailing slash required
         return config;
 	}
 	

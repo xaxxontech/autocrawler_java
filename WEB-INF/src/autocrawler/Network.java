@@ -33,7 +33,7 @@ public class Network {
                     int networkInfoToStateFailCount = 0;
                     long wait = 0;
 
-                    while (true) {
+                    while (app.running) {
 
                         if (!state.exists(State.values.localaddress)) Util.updateLocalIPAddress();
                         else if (state.equals(State.values.localaddress, "127.0.0.1")) Util.updateLocalIPAddress();
@@ -49,6 +49,11 @@ public class Network {
                                 wait = System.currentTimeMillis() + Util.ONE_MINUTE;
                                 networkInfoToStateFailCount ++;
                             }
+                        }
+                        else {
+                            Util.log("networkInfoToStateFailCount exceeded", this);
+                            wait = System.currentTimeMillis() + Util.ONE_HOUR;
+                            networkInfoToStateFailCount = 0;
                         }
 
                         Thread.sleep(10000);

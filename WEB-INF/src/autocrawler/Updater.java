@@ -7,7 +7,11 @@ import java.util.regex.Pattern;
 
 public class Updater {
 		
-	public static final String PATH = "https://www.xaxxon.com/downloads/";
+	private String updatelocation;
+
+	public Updater() {
+		updatelocation = Settings.getReference().readSetting(ManualSettings.updatelocation);
+	}
 	
 	/** @return number of current version, or -1 if unknown */
 	public double getCurrentVersion() {
@@ -46,7 +50,7 @@ public class Updater {
 		//pull download list into string
 		String downloadListPage = "";
 		try {
-			URLConnection con = new URL(PATH).openConnection();
+			URLConnection con = new URL(updatelocation).openConnection();
 			String charset = "ISO-8859-1";
 			Reader r = new InputStreamReader(con.getInputStream(), charset);
 			StringBuilder buf = new StringBuilder();
@@ -73,7 +77,7 @@ public class Updater {
 				while ((str = reader.readLine()) != null) {
 					mat = pat.matcher(str);
 					while (mat.find()) {
-						filename = PATH +mat.group();
+						filename = updatelocation +mat.group();
 						break;
 					}
 				}
@@ -111,11 +115,11 @@ public class Updater {
 	 * @param version firmware version no.
 	 * @param port  current USB port
 	 */
-	public static void updateFirmware(final String id, final Double version, final String port) {
+	public void updateFirmware(final String id, final Double version, final String port) {
 
 		// download file
 		String filename = id+"_"+version+".hex";
-		String fileurl = PATH +filename;
+		String fileurl = updatelocation +filename;
 		String folder = "avrdude";
 		Util.log("Updater.updateFirmware() downloading url: " + fileurl, null);
 		Downloader dl = new Downloader();

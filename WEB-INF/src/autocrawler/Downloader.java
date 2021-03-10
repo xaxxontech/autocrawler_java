@@ -24,18 +24,15 @@ public class Downloader {
 	public boolean FileDownload(final String fileAddress,
 		final String localFileName, final String destinationDir, long timeout) {
 
-		// long start = System.currentTimeMillis();
-		String sep = System.getProperty("file.separator");
-		
 		InputStream is = null;
 		OutputStream os = null;
 		URLConnection URLConn = null;
 
-		// create PATH to local file
-		final String path = System.getenv("RED5_HOME")+ sep + destinationDir + sep + localFileName;
+		// create updatelocation to local file
+		final String path = Settings.tomcathome+ Util.sep + destinationDir + Util.sep + localFileName;
 
 		// create target directory
-		new File(System.getenv("RED5_HOME")+ sep + destinationDir).mkdirs();
+		new File(Settings.tomcathome + Util.sep + destinationDir).mkdirs();
 
 		// delete target first
 		new File(path).delete();
@@ -70,7 +67,7 @@ public class Downloader {
 
 			Util.log("saved to local file: " + path + " bytes: " + ByteWritten, this);
 			// Util.debug("download took: "+ (System.currentTimeMillis()-start) + " ms", this);
-			// Util.debug("downloaded " + ByteWritten + " bytes to: " + PATH, this);
+			// Util.debug("downloaded " + ByteWritten + " bytes to: " + updatelocation, this);
 
 		} catch (Exception e) {
 			Util.log("ERROR downloading file", this);
@@ -126,9 +123,8 @@ public class Downloader {
 	 * @param filename
 	 */
 	public void deleteFile(String filename) {
-		String sep = System.getProperty("file.separator");
 
-		File f = new File(System.getenv("RED5_HOME")+sep+filename);
+		File f = new File(Settings.tomcathome + Util.sep + filename);
 		try {
 			f.delete();
 		} catch (Exception e) {

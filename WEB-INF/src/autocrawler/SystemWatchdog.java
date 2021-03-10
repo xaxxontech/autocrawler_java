@@ -322,7 +322,7 @@ public class SystemWatchdog {
 		PowerLogger.append("callForHelp() " + subject + " " + body, this);
 
 		body += "\nhttp://"+state.get(State.values.externaladdress)+":"+
-				settings.readHTTPport("http.port")+ "/autocrawler/";
+				settings.readHTTPport()+ "/autocrawler/";
 		String emailto = settings.readSetting(GUISettings.email_to_address);
 		if (!emailto.equals(Settings.DISABLED))
 			application.driverCallServer(PlayerCommands.email, emailto+" ["+subject+"] "+body);

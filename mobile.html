@@ -22,6 +22,7 @@ TD  { border: 1px solid black; border-style: hidden; }
 a { color: #ffffff; background-color: transparent; text-decoration: none; }
 a:link { color: #ffffff; background-color: transparent; text-decoration: none; }
 a:visited { color: #ffffff; background-color: transparent; text-decoration: none; }
+a:active { color: #000000; background-color: #ffffff; text-decoration: none; }
 .status_title { text-transform: uppercase; color: #f5b219;   }
 .status { color: yellow; text-transform: lowercase; } /* 28872f 45F239 */
 .status_info { color: #28872f; } /* 28872f 45F239 */
@@ -215,7 +216,7 @@ onKeyPress="if (keypress(event)==13) { telnetsend(); }" >
 </div>
 </div>
 
-<!-- ADVANCED MENU -->
+<!-- ADVANCED/MORE MENU -->
 <div id="advanced_menu" class="menu" style="position: absolute; display: none;" >
 <a href="javascript: menu('main_menu');" >
 <span class="cancelbox"><b>&lt;</b></span> BACK</a>
@@ -236,6 +237,9 @@ onKeyPress="if (keypress(event)==13) { telnetsend(); }" >
 	callServer('powershutdown',''); }">power down</a>
 <br>
 <a href="/autocrawler">desktop controls</a>
+<div id="developermenu" style="display: none">
+<a href="javascript: menu('developer_menu');">developer &gt;</a> 
+</div>
 </div>
 
 <!-- COMMAND LOG MENU -->
@@ -285,6 +289,41 @@ Nav System <span id="navsystemstatus" class="status_info">STOPPED</span><br>
 <span class="cancelbox"><b>X</b></span> CLOSE</a>
 <div style="height: 2%"> </div>
 <div id="routeslist">loading...</div>
+</div>
+
+<!-- DEVELOPER MENU -->
+<div id="developer_menu" class="menu" style="position: absolute; display: none;" >
+<a href="javascript: menu('advanced_menu');" >
+<span class="cancelbox"><b>&lt;</b></span> BACK</a>
+&nbsp; <a href="javascript: closemenus();" >
+<span class="cancelbox"><b>X</b></span> CLOSE</a>
+<div style="height: 2%"> </div>
+OpenMANIPULATOR<br>
+<a href="javascript: callServer('malgcommand','W'); callServer('roslaunch', 'autocrawler_openmanipulator');">arm power on</a><br>
+<a href="javascript: callServer('state','arm off');">arm power off</a><br>
+<a href="javascript: callServer('state','arm enable');">arm enable servos</a><br>
+<a href="javascript: if(confirm('this could cause arm to crash. Are you sure?')) {callServer('state','arm disable');}">arm disable servos</a><br>
+<table><tr><td style="height: 7px"></td></tr></table>
+<a href="javascript: callServer('state','arm record1');">arm record position 1</a><br>
+<a href="javascript: callServer('state','arm record2');">arm record position 2</a><br>
+<a href="javascript: callServer('state','arm record3');">arm record position 3</a><br>
+<a href="javascript: callServer('state','arm record4');">arm record position 4</a><br>
+<a href="javascript: callServer('state','arm record5');">arm record position 5</a><br>
+<table><tr><td style="height: 7px"></td></tr></table>
+<a href="javascript: callServer('state','arm goto1');">arm goto position 1</a><br>
+<a href="javascript: callServer('state','arm goto2');">arm goto position 2</a><br>
+<a href="javascript: callServer('state','arm goto3');">arm goto position 3</a><br>
+<a href="javascript: callServer('state','arm goto4');">arm goto position 4</a><br>
+<a href="javascript: callServer('state','arm goto5');">arm goto position 5</a><br>
+<table><tr><td style="height: 7px"></td></tr></table>
+gripper <a href="javascript: callServer('state','arm open');">open</a> /
+<a href="javascript: callServer('state','arm close');">close</a><br>
+<a href="javascript: callServer('state','arm floor');">arm floor</a><br>
+<a href="javascript: callServer('state','arm forward');">arm forward</a><br>
+<a href="javascript: callServer('state','arm home');">arm home</a><br>
+<a href="javascript: callServer('state','arm rest');">arm rest</a><br>
+<table><tr><td style="height: 7px"></td></tr></table>
+<a href="javascript: callServer('state','arm pickup');">arm pickup</a><br>
 </div>
 
 <!-- LOGIN -->

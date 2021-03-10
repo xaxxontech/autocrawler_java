@@ -421,9 +421,9 @@ public class Settings {
 		}
 	}
 
-	public String readHTTPport(String str) {
+	public String readHTTPport() {
 
-	    return "8080"; // TODO:
+	    return "5080"; // TODO:
 
 //		String filenm = tomcathome + Util.sep+"conf"+Util.sep+"server.xml";
 //		FileInputStream filein;

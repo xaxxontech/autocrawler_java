@@ -15,7 +15,7 @@ public class Power implements SerialPortEventListener  {
 
 	public static final double FIRMWARE_VERSION_REQUIREDV1 = 0.957; // trailing zeros ignored!
 	public static final String FIRMWARE_IDV1 = "oculusPower";
-	public static final double FIRMWARE_VERSION_REQUIREDV2 = 0.24; // trailing zeros ignored!
+	public static final double FIRMWARE_VERSION_REQUIREDV2 = 0.25; // trailing zeros ignored!
 	public static final String FIRMWARE_IDV2 = "xaxxonpowerv2";
 	public static final int DEVICEHANDSHAKEDELAY = 2000;
 	public static final int DEAD_TIME_OUT = 15000;
@@ -38,7 +38,8 @@ public class Power implements SerialPortEventListener  {
 	public static final byte READ_SAFECURRENT = 'G';
 	public static final byte READ_DOCKVOLTAGE = 'E';
 	public static final byte TEMPORARY_SHUTDOWN = 'K';
-	public static final int COMM_LOST = -99;
+    public static final byte READ_FLOAT_VOLTAGE = 'T';
+    public static final int COMM_LOST = -99;
 //	public static final int LOWBATTPERCENTAGE = 90; // same or less than firmware var: gettingLowCell to enable capacity recalc
 
 	protected Application application = null;
@@ -117,7 +118,8 @@ public class Power implements SerialPortEventListener  {
 
 //		new CommandSender().start();
 
-		if(!settings.readSetting(ManualSettings.powerport).equals(Settings.DISABLED)) connect();
+		if(!settings.readSetting(ManualSettings.powerport).equals(Settings.DISABLED))
+			connect();
 		
 		if (isconnected) {
 			new CommandSender().start();
@@ -135,6 +137,7 @@ public class Power implements SerialPortEventListener  {
 		sendCommand(READCAPACITY);
 		sendCommand(READ_SAFECURRENT);
 		sendCommand(READ_DOCKVOLTAGE);
+        sendCommand(READ_FLOAT_VOLTAGE);
 	}
 	
 	private void connect() {
@@ -193,7 +196,9 @@ public class Power implements SerialPortEventListener  {
     					lastRead = lastReset = System.currentTimeMillis();
     					isconnected = true;
     					state.set(State.values.powerport, portNames[i]);
-    		            serialPort.addEventListener(this, SerialPort.MASK_RXCHAR);//Add SerialPortEventListener
+//    		            serialPort.addEventListener(this, SerialPort.MASK_RXCHAR);
+						new SerialInputPoller().start();
+
 						boardid = device;
     					break; // job done, don't read any more ports
     				}
@@ -350,7 +355,7 @@ public class Power implements SerialPortEventListener  {
 			disconnect();
 
 			// note: blocking
-			Updater.updateFirmware(boardid, versionrequired, port);
+			new Updater().updateFirmware(boardid, versionrequired, port);
 
 			connect();
 
@@ -397,7 +402,44 @@ public class Power implements SerialPortEventListener  {
 			PowerLogger.append("serialEvent:" + e.getLocalizedMessage(), this);
 		}
 	}
-	
+
+	private class SerialInputPoller extends Thread {
+
+		public SerialInputPoller() {
+			this.setDaemon(true);
+		}
+
+		public void run() {
+
+			while (application.running && isconnected) {
+
+				try {
+					byte[] input = serialPort.readBytes();
+
+					if (input != null) {
+						for (int j = 0; j < input.length; j++) {
+							if ((input[j] == '>') || (input[j] == 13) || (input[j] == 10)) {
+								if (buffSize > 0) execute();
+								buffSize = 0; // reset
+								lastRead = System.currentTimeMillis();    // last command from board
+
+							} else if (input[j] == '<') {  // start of message
+								buffSize = 0;
+							} else {
+								buffer[buffSize++] = input[j];   // buffer until ready to parse
+							}
+						}
+					}
+
+					Util.delay(1);
+
+				} catch (SerialPortException e) {
+					e.printStackTrace();
+				}
+
+			}
+		}
+	}
 	
 	/** respond to feedback from the device  */	
 	public void execute() {

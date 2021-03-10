@@ -28,7 +28,7 @@ public class State {
         driverclientid, // <<not typically used by scripts, webrtc use only
 
 		// audio video
-		videosoundmode, stream, driverstream, volume,
+		stream, driverstream, volume,
 		framegrabbusy, controlsinverted, lightlevel,
 		streamactivity,
 		motiondetect, objectdetect, jpgstream,

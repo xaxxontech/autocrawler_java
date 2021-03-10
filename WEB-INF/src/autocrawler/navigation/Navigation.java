@@ -28,8 +28,7 @@ public class Navigation implements Observer {
     protected static Application app = null;
 	private static State state = State.getReference();
 	public static final String DOCK = "dock"; // waypoint name
-	private static final String redhome = System.getenv("RED5_HOME");
-	public static final File navroutesfile = new File(redhome+"/conf/navigationroutes.xml");
+	public static final File navroutesfile = new File(Settings.tomcathome+"/conf/navigationroutes.xml");
 	public static final long WAYPOINTTIMEOUT = Util.TEN_MINUTES;
 	public static final long NAVSTARTTIMEOUT = Util.TWO_MINUTES;
 	public static final int RESTARTAFTERCONSECUTIVEROUTES = 15; // testing, was 15
