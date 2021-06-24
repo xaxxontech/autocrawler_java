@@ -7,6 +7,7 @@ import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.imgproc.Imgproc;
 import org.opencv.video.BackgroundSubtractorMOG2;
+import org.opencv.video.Video;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -37,6 +38,7 @@ public class OpenCVMotionDetect  {
         state = State.getReference();
     }
 
+
     public void motionDetectGo() {
         if (state.getBoolean(State.values.motiondetect)) {
             Util.log("error, motion detect already running", this);
@@ -50,8 +52,8 @@ public class OpenCVMotionDetect  {
 
         new Thread(new Runnable() {
             public void run() {
-                BackgroundSubtractorMOG2 mog = new BackgroundSubtractorMOG2(0, 512, false);
-//                frame = cv.bufferedImageToMat(ImageUtils.getImageFromStream());
+//                BackgroundSubtractorMOG2 mog = new BackgroundSubtractorMOG2(0, 512, false);
+                BackgroundSubtractorMOG2 mog = Video.createBackgroundSubtractorMOG2(0, 512, false);
 
                 Mat frame = new Mat();
                 Mat gr = null;
@@ -163,7 +165,8 @@ public class OpenCVMotionDetect  {
 
             double threshold= 0.00001;
             int f = 0;
-            BackgroundSubtractorMOG2 mog = new BackgroundSubtractorMOG2(0, 16, false);
+//            BackgroundSubtractorMOG2 mog = new BackgroundSubtractorMOG2(0, 16, false);
+            BackgroundSubtractorMOG2 mog = Video.createBackgroundSubtractorMOG2(0, 16, false);
 
             Mat frame;
             Mat gr = null;

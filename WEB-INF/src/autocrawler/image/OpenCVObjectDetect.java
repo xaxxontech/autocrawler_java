@@ -3,6 +3,7 @@ package autocrawler.image;
 
 import autocrawler.*;
 import org.opencv.core.*;
+import org.opencv.imgproc.Imgproc;
 import org.opencv.objdetect.HOGDescriptor;
 
 import javax.imageio.ImageIO;
@@ -127,7 +128,7 @@ public class OpenCVObjectDetect {
 
                             if (trigger >= 2) {
 
-                                Core.rectangle(frame, new Point(rects[i].x, rects[i].y),
+                                Imgproc.rectangle(frame, new Point(rects[i].x, rects[i].y),
                                         new Point(rects[i].x + rects[i].width, rects[i].y + rects[i].height),
                                         new Scalar(255, 0, 0, 255), 2);
 
@@ -222,7 +223,7 @@ public class OpenCVObjectDetect {
 
                         if (trigger >= 2) {
 
-                            Core.rectangle(detect, new Point(rects[i].x, rects[i].y),
+                            Imgproc.rectangle(detect, new Point(rects[i].x, rects[i].y),
                                     new Point(rects[i].x + rects[i].width, rects[i].y + rects[i].height),
                                     new Scalar(255, 0, 0, 255), 2);
                             trigger = 0; // reset

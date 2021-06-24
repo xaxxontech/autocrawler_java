@@ -201,18 +201,17 @@ public class Malg implements jssc.SerialPortEventListener {
 						commandList.size() == 0 &&
 						!state.getBoolean(autocrawler.State.values.moving)) {
 
-					if (settings.getBoolean(GUISettings.navigation)) {
-						if (state.exists(autocrawler.State.values.navigationroute) && (
-								state.get(autocrawler.State.values.navsystemstatus).equals(Ros.navsystemstate.running.toString()) ||
-										state.get(autocrawler.State.values.navsystemstatus).equals(Ros.navsystemstate.starting.toString()))) {
+
+					if (state.exists(autocrawler.State.values.navigationroute) && (
+							state.get(autocrawler.State.values.navsystemstatus).equals(Ros.navsystemstate.running.toString()) ||
+									state.get(autocrawler.State.values.navsystemstatus).equals(Ros.navsystemstate.starting.toString()))) {
+						Util.delay(WATCHDOG_DELAY);
+						continue;
+					}
+					if (state.exists(autocrawler.State.values.nextroutetime)) {
+						if (state.getLong(autocrawler.State.values.nextroutetime.toString()) - System.currentTimeMillis() < Util.TWO_MINUTES) {
 							Util.delay(WATCHDOG_DELAY);
 							continue;
-						}
-						if (state.exists(autocrawler.State.values.nextroutetime)) {
-							if (state.getLong(autocrawler.State.values.nextroutetime.toString()) - System.currentTimeMillis() < Util.TWO_MINUTES) {
-								Util.delay(WATCHDOG_DELAY);
-								continue;
-							}
 						}
 					}
 

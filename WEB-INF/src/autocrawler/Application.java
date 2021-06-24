@@ -116,9 +116,12 @@ public class Application implements ServletContextListener {
 
         state.set(State.values.navsystemstatus, Ros.navsystemstate.stopped.toString());
 
-        if(settings.getBoolean(GUISettings.navigation)) {
-			navigation = new Navigation(this);
-            navigation.runAnyActiveRoute();
+		navigation = new Navigation(this);
+
+		// run any active route 
+		if (!navigation.runAnyActiveRoute() && !settings.getBoolean(ManualSettings.ros2)) {
+			Util.log("starting roscore", this);
+			Ros.roscommand(null); // start ROS1 roscore
 		}
 
 		Util.log("application initialize done", this);
@@ -584,18 +587,7 @@ public class Application implements ServletContextListener {
 //            } catch (Exception e) {}
 			break;
 
-		case jpgstream:
-			if (str== null) str="";
-			if (str.equals(streamstate.stop.toString())) {
-				state.delete(values.jpgstream);
-				break;
-			}
-			if (str.equals("")) str = AutoDock.HIGHRES;
-			new OpenCVUtils(this).jpgStream(str);
-//			opencvutils.jpgStream(str);
-			break;
-			
-		case deletelogs: // super dangerous, purge all log folders and ros logs, causes restart 
+		case deletelogs: // super dangerous, purge all log folders and ros logs, causes restart
 			if( !state.equals(values.dockstatus, AutoDock.DOCKED)) {
 				Util.log("must be docked, skipping.. ", null);
 				break;
@@ -641,8 +633,11 @@ public class Application implements ServletContextListener {
                 sendplayerfunction(arr[0], arr[1]);
             break;
 
-		}
+        case webrtcrestart:
+            video.webrtcRestart();
+            break;
 
+		}
 
 	}
 
@@ -876,7 +871,7 @@ public class Application implements ServletContextListener {
 			
 			
 			if (settings.getBoolean(ManualSettings.developer)) str += " developer true";
-			if (settings.getBoolean(GUISettings.navigation)) str += " navigation " +state.get(values.navsystemstatus);
+			str += " navigation " +state.get(values.navsystemstatus);
 
 			str += " battery " + state.get(State.values.batterylife);
 
@@ -1010,8 +1005,7 @@ public class Application implements ServletContextListener {
 
 	private void move(final String str, boolean passengerOverride) {
 
-
-        if (settings.getBoolean(GUISettings.navigation)) navigation.navdockactive = false;
+        navigation.navdockactive = false;
 
         if (state.exists(State.values.navigationroute) && !passengerOverride &&
                 str.equals(Malg.direction.stop.toString())) {

@@ -242,7 +242,7 @@ public class SystemWatchdog {
 		if (str == null) str = "";
 
 		// TODO: force nav shutdown?
-		if (settings.getBoolean(GUISettings.navigation) && !str.equals(NOFORWARD) ) {
+		if (!str.equals(NOFORWARD) ) {
 			if ( !state.get(values.navsystemstatus).equals(Ros.navsystemstate.stopping.toString()) &&
 					!state.get(values.navsystemstatus).equals(Ros.navsystemstate.stopped.toString())) {
 				Util.log("warning: redock skipped, autocrawler.navigation running", this);

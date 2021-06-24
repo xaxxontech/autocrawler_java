@@ -28,7 +28,9 @@ var ws_conn;
 // Promise for local stream after constraints are approved by the user
 var local_stream_promise;
 var ws_conn_close_forever = false;
+var webrtcreconnectattempt = 0;
 var webrtcdebug = false;
+var VIDEOCONNECTTIMEOUT = 5000;
 
 function getOurId() {
 	if (commclientid) return commclientid;
@@ -71,12 +73,12 @@ function setError(text) {
 
 function resetVideo() {
     // Release the webcam and mic
-    if (local_stream_promise)
-        local_stream_promise.then(stream => {
-            if (stream) {
-                stream.getTracks().forEach(function (track) { track.stop(); });
-            }
-        });
+    // if (local_stream_promise)
+        // local_stream_promise.then(stream => {
+            // if (stream) {
+                // stream.getTracks().forEach(function (track) { track.stop(); });
+            // }
+        // });
 
     // Reset the video element and stop showing the last received frame
     var videoElement = getVideoElement();
@@ -246,11 +248,37 @@ function websocketServerDisconnect() {
 }
 
 function onRemoteTrack(event) {
-    if (getVideoElement().srcObject !== event.streams[0]) {
+ 
+	if (getVideoElement().srcObject !== event.streams[0]) {
         webrtc_logdebug('Incoming stream');
         getVideoElement().srcObject = event.streams[0];
         videologo("off");
+        
+        setTimeout(function() { checkvideoState(event); }, VIDEOCONNECTTIMEOUT);
     }
+}
+
+function checkvideoState(event) {
+	var state = getVideoElement().readyState;
+	webrtc_logdebug("getVideoElement().readyState="+state);
+	if (state == 0) {
+		if (webrtcreconnectattempt < 10) {
+			
+			webrtcreconnectattempt ++;
+			message("webkit error, restart webrtc #"+webrtcreconnectattempt,"orange");
+
+			webrtc_logdebug("error, resetting video");
+			resetVideo();
+			callServer("webrtcrestart", "");
+		}
+		else {
+			webrtcreconnectattempt = 0;
+			message("webkit webrtc error, giving up","orange");
+			callServer("publish", "stop");
+			resetVideo();
+		}
+	}
+	else { webrtcreconnectattempt = 0; }
 }
 
 function errorUserMediaHandler() {
@@ -261,36 +289,6 @@ const handleDataChannelOpen = (event) =>{
     webrtc_logdebug("dataChannel.OnOpen", event);
 };
 
-// const handleDataChannelMessageReceived = (event) =>{
-    // webrtc_logdebug("dataChannel.OnMessage:", event, event.data.type);
-
-    // webrtcStatus("Received data channel message");
-    // if (typeof event.data === 'string' || event.data instanceof String) {
-        // webrtc_logdebug('Incoming string message: ' + event.data);
-        // textarea = document.getElementById("text")
-        // textarea.value = textarea.value + '\n' + event.data
-    // } else {
-        // webrtc_logdebug('Incoming data message');
-    // }
-    // send_channel.send("Hi! (from browser)");
-// };
-
-// const handleDataChannelError = (error) =>{
-    // console.log("dataChannel.OnError:", error);
-// };
-
-// const handleDataChannelClose = (event) =>{
-    // webrtc_logdebug("dataChannel.OnClose", event);
-// };
-
-// function onDataChannel(event) {
-    // webrtcStatus("Data channel created");
-    // let receiveChannel = event.channel;
-    // receiveChannel.onopen = handleDataChannelOpen;
-    // receiveChannel.onmessage = handleDataChannelMessageReceived;
-    // receiveChannel.onerror = handleDataChannelError;
-    // receiveChannel.onclose = handleDataChannelClose;
-// }
 
 function createCall(msg) {
     // Reset connection attempts because we connected successfully
@@ -299,19 +297,7 @@ function createCall(msg) {
     webrtc_logdebug('Creating RTCPeerConnection');
 
     peer_connection = new RTCPeerConnection(rtc_configuration);
-    // send_channel = peer_connection.createDataChannel('label', null);
-    // send_channel.onopen = handleDataChannelOpen;
-    // send_channel.onmessage = handleDataChannelMessageReceived;
-    // send_channel.onerror = handleDataChannelError;
-    // send_channel.onclose = handleDataChannelClose;
-    // peer_connection.ondatachannel = onDataChannel;
     peer_connection.ontrack = onRemoteTrack;
-    /* Send our video/audio to the other peer */
-    // local_stream_promise = getLocalStream().then((stream) => {
-        // webrtc_logdebug('Adding local stream');
-        // peer_connection.addStream(stream);
-        // return stream;
-    // }).catch(setError);
 
     if (!msg.sdp) {
         console.log("WARNING: First message wasn't an SDP message!?");

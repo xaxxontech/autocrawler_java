@@ -7,7 +7,7 @@ public enum GUISettings {
 	/** these settings must be available in basic configuration */
 	speedslow, speedmed, nudgedelay, fullrotationdelay, onemeterdelay,
 	vlow, vmed, vhigh, vcustom, vset, maxclicknudgedelay, steeringcomp,
-	maxclickcam, loginnotify, redock, navigation, telnetport,
+	maxclickcam, loginnotify, redock, telnetport,
 	email_smtp_server, email_smtp_port, email_username, email_password, email_from_address, email_to_address,
 	volume, reboot, camhoriz,
 	cammin, cammax, reversesteeringcomp // undocumented
@@ -37,7 +37,6 @@ public enum GUISettings {
 		config.setProperty(cammin.name(), "52");
 		config.setProperty(loginnotify.name() , Settings.FALSE);
 		config.setProperty(redock.name() , Settings.FALSE);
-		config.setProperty(navigation.name() , Settings.TRUE);
 		config.setProperty(email_smtp_server.name(), Settings.DISABLED);
 		config.setProperty(email_smtp_port.name(), "25");
 		config.setProperty(email_username.name(), Settings.DISABLED);

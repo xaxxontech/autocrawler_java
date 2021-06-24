@@ -8,8 +8,8 @@ import java.awt.image.DataBufferByte;
 import autocrawler.*;
 
 import org.opencv.core.*;
-import org.opencv.highgui.Highgui;
-import org.opencv.highgui.VideoCapture;
+//import org.opencv.highgui.Highgui;
+//import org.opencv.highgui.VideoCapture;
 
 
 public class OpenCVUtils {
@@ -76,6 +76,7 @@ public class OpenCVUtils {
 		return m;
 	}
 
+/*
 	public Mat getWebCamImg(VideoCapture capture) {
 //    	VideoCapture capture =new VideoCapture(camnum); 
 		capture.set(Highgui.CV_CAP_PROP_FRAME_WIDTH, 320);
@@ -145,5 +146,6 @@ public class OpenCVUtils {
 			}
 		}).start();
 	}
+	*/
 
 }

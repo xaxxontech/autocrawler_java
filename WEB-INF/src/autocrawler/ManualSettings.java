@@ -11,7 +11,7 @@ public enum ManualSettings {
 
 	// undocumented
 	lowbattery, timedshutdown, camhold, soundthreshold, webrtcserver, webrtcport,
-    turnserverlogin, turnserverport, ros2, rosworkspace
+    turnserverlogin, turnserverport, ros2
 	
 	;
 	
@@ -43,7 +43,6 @@ public enum ManualSettings {
         config.setProperty(turnserverlogin.name(), "auto:robot");
         config.setProperty(turnserverport.name(), "3478");
 		config.setProperty(ros2.name(), Settings.FALSE);
-		config.setProperty(rosworkspace.name(), "/home/auto/catkin_ws");
 		config.setProperty(updatelocation.name(), "https://www.xaxxon.com/downloads/"); // trailing slash required
         return config;
 	}

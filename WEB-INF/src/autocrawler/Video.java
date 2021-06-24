@@ -44,6 +44,7 @@ public class Video {
     private static String ubuntuVersion;
     public String realsensepstring = null;
     private String webrtcpstring = null;
+    private ArrayList<String> webrtccmdarray = new ArrayList<>();;
     private volatile long lastvideocommand = 0;
     private Settings settings = Settings.getReference();
     public final static String TURNLOG = Settings.tomcathome + "/log/turnserver.log"; // not working
@@ -147,7 +148,7 @@ public class Video {
     public void publish (final Application.streamstate mode, final int w, final int h, final int fps, final long bitrate) {
         // todo: disallow unsafe custom values (device can be corrupted?)
 
-        if (System.currentTimeMillis() < lastvideocommand + STREAM_CONNECT_DELAY) {
+        if (System.currentTimeMillis() <= lastvideocommand + STREAM_CONNECT_DELAY) {
             app.driverCallServer(PlayerCommands.messageclients, "video command received too soon after last, dropped");
             return;
         }
@@ -194,7 +195,7 @@ public class Video {
 
                     if (state.exists(values.driverclientid)) {
 
-                        final ArrayList<String> strarray = new ArrayList<String>(Arrays.asList(Ros.RGBWEBRTC,
+                        webrtccmdarray = new ArrayList<String>(Arrays.asList(Ros.RGBWEBRTC,
                                 "peerid:=--peer-id=" + state.get(values.driverclientid),
                                 "webrtcserver:=--server=wss://"+settings.readSetting(ManualSettings.webrtcserver)+":"
                                         +settings.readSetting(ManualSettings.webrtcport),
@@ -204,8 +205,8 @@ public class Video {
                                 "turnserverlogin:=--turnserver-login="+settings.readSetting(ManualSettings.turnserverlogin)
                         ));
 
-                        webrtcStatusListener(strarray, mode.toString());
-                        webrtcpstring = Ros.launch(strarray);
+                        webrtcStatusListener(webrtccmdarray, mode.toString());
+                        webrtcpstring = Ros.launch(webrtccmdarray);
                     }
 
                     break;
@@ -220,7 +221,7 @@ public class Video {
 
                     if (state.exists(values.driverclientid)) {
 
-                        final ArrayList<String> strarray = new ArrayList<String>(Arrays.asList(Ros.RGBWEBRTC,
+                        webrtccmdarray = new ArrayList<String>(Arrays.asList(Ros.RGBWEBRTC,
                                 "peerid:=--peer-id=" + state.get(values.driverclientid),
                                 "webrtcserver:=--server=wss://"+settings.readSetting(ManualSettings.webrtcserver)+":"
                                         +settings.readSetting(ManualSettings.webrtcport),
@@ -231,8 +232,8 @@ public class Video {
                                 "turnserverlogin:=--turnserver-login="+settings.readSetting(ManualSettings.turnserverlogin)
                         ));
 
-                        webrtcStatusListener(strarray, mode.toString());
-                        webrtcpstring = Ros.launch(strarray);
+                        webrtcStatusListener(webrtccmdarray, mode.toString());
+                        webrtcpstring = Ros.launch(webrtccmdarray);
                     }
 
                     break;
@@ -253,10 +254,10 @@ public class Video {
                             " --turnserver-login="+settings.readSetting(ManualSettings.turnserverlogin)
                             ;
 
-                        List <String> args = new ArrayList<>();
+                        webrtccmdarray = new ArrayList<>();
                         String[] array = webrtcpstring.split(" ");
-                        for (String t : array) args.add(t);
-                        processBuilder.command(args);
+                        for (String t : array) webrtccmdarray.add(t);
+                        processBuilder.command(webrtccmdarray);
                         Process proc = null;
 
                         try{
@@ -334,6 +335,17 @@ public class Video {
 
         } }).start();
 
+    }
+
+    // restart webrtc connection, called by javascript for periodic webkit connect failure
+    public void webrtcRestart() {
+        new Thread(new Runnable() { public void run() {
+            String w = webrtcpstring;
+            killwebrtc();
+            webrtcpstring = w;
+            Util.delay(1000);
+            Ros.launch(webrtccmdarray);
+        } }).start();
     }
 
     private void forceShutdownFrameGrabs() {

@@ -42,16 +42,19 @@ public class Navigation implements Observer {
     private String navpstring = null;
 
 
-    /** Constructor */
+	/** Constructor */
 	public Navigation(Application a) {
 		Ros.loadwaypoints();
-        Ros.rospackagedir = settings.readSetting(ManualSettings.rosworkspace)+Util.sep+"src"+Util.sep+Ros.ROSPACKAGE;
+
+		Ros.rospackagedir = Ros.getRosPackageDir();
+		Util.debug(Ros.rospackagedir, this);
+
 		navlog = new NavigationLog();
 		state.addObserver(this);
 		app = a;
 		state.set(values.lidar, true); // or any non null
-	}	
-	
+	}
+
 	@Override
 	public void updated(String key) {
 		if(key.equals(values.distanceangle.name())){
@@ -411,7 +414,7 @@ public class Navigation implements Observer {
 		}
 	}
 
-	public void runAnyActiveRoute() {
+	public boolean runAnyActiveRoute() {
 		Document document = Util.loadXMLFromString(routesLoad());
 		NodeList routes = document.getDocumentElement().getChildNodes();
 		for (int i = 0; i< routes.getLength(); i++) {
@@ -420,9 +423,10 @@ public class Navigation implements Observer {
 			if (isactive.equals("true")) {
 				runRoute(rname);
 				Util.log("Auto-starting nav route: "+rname, this);
-				break;
+				return true;
 			}
 		}
+		return false;
 	}
 	
 	/** only used before starting a route, ignored if un-docked */
@@ -1050,12 +1054,12 @@ public class Navigation implements Observer {
 
 					if (streamactivity.contains(OpenCVObjectDetect.HUMAN)) {
 						msg = "[Autocrawler Detected "+streamactivity+"] " + msg;
-						msg += "\nautocrawler.image link: " + link + "\n";
+						msg += "\nimage link: " + link + "\n";
 						Util.delay(3000); // allow time for download thread to capture autocrawler.image before turning off camera
 					}
 					if (streamactivity.contains("video")) {
 						msg = "[Autocrawler Detected Motion] " + msg;
-						msg += "\nautocrawler.image link: " + link + "\n";
+						msg += "\nimage link: " + link + "\n";
 						Util.delay(3000); // allow time for download thread to capture autocrawler.image before turning off camera
 					}
 					else if (streamactivity.contains("audio")) {

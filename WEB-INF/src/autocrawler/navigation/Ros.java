@@ -381,6 +381,21 @@ public class Ros {
 		return Ros.rospackagedir + Util.sep + "maps" + Util.sep ;
 	}
 
+	public static String getRosPackageDir() {
+		try {
+
+			String[] cmd = { "bash", "-ic", "roscd "+ROSPACKAGE+" ; pwd" };
+			Process proc = Runtime.getRuntime().exec(cmd);
+			BufferedReader procReader = new BufferedReader(new InputStreamReader(proc.getInputStream()));
+			String str = procReader.readLine();
+			return str;
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+
 	public static void backUpMappgm() {
 		String mapfilepath = getMapFilePath();
 		File oldname = new File(mapfilepath+mapfilename);
