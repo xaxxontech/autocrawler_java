@@ -6,7 +6,6 @@ import java.io.IOException;
 
 import autocrawler.commport.Malg;
 import autocrawler.servlet.CommServlet;
-import autocrawler.servlet.DashboardServlet;
 import autocrawler.servlet.FrameGrabHTTP;
 import org.jasypt.util.password.ConfigurablePasswordEncryptor;
 
@@ -69,7 +68,6 @@ public class Application implements ServletContextListener {
 		passwordEncryptor.setPlainDigest(true);
 		loginRecords = LoginRecords.getReference();
         CommServlet.setApp(this);
-        DashboardServlet.setApp(this);
 		FrameGrabHTTP.setApp(this);
 		initialize();
 
