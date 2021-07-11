@@ -1,55 +1,83 @@
 package autocrawler.developer.swingtool;
 
-import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
-
-import autocrawler.PlayerCommands;
-import autocrawler.Util;
-
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.util.Arrays;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.Vector;
 
+import javax.swing.DefaultListModel;
+import javax.swing.JFrame;
+import javax.swing.JList;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
+import javax.swing.JToggleButton;
+import javax.swing.ListSelectionModel;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
+
+import autocrawler.PlayerCommands;
+import autocrawler.Util;
+
+//todo: scollpane tabbed .. count state vars use
+//         button panel 
+//         history up arrows
+// 		
+// high res monitors: https://stackoverflow.com/questions/26877517/java-swing-on-high-dpi-screen
+//
 public class SwingTerminal extends JFrame {
 
 	private static final long serialVersionUID = 1L;
 	final long DELAY = 5000; 
 
-	DefaultListModel<PlayerCommands> listModel = new DefaultListModel<PlayerCommands>();
-	JList<PlayerCommands> list = new JList<PlayerCommands>(listModel) ;
+	DefaultListModel<String> listModel = new DefaultListModel<String>();
+	JList<String> list = new JList<String>(listModel);
+	
+	JToggleButton pause = new JToggleButton("waiting", true);
 	JTextArea messages = new JTextArea();	
 	JTextField in = new JTextField();
+	Vector<String> ignore = new Vector<String>();
 	BufferedReader reader = null;
 	PrintWriter printer = null;
-	Socket socket = null;
+	Socket socket = null;	
+	String version = null;
+	String exclude = null;
 	int rx, tx = 0;
 	String ip;
 	int port;
 	
-	public SwingTerminal(String ip, int port){ 
+	public SwingTerminal(String ip, int port, String exclude){ 
+		
 		this.ip = ip;
 		this.port = port;
+		this.exclude = exclude;
 		
 		setDefaultLookAndFeelDecorated(true);
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
 		setLayout(new BorderLayout());
 
-//		messages.setFont(new Font("serif", Font.PLAIN, 25));
-//		list.setFont(new Font("serif", Font.PLAIN, 25));
-//		in.setFont(new Font("serif", Font.PLAIN, 25));
-//		setFont(new Font("serif", Font.PLAIN, 25));
+		messages.setFont(new Font("serif", Font.PLAIN, 25));
+		list.setFont(new Font("serif", Font.PLAIN, 25));
+		in.setFont(new Font("serif", Font.PLAIN, 25));
+		setFont(new Font("serif", Font.PLAIN, 25));
 		
 		
 		list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -93,18 +121,38 @@ public class SwingTerminal extends JFrame {
 			}
 		});
 		
-		final PlayerCommands[] cmds = PlayerCommands.values();
-		for(int i = 0; i < cmds.length; i++) listModel.addElement(cmds[i]);
+		pause.addItemListener( new ItemListener() {
+			@Override
+		    public void itemStateChanged(ItemEvent eve) {  
+				updateButtonText();
+		    }  
+		});
+
+
+		PlayerCommands[] cmds = PlayerCommands.values();
+//		nonTelnetBroadcast[] cmds = State.nonTelnetBroadcast.values();
+		String[] c = new String[cmds.length];
+		for(int i = 0; i < cmds.length; i++) {
+			c[i] = cmds[i].toString();
+		}
+		
+		Arrays.sort(c); // doesn't work unless create string array0-= ?
+		for(int i = 0; i < c.length; i++) {
+			System.out.println(c[i]);
+			listModel.addElement(c[i].toString());
+		}
 		
 		JScrollPane listScrollPane = new JScrollPane(list);
 		JScrollPane chatScroller = new JScrollPane(messages);
 		JScrollPane cmdsScroller = new JScrollPane(listScrollPane);
 
-		chatScroller.setPreferredSize(new Dimension(500, 800));
-		cmdsScroller.setPreferredSize(new Dimension(250, 800));
+		chatScroller.setPreferredSize(new Dimension(700, 800));
+		cmdsScroller.setPreferredSize(new Dimension(350, 800));
 		getContentPane().add(chatScroller, BorderLayout.LINE_END);
 		getContentPane().add(cmdsScroller, BorderLayout.LINE_START);
+
 		getContentPane().add(in, BorderLayout.PAGE_END);
+		getContentPane().add(pause, BorderLayout.PAGE_START);
 		// chatScroller.setFocusable(false);
 		
 		in.addKeyListener(new KeyListener() {
@@ -124,7 +172,44 @@ public class SwingTerminal extends JFrame {
 		
 		// start timer watch dog 
 		new Timer().scheduleAtFixedRate(new Task(), 0, DELAY);
+		importFile();
 	}
+	
+	
+	private void importFile(){
+		
+		if (exclude == null) {
+			exclude = " filtering dissabled";
+			return;
+		}
+		
+		if ( ! new File(exclude).exists()) {
+			exclude = " filtering dissabled";
+			return;
+		}
+	
+		try {
+			
+			String line;
+			FileInputStream filein = new FileInputStream(exclude);
+			BufferedReader reader = new BufferedReader(new InputStreamReader(filein));
+			while ((line = reader.readLine()) != null) {
+				
+				ignore.add(line.trim());
+				
+			}
+			reader.close();
+			filein.close();
+			
+		} catch (Exception e) {
+			// System.out.println("importFile: " + e.getMessage());
+			exclude = "file error";
+			return;
+		}
+		
+		exclude = new File(exclude).getName(); // just display file name if big path 
+	}
+	
 	
 	private class Task extends TimerTask {
 		public void run(){
@@ -138,8 +223,9 @@ public class SwingTerminal extends JFrame {
 				try {
 					printer.checkError();
 					printer.flush();
-					// printer.println("\n\n\n"); 
+					printer.println("\n\n\n"); 
 					// send dummy message to test the connection
+					
 				} catch (Exception e) {
 					appendMessages("TimerTask(): "+e.getMessage());
 					closeSocket();
@@ -150,14 +236,13 @@ public class SwingTerminal extends JFrame {
 	
 	void openSocket(){	
 		try {	
-			setTitle("trying to connect");
+			setTitle("\t\t.... Trying to connect");
 			socket = new Socket(ip, port);
 			printer = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream())), true);
 			reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 			appendMessages("openSocket(): connected to: " + socket.getInetAddress().toString());
-			setTitle(socket.getInetAddress().toString());
 		} catch (Exception e) {
-			setTitle("disconnected");
+			setTitle("\t\t.... Disconnected");
 			appendMessages("openSocket(): " + e.getMessage());
 			closeSocket();
 		}
@@ -183,6 +268,20 @@ public class SwingTerminal extends JFrame {
 		}
 	}
 
+	void updateButtonText() {
+		
+		if( pause.isSelected()) {
+			
+			pause.setText("Click to pause.." + " rx: " + rx + " tx: " + tx );
+			
+		} else {
+			
+			pause.setText("Paused..........." + " rx: " + rx++ + " tx: " + tx );
+
+		}
+		
+	}
+	
 	void readSocket(){	
 		new Thread(new Runnable() { public void run() {
 			String input = null;
@@ -199,7 +298,9 @@ public class SwingTerminal extends JFrame {
 					// ignore dummy messages 
 					input = input.trim();
 					if(input.length() > 0) {
-						setTitle(socket.getInetAddress().toString() + " rx: " + rx++ + " tx: " + tx);
+						
+						rx++;
+						updateButtonText();
 						appendMessages( input );
 					}
 				} catch (Exception e) {
@@ -217,6 +318,7 @@ public class SwingTerminal extends JFrame {
 		}
 	
 		tx++;
+		updateButtonText();
 		try {
 			printer.checkError();
 			printer.println(input);
@@ -225,21 +327,65 @@ public class SwingTerminal extends JFrame {
 			closeSocket();
 		}
 		
-		// in.setText(""); // reset text input field 
+		// in.setText(""); // reset text input field better? 
 	}
 	
 	void appendMessages(final String input){
-		messages.append(Util.getDateStampShort() + " " + input + "\n");
-		messages.setCaretPosition(messages.getDocument().getLength());
+		
+		if( input.toLowerCase().contains("welcome")) {
+			
+			version = input.replace("<telnet>", "");
+		
+			setTitle( version + " [" +socket.getInetAddress().toString() + "] " + exclude);
+
+			return;
+			
+		}
+		
+		for( int i = 0 ; i < ignore.size() ; i++ ) {
+			 if (input.contains(ignore.get(i))) {
+				// System.out.println("ignored.. " + input + " [" + ignore.get(i)+"]");
+				return;
+			}
+		}
+		
+		if( pause.isSelected()) {
+			messages.append(Util.getDateStampShort().replace("-", " : ") + "       " + input + "\n");
+			messages.setCaretPosition(messages.getDocument().getLength());
+		}
 	}
 	
 	public static void main(String[] args) {
-		final String ip = args[0];
-		final int port = Integer.parseInt(args[1]);
-		javax.swing.SwingUtilities.invokeLater(new Runnable() {
-			public void run() {
-				new SwingTerminal(ip, port);
-			}
-		});
+		if (args.length == 3) {
+			javax.swing.SwingUtilities.invokeLater(new Runnable() {
+				public void run() {
+					new SwingTerminal(args[0], Integer.parseInt(args[1]), args[2]);
+				}
+			});
+		}
+		
+		if (args.length == 2) {
+			javax.swing.SwingUtilities.invokeLater(new Runnable() {
+				public void run() {
+					new SwingTerminal(args[0], Integer.parseInt(args[1]), null);
+				}
+			});
+		}
+		
+		if (args.length == 1) {
+			javax.swing.SwingUtilities.invokeLater(new Runnable() {
+				public void run() {
+					new SwingTerminal("crawler", 4444, args[1]);
+				}
+			});
+		}
+		
+		if (args.length == 0) {
+			javax.swing.SwingUtilities.invokeLater(new Runnable() {
+				public void run() {
+					new SwingTerminal("crawler", 4444, null);
+				}
+			});
+		}
 	}
 }
