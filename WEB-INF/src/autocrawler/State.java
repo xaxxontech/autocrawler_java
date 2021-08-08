@@ -61,7 +61,7 @@ public class State {
 		roscurrentgoal, rosmapupdated, rosmapwaypoints, navsystemstatus,
 		rossetgoal, rosgoalstatus, rosgoalcancel, navigationroute, rosinitialpose,
 		navigationrouteid, nextroutetime, roswaypoint, rosarcmove,
-		waypointbusy, lidar, // to be documented
+		waypointbusy, lidar, estimatedrouteseconds, // to be documented
 
 	}
 

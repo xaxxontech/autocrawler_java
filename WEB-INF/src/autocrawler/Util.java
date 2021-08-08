@@ -357,6 +357,7 @@ public class Util {
 		}
 	}
 
+
 	public static long[] readProcStat() {
 		try {
 
@@ -529,6 +530,7 @@ public class Util {
 		else state.delete(values.externaladdress);
 	}
 
+	/*
 	public static void deleteLogFiles(){
 
 		if( ! Settings.getReference().getBoolean(ManualSettings.debugenabled)){
@@ -642,7 +644,6 @@ public class Util {
 		});
 	}
 
-	/*
 	public static void truncState(){
 		File[] files  = new File(Settings.logfolder).listFiles(new stateFilter());
 		debug("truncState(): " + files.length + " files in folder");
@@ -680,6 +681,7 @@ public class Util {
 		}}).start();
 	}
 
+	/*
 	public static void archiveLogFiles(){
 		String list = Settings.settingsfile + " ";
 		File[] files = new File(Settings.logfolder).listFiles();
@@ -814,6 +816,7 @@ public class Util {
 		f = walk(path, f);
 		return f.size();
 	}
+*/
 
 	public static void appendUserMessage(String message){
 		State state = State.getReference();
@@ -830,6 +833,7 @@ public class Util {
 		state.set(values.guinotify, msg += message);
 	}
 
+	/*
 	public static void deleteROS() {
 
 		if( ! Settings.getReference().getBoolean(ManualSettings.debugenabled)){
@@ -857,8 +861,8 @@ public class Util {
 				systemCall(Settings.tomcathome + Util.sep + "systemreboot.sh");
 			} catch (Exception e){printError(e);}
 		} }).start();
-
 	}
+*/
 
 }
 

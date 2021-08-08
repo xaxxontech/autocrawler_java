@@ -60,14 +60,20 @@ public class Navigation implements Observer {
 		if(key.equals(values.distanceangle.name())){
 			try {
 				int mm = Integer.parseInt(state.get(values.distanceangle).split(" ")[0]);
-				if(mm > 0) routemillimeters += mm;
+				if(mm > 0) {
+					
+					routemillimeters += mm;
+					// state.set(State.values.routemm, routemillimeters);
+					
+				}
 			} catch (Exception e){}
 		}
 	}
 
-	public static String getRouteMeters() {
-		return Util.formatFloat(routemillimeters / 1000, 0);
-	}
+	// was used in old dashboard only
+	//public static String getRouteMeters() {
+	//	return Util.formatFloat(routemillimeters / 1000, 0);
+	//}
 	
 	public void gotoWaypoint(final String str) {
 		if (state.getBoolean(State.values.autodocking)) {
@@ -660,7 +666,12 @@ public class Navigation implements Observer {
 				routestarttime = System.currentTimeMillis();
 				state.set(State.values.lastusercommand, routestarttime);  // avoid watchdog abandoned
 				routemillimeters = 0l;
-				
+
+				// for watchdog scripts
+				// String r = state.get(State.values.navigationroute);
+				String est = NavigationUtilities.getRouteTimeEstimateString(state.get(State.values.navigationroute));
+				state.set(State.values.estimatedrouteseconds, est);
+
 				// undock if necessary
 				if (!state.get(State.values.dockstatus).equals(AutoDock.UNDOCKED)) {
 					SystemWatchdog.waitForCpu();
@@ -781,12 +792,12 @@ public class Navigation implements Observer {
 
 					navlog.newItem(NavigationLog.COMPLETEDSTATUS, null, routestarttime, null, name, consecutiveroute, routemillimeters);
 
-					// how long did docking take
-					int timetodock = 0; // (int) ((System.currentTimeMillis() - start)/ 1000);
-					// subtract from routes time
+					// subtract from routes time or no?
+					int timetodock = (int) ((System.currentTimeMillis() - start)/ 1000);
 					int routetime = (int)(System.currentTimeMillis() - routestarttime)/1000 - timetodock;
 					NavigationUtilities.routeCompleted(name, routetime, (int)routemillimeters/1000);
-
+					state.delete(State.values.estimatedrouteseconds);
+					
 					consecutiveroute++;
 					routemillimeters = 0;
 

@@ -585,6 +585,7 @@ public class Application implements ServletContextListener {
 //            } catch (Exception e) {}
 			break;
 
+			/* old dashboard
 		case deletelogs: // super dangerous, purge all log folders and ros logs, causes restart
 			if( !state.equals(values.dockstatus, AutoDock.DOCKED)) {
 				Util.log("must be docked, skipping.. ", null);
@@ -606,7 +607,8 @@ public class Application implements ServletContextListener {
 			Util.truncStaleFrames();
 			Util.truncStaleAudioVideo();
 			break;
-			
+			*/
+
 		case streammode: // TODO: testing ffmpeg/avconv streaming
 			setStreamMode(str);
 			break;
