@@ -663,7 +663,6 @@ public class Util {
             return name.contains("state");
         }
 	}
-	*/
 
 	static void archiveNavigation(){
 		final String path = "./log/archive/navigation_" + System.currentTimeMillis() + ".tar";
@@ -681,7 +680,6 @@ public class Util {
 		}}).start();
 	}
 
-	/*
 	public static void archiveLogFiles(){
 		String list = Settings.settingsfile + " ";
 		File[] files = new File(Settings.logfolder).listFiles();

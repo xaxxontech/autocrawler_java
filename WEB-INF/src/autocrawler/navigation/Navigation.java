@@ -702,7 +702,6 @@ public class Navigation implements Observer {
 						navlog.newItem(NavigationLog.ERRORSTATUS, "current route override prior to set waypoint: "+wpname,
 								routestarttime, null, name, consecutiveroute, 0);
 						app.driverCallServer(PlayerCommands.messageclients, "current route override prior to set waypoint: "+wpname);
-						NavigationUtilities.routeFailed(state.get(values.navigationroute));
 						break;
 					}
 
