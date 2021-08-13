@@ -39,6 +39,7 @@ public class Navigation implements Observer {
 	public static long routestarttime = 0;
 	public NavigationLog navlog;
 	int batteryskips = 0;
+	int unsafeskips = 0;
     private String navpstring = null;
 
 
@@ -650,6 +651,16 @@ public class Navigation implements Observer {
 					continue;
 				}
 
+				if (!safeUndock()) {
+					unsafeskips++;
+					Util.log("robot blocked from safely undocking: " + unsafeskips, this);
+					if (unsafeskips == 1)
+						navlog.newItem(NavigationLog.ALERTSTATUS, "Robot blocked from safely undocking", 0, null, name, consecutiveroute, 0);	
+					stopNavigation(); // turn off lidar
+					if( ! delayToNextRoute(navroute, name, id)) return;
+					continue;
+				} unsafeskips = 0;
+				
 				// enable rgb cam
                 if (!(state.equals(values.stream, Application.streamstate.camera.toString()) ||
                         state.equals(values.stream, Application.streamstate.camandmic.toString()))) {
@@ -807,7 +818,25 @@ public class Navigation implements Observer {
 		}  }).start();
 	}
 
+	private boolean safeUndock() {
+		final double distance = settings.getDouble(ManualSettings.undockdistance);
+		String scan = state.get(State.values.rosscan);
+		if (scan == null) return false;
+		
+		String[] points = scan.split(",");
+		// Util.log("points: "+points.length, this);
+
+		// TODO: USE MORE POINTS
+		double avg = (Double.parseDouble(points[0]) + Double.parseDouble(points[points.length-1])) / 2; 
+		
+		Util.log("undock setting: "+distance, this);
+		Util.log("lidar: "+ avg, this);
+			
+		return avg > (distance * 2); // safety padding try 1.5 for prod
+	}
+	
 	private void undockandlocalize() { // blocking
+		if (!safeUndock()) return;
 		state.set(State.values.motionenabled, true);
 		double distance = settings.getDouble(ManualSettings.undockdistance);
 		app.driverCallServer(PlayerCommands.forward, String.valueOf(distance));

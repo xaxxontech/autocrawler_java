@@ -37,7 +37,6 @@ import autocrawler.State.values;
 
 public class Util {
 
-	// TODO: NUKE, JUST USE LINUX 
 	public final static String sep = System.getProperty("file.separator");
 
 	public static final long ONE_DAY = 86400000;
@@ -51,11 +50,7 @@ public class Util {
 	public static final int MAX_HISTORY = 40;
 	public static final int PRECISION = 1;
 
-//	static Vector<String> history = new Vector<String>(MAX_HISTORY);
-//	static private String rosinfor = null;
-//	static private int rosattempts = 0;
-
-	static State state = State.getReference();
+//	static State state = State.getReference();
 
 	public static String trimLength(String txt, int length){
 		if(txt.length() > length) {
@@ -814,7 +809,6 @@ public class Util {
 		f = walk(path, f);
 		return f.size();
 	}
-*/
 
 	public static void appendUserMessage(String message){
 		State state = State.getReference();
@@ -831,7 +825,6 @@ public class Util {
 		state.set(values.guinotify, msg += message);
 	}
 
-	/*
 	public static void deleteROS() {
 
 		if( ! Settings.getReference().getBoolean(ManualSettings.debugenabled)){

@@ -53,10 +53,9 @@ public class OpenCVMotionDetect  {
         new Thread(new Runnable() {
             public void run() {
 //                BackgroundSubtractorMOG2 mog = new BackgroundSubtractorMOG2(0, 512, false);
-//                BackgroundSubtractorMOG2 mog = Video.createBackgroundSubtractorMOG2(0, 512, false);
-                BackgroundSubtractorMOG2 mog = null;
+            	BackgroundSubtractorMOG2 mog = Video.createBackgroundSubtractorMOG2(0, 512, false);
 
-                        Mat frame = new Mat();
+                Mat frame = new Mat();
                 Mat gr = null;
                 Mat bl = null;
                 Mat m =  new Mat();
@@ -167,9 +166,8 @@ public class OpenCVMotionDetect  {
             double threshold= 0.00001;
             int f = 0;
 //            BackgroundSubtractorMOG2 mog = new BackgroundSubtractorMOG2(0, 16, false);
-//            BackgroundSubtractorMOG2 mog = Video.createBackgroundSubtractorMOG2(0, 16, false);
-            BackgroundSubtractorMOG2 mog = null;
-                    Mat frame;
+            BackgroundSubtractorMOG2 mog = Video.createBackgroundSubtractorMOG2(0, 16, false);
+            Mat frame;
             Mat gr = null;
             Mat bl = null;
             Mat m =  new Mat();
