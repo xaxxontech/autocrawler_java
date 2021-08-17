@@ -19,6 +19,7 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.Vector;
@@ -35,6 +36,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
 import autocrawler.PlayerCommands;
+import autocrawler.State;
 import autocrawler.Util;
 
 //todo: scollpane tabbed .. count state vars use
@@ -60,15 +62,37 @@ public class SwingTerminal extends JFrame {
 	Socket socket = null;	
 	String version = null;
 	String exclude = null;
-	int rx, tx = 0;
+	int rx, tx, historyPointer, statePointer = 0;
 	String ip;
 	int port;
+
+	final int MAX_HISTORY = 20;
+	Vector<String> history = new Vector<String>(MAX_HISTORY);
+
+
+	Vector<String> filter = getFilter();
+	Vector<String> getFilter() {
+		HashSet<String> init = new HashSet<String>();
+		init.add("Connection timed out: connect");
+		init.add("<messageclient> <status> battery");
+		init.add("distanceangle");
+		init.add("volts");
+		init.add("cpu");
+		return new Vector<String>(init);
+	}
 	
-	public SwingTerminal(String ip, int port, String exclude){ 
+	public SwingTerminal(String ip, int port){ 
 		
 		this.ip = ip;
 		this.port = port;
-		this.exclude = exclude;
+		// this.exclude = exclude;
+		
+		// hack
+		/*
+		history.add("runroute red");
+		history.add("stopnav");
+		history.add("gotodock");
+		*/
 		
 		setDefaultLookAndFeelDecorated(true);
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
@@ -78,7 +102,6 @@ public class SwingTerminal extends JFrame {
 		list.setFont(new Font("serif", Font.PLAIN, 25));
 		in.setFont(new Font("serif", Font.PLAIN, 25));
 		setFont(new Font("serif", Font.PLAIN, 25));
-		
 		
 		list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		list.addListSelectionListener(new ListSelectionListener() {	
@@ -98,6 +121,7 @@ public class SwingTerminal extends JFrame {
 			@Override public void keyReleased(KeyEvent arg) {}
 			@Override // enter key 
 			public void keyPressed(KeyEvent arg) {
+				
 				if(arg.getKeyCode() == 10){				
 					if(list.getSelectedIndex() != -1){
 						sendCommand(in.getText().trim());
@@ -136,7 +160,7 @@ public class SwingTerminal extends JFrame {
 			c[i] = cmds[i].toString();
 		}
 		
-		Arrays.sort(c); // doesn't work unless create string array0-= ?
+		Arrays.sort(c); // sort doesn't work unless create string array?
 		for(int i = 0; i < c.length; i++) {
 			System.out.println(c[i]);
 			listModel.addElement(c[i].toString());
@@ -153,13 +177,43 @@ public class SwingTerminal extends JFrame {
 
 		getContentPane().add(in, BorderLayout.PAGE_END);
 		getContentPane().add(pause, BorderLayout.PAGE_START);
-		// chatScroller.setFocusable(false);
+		chatScroller.setFocusable(false);
 		
 		in.addKeyListener(new KeyListener() {
-			@Override public void keyPressed(KeyEvent arg) {}
+			@Override public void keyPressed(KeyEvent arg) {
+								
+				if (arg.getKeyCode() == 38) {
+					if (historyPointer == history.size()-1) historyPointer = 0;
+					else historyPointer++;
+					in.setText(history.get(historyPointer));
+					// System.out.println(arg.getKeyCode() + " ++ " + historyPointer + " " + history.size());
+					// System.out.println(history.toString());
+				}
+				
+				if (arg.getKeyCode() == 40) {
+					if (historyPointer == 0) historyPointer = history.size()-1;
+					else historyPointer--;
+					in.setText(history.get(historyPointer));
+					// System.out.println(arg.getKeyCode() + " -- " + historyPointer + " " + history.size());
+					// System.out.println(history.toString());
+
+				}
+				
+				if (arg.getKeyCode() == 39) {
+					if (statePointer == State.values.values().length-1) statePointer = 0;
+					statePointer++;
+					in.setText("state " + State.values.values()[statePointer] + " ");
+				}
+				
+				if (arg.getKeyCode() == 37) {
+					if (statePointer == 0) statePointer = State.values.values().length-1;
+					else statePointer--;
+					in.setText("state " + State.values.values()[statePointer] + " ");
+				}
+			}
+			
 			@Override public void keyReleased(KeyEvent arg) {}
-			@Override // input with parameter 
-			public void keyTyped(KeyEvent e) {
+			@Override public void keyTyped(KeyEvent e) {
 				if(e.getKeyChar() == '\n' || e.getKeyChar() == '\r') 
 					sendCommand(in.getText().trim());
 			}
@@ -172,10 +226,10 @@ public class SwingTerminal extends JFrame {
 		
 		// start timer watch dog 
 		new Timer().scheduleAtFixedRate(new Task(), 0, DELAY);
-		importFile();
+	//	importFile();
 	}
 	
-	
+	/*
 	private void importFile(){
 		
 		if (exclude == null) {
@@ -209,7 +263,7 @@ public class SwingTerminal extends JFrame {
 		
 		exclude = new File(exclude).getName(); // just display file name if big path 
 	}
-	
+	*/
 	
 	private class Task extends TimerTask {
 		public void run(){
@@ -323,11 +377,17 @@ public class SwingTerminal extends JFrame {
 			printer.checkError();
 			printer.println(input);
 		} catch (Exception e) {
-			appendMessages("sendCommand(): "+e.getMessage());
+			// appendMessages("sendCommand(): "+e.getMessage());
 			closeSocket();
 		}
 		
-		// in.setText(""); // reset text input field better? 
+
+		while (history.size() > MAX_HISTORY) history.remove(0);
+		if (!history.contains(input)) history.add(input);
+		
+		System.out.println(history.toString());
+		
+		in.setText(""); // reset text input field better? 
 	}
 	
 	void appendMessages(final String input){
@@ -341,13 +401,29 @@ public class SwingTerminal extends JFrame {
 			return;
 			
 		}
-		
+	
+		/*	
 		for( int i = 0 ; i < ignore.size() ; i++ ) {
 			 if (input.contains(ignore.get(i))) {
-				// System.out.println("ignored.. " + input + " [" + ignore.get(i)+"]");
+				System.out.println("ignored.. " + input + " [" + ignore.get(i)+"]");
+				return;
+			}
+		} 
+		
+		if (filter.contains(input)) {
+			System.out.println("filtered.. " + input );
+			return;
+		}
+		
+		System.out.println("in.. " + input );
+		*/
+		for( int i = 0 ; i < filter.size() ; i++ ) {
+			 if (input.contains(filter.get(i))) {
+				// System.out.println("filtered.. " + input + " [" + filter.get(i)+"]");
 				return;
 			}
 		}
+		
 		
 		if( pause.isSelected()) {
 			messages.append(Util.getDateStampShort().replace("-", " : ") + "       " + input + "\n");
@@ -356,18 +432,12 @@ public class SwingTerminal extends JFrame {
 	}
 	
 	public static void main(String[] args) {
-		if (args.length == 3) {
-			javax.swing.SwingUtilities.invokeLater(new Runnable() {
-				public void run() {
-					new SwingTerminal(args[0], Integer.parseInt(args[1]), args[2]);
-				}
-			});
-		}
+	
 		
 		if (args.length == 2) {
 			javax.swing.SwingUtilities.invokeLater(new Runnable() {
 				public void run() {
-					new SwingTerminal(args[0], Integer.parseInt(args[1]), null);
+					new SwingTerminal(args[0], Integer.parseInt(args[1]));
 				}
 			});
 		}
@@ -375,7 +445,7 @@ public class SwingTerminal extends JFrame {
 		if (args.length == 1) {
 			javax.swing.SwingUtilities.invokeLater(new Runnable() {
 				public void run() {
-					new SwingTerminal("crawler", 4444, args[1]);
+					new SwingTerminal(args[0], 4444);
 				}
 			});
 		}
@@ -383,7 +453,7 @@ public class SwingTerminal extends JFrame {
 		if (args.length == 0) {
 			javax.swing.SwingUtilities.invokeLater(new Runnable() {
 				public void run() {
-					new SwingTerminal("crawler", 4444, null);
+					new SwingTerminal("crawler", 4444);
 				}
 			});
 		}
