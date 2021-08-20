@@ -583,6 +583,8 @@ public class Application implements ServletContextListener {
 //                        "rosrun", Ros.ROSPACKAGE, "image_to_shm.py");
 //                p.start();
 //            } catch (Exception e) {}
+			
+			Util.log(BanList.getRefrence().toString(), this);
 			break;
 
 			/* old dashboard
@@ -888,8 +890,7 @@ public class Application implements ServletContextListener {
 		}
 	}
 
-	private void
-    streamSettingsCustom(String str) {
+	private void streamSettingsCustom(String str) {
 		settings.writeSettings(GUISettings.vset, "vcustom");
 		settings.writeSettings(GUISettings.vcustom, str);
 		String s = "custom stream set to: " + str;
@@ -1126,6 +1127,9 @@ public class Application implements ServletContextListener {
 	}
 
 	public String logintest(String user, String pass, String remember) {
+		
+	    Util.debug("logintest user: "+user+", pass: "+pass, this);
+
         String encryptedPassword = (passwordEncryptor.encryptPassword(user + salt + pass)).trim();
 
         if(logintest(user, encryptedPassword) == null) return null;
@@ -1135,7 +1139,7 @@ public class Application implements ServletContextListener {
     }
 
 	public String logintest(String user, String encryptedpass) {
-//	    Util.debug("logintest user: "+user+", encryptedpass: "+encryptedpass, this);
+	    Util.debug("logintest user: "+user+", encryptedpass: "+encryptedpass, this);
 		int i;
 		String value = "";
 		String returnvalue = null;
@@ -1407,6 +1411,7 @@ public class Application implements ServletContextListener {
 		}
 	}
 
+	/*
 	public void factoryReset() {
 
 		final String backup = "conf"+Util.sep+"backup_autocrawler_settings.txt";
@@ -1419,6 +1424,7 @@ public class Application implements ServletContextListener {
 
 		restart();
 	}
+	*/
 
 }
 

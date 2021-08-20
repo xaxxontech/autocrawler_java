@@ -22,6 +22,7 @@ public class CommServlet extends HttpServlet {
 	private static Application app = null;
     private static BanList ban = BanList.getRefrence();
 	private static State state = State.getReference();
+	private static Settings settings = Settings.getReference(); 
 	private static final String RESP = "ok";
 	public static String clientaddress = null;
 	volatile long clientID = 0;
@@ -66,6 +67,9 @@ public class CommServlet extends HttpServlet {
             String username = app.logintest(request.getParameter(params.loginuser.toString()),
 					request.getParameter(params.loginpass.toString()), request.getParameter(params.loginremember.toString()));
             if(username == null) {
+            	
+            	// login fail
+            	ban.loginFailed(request.getLocalAddr());
 				logdebug("username=null, loginuser: sending SC_FORBIDDEN", this);
             	response.sendError(HttpServletResponse.SC_FORBIDDEN);
             	return;
@@ -268,7 +272,10 @@ public class CommServlet extends HttpServlet {
     }
 
     private static void logdebug(String str, Object obj) {
-//		 Util.debug(str, "CommServlet");
+    	
+		if( ! settings.getBoolean(ManualSettings.debugenabled)) return;
+
+    	Util.debug(str, "CommServlet");
 	}
     
 }

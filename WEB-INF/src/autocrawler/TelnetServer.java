@@ -74,7 +74,7 @@ public class TelnetServer implements Observer {
 		public void run() {
 			
 			if(settings.getBoolean(GUISettings.loginnotify)) app.saySpeech("lawg inn telnet");
-			sendToGroup(TELNETTAG+" "+printers.size() + " tcp connections active");
+			// if(debug) sendToGroup(TELNETTAG+" "+printers.size() + " tcp connections active");
 			state.set(autocrawler.State.values.telnetusers, printers.size());
 			
 			String str = null;
@@ -137,6 +137,7 @@ public class TelnetServer implements Observer {
 	}
 		
 	private void doPlayer(final String str, PrintWriter out){
+		
 //		Util.debug(str, this);
 		
 		if(str == null || out == null) return;

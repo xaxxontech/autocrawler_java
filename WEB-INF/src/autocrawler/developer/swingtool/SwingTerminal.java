@@ -28,6 +28,7 @@ import javax.swing.DefaultListModel;
 import javax.swing.JFrame;
 import javax.swing.JList;
 import javax.swing.JScrollPane;
+import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.JToggleButton;
@@ -52,6 +53,8 @@ public class SwingTerminal extends JFrame {
 
 	DefaultListModel<String> listModel = new DefaultListModel<String>();
 	JList<String> list = new JList<String>(listModel);
+	
+//	JTable table = new JTable
 	
 	JToggleButton pause = new JToggleButton("waiting", true);
 	JTextArea messages = new JTextArea();	
