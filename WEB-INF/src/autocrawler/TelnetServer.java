@@ -64,7 +64,7 @@ public class TelnetServer implements Observer {
 			// send banner to terminal
 			sendToSocket("Welcome to Autocrawler v" + new Updater().getCurrentVersion(), out);
 			String ip_address = clientSocket.getInetAddress().toString().substring(1);
-			sendToSocket(ip_address + " connected via socket", out);
+			// sendToSocket(ip_address + " connected via socket", out);
 			Util.debug(ip_address+" connected via socket", this);
 			this.start();
 		}
@@ -132,7 +132,8 @@ public class TelnetServer implements Observer {
 			Util.log("shutdown: " + e.getMessage(), this);
 		}
 		
-		sendToGroup(TELNETTAG+" "+printers.size() + " tcp connections active");
+		// debug ?
+		// sendToGroup(TELNETTAG+" "+printers.size() + " tcp connections active");
 		state.set(autocrawler.State.values.telnetusers, printers.size());
 	}
 		
@@ -153,12 +154,6 @@ public class TelnetServer implements Observer {
 			sendToSocket("error: unknown command, " + cmd[0], out);
 			return;
 		}
-
-// TODO: maybe in autocrawler.developer mode?
-//		if (player.equals(PlayerCommands.systemcall)) {
-//			sendToSocket("forbidden command, " + cmd[0], out);
-//			return;
-//		}
 
 		// check for null vs string("")
 		args = args.trim();

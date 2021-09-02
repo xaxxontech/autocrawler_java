@@ -291,10 +291,10 @@ public class NavigationUtilities {
 			for (int i = 0; i < routes.getLength(); i++) {
 				String rname = ((Element) routes.item(i)).getElementsByTagName(ROUTE_NAME).item(0).getTextContent();
 				String isactive = ((Element) routes.item(i)).getElementsByTagName(ACTIVE).item(0).getTextContent();
-				if(isactive.equals("true")) return rname;//Boolean.TRUE.toString())) return rname;  //-------------------------------------------------------------------- bpool?
+				if(isactive.equals("true")) return rname;
 			}
 		} catch (DOMException e) {
-			Util.printError(e);
+			// Util.printError(e);
 			return null;
 		}
 		return null;

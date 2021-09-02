@@ -11,6 +11,7 @@ import org.jasypt.util.password.ConfigurablePasswordEncryptor;
 
 import autocrawler.navigation.Navigation;
 import autocrawler.navigation.NavigationLog;
+import autocrawler.navigation.NavigationUtilities;
 import autocrawler.navigation.Ros;
 import autocrawler.image.OpenCVMotionDetect;
 import autocrawler.image.OpenCVObjectDetect;
@@ -112,17 +113,42 @@ public class Application implements ServletContextListener {
         network = new Network(this);
 		watchdog = new SystemWatchdog(this);
 
-        state.set(State.values.navsystemstatus, Ros.navsystemstate.stopped.toString());
+ // moved to nav ---       state.set(State.values.navsystemstatus, Ros.navsystemstate.stopped.toString());
 
 		navigation = new Navigation(this);
-
-		// run any active route 
+		Util.log("application initialize done", this);
+		
+		// run any active route ..TODO: will throw error and run route even on low battery 
+		/*
+		 * 
+ java.base@11.0.11/java.lang.Thread.sleep(Native Method)
+ autocrawler.Util.delay(Util.java:69)
+ autocrawler.navigation.Navigation.delayToNextRoute(Navigation.java:871)
+ autocrawler.navigation.Navigation.access$7(Navigation.java:849)
+ autocrawler.navigation.Navigation$5.run(Navigation.java:633)
+ java.base@11.0.11/java.lang.Thread.run(Thread.java:829)
+*/
+		
 		if (!navigation.runAnyActiveRoute() && !settings.getBoolean(ManualSettings.ros2)) {
 			Util.log("starting roscore", this);
 			Ros.roscommand(null); // start ROS1 roscore
 		}
+		
+		
+		/*
+		if ( ! settings.getBoolean(ManualSettings.ros2)) {
+			Util.log("starting roscore", this);
+			Ros.roscommand(null); // start ROS1 roscore
+		}
+		
+		if (navigation.runAnyActiveRoute()) {
+			
+			Util.log("starting route: " + NavigationUtilities.getActiveRoute(), this);
 
-		Util.log("application initialize done", this);
+			
+		}
+		*/
+
 	}
 
 
@@ -584,32 +610,8 @@ public class Application implements ServletContextListener {
 //                p.start();
 //            } catch (Exception e) {}
 			
-			Util.log(BanList.getRefrence().toString(), this);
+ 			Util.log(BanList.getRefrence().toHTML(), this);
 			break;
-
-			/* old dashboard
-		case deletelogs: // super dangerous, purge all log folders and ros logs, causes restart
-			if( !state.equals(values.dockstatus, AutoDock.DOCKED)) {
-				Util.log("must be docked, skipping.. ", null);
-				break;
-			}
-			state.set(values.guinotify, "logs being deleted, rebooting");
-			Util.deleteLogFiles();
-			break;
-			
-		case archivelogs: // create zip of log folder 
-			Util.archiveLogFiles();
-			break;
-
-		case archivenavigation: // create zip file with settings, tailf of main logs, nav log, routes.xml 
-			Util.archiveNavigation();
-			break;
-		
-		case truncmedia: // remove any frames or videos not currently linked in autocrawler.navigation log
-			Util.truncStaleFrames();
-			Util.truncStaleAudioVideo();
-			break;
-			*/
 
 		case streammode: // TODO: testing ffmpeg/avconv streaming
 			setStreamMode(str);

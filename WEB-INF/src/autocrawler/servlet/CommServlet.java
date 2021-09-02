@@ -34,7 +34,12 @@ public class CommServlet extends HttpServlet {
 
 	public void doPost(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
-
+		
+//		if (ban.isBanned(request.getRemoteAddr())) {
+//        	logdebug("banned ip: sending SC_FORBIDDEN", this);
+//        	response.sendError(HttpServletResponse.SC_FORBIDDEN);
+//		}
+		
 		if (request.getParameter(params.clientid.toString()) == null) return;
 
 		Long id = Long.valueOf(request.getParameter(params.clientid.toString()));
@@ -231,7 +236,7 @@ public class CommServlet extends HttpServlet {
 		obj.put("params", params);
 		String msg = obj.toJSONString();
 
-        Util.debug("sendToClientFunction: "+msg, "CommServlet.sendToClientFunction()");
+        // Util.debug("sendToClientFunction: "+msg, "CommServlet.sendToClientFunction()");
 
 		if (!state.exists(State.values.driver)) {
 			logdebug("no driver, dropped: sendToClientFunction: " + msg, "CommServlet.sendToClientFunction()");
@@ -273,9 +278,10 @@ public class CommServlet extends HttpServlet {
 
     private static void logdebug(String str, Object obj) {
     	
-		if( ! settings.getBoolean(ManualSettings.debugenabled)) return;
+// dev mode + debug?		if( ! settings.getBoolean(ManualSettings.debugenabled)) return;
 
-    	Util.debug(str, "CommServlet");
+
+    	// Util.debug(str, "CommServlet");
 	}
     
 }

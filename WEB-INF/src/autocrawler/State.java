@@ -68,7 +68,7 @@ public class State {
 	/** not to be broadcast over telnet channel when updated, to reduce chatter */
 	public enum nonTelnetBroadcast { batterylife, sysvolts, batteryinfo, rosscan, rosmapwaypoints, rosglobalpath,
 		odomturnpwm, odomlinearpwm, framegrabbusy, lastusercommand, odomupdated, lastodomreceived,
-		redockifweakconnection, networksinrange,
+		redockifweakconnection, networksinrange, telnetusers,
 	}
 
 	/** @return true if given command is in the sub-set */
@@ -114,9 +114,13 @@ public class State {
 		return equals(value.name(), b);
 	}
 
+	public int countObservers() {
+		return observers.size();
+	}
+	
 	@Override
 	public String toString(){
-		String str = "number of observers: " + observers.size();
+		String str = "observers " + observers.size() + "<br>";
 		final Set<String> keys = props.keySet();
 		for(final Iterator<String> i = keys.iterator(); i.hasNext(); ){
 			final String key = i.next();

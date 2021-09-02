@@ -54,6 +54,8 @@ public class Navigation implements Observer {
 		state.addObserver(this);
 		app = a;
 		state.set(values.lidar, true); // or any non null
+        state.set(State.values.navsystemstatus, Ros.navsystemstate.stopped.toString());
+
 	}
 
 	@Override
@@ -436,7 +438,7 @@ public class Navigation implements Observer {
 		return false;
 	}
 	
-	/** only used before starting a route, ignored if un-docked */
+	/** only used before starting a route */
 	public static boolean batteryTooLow() {
 
 		if (state.get(values.batterylife).matches(".*\\d+.*")) {  // make sure batterylife != 'TIMEOUT', throws error
@@ -790,7 +792,7 @@ public class Navigation implements Observer {
 						navlog.newItem(NavigationLog.ERRORSTATUS, "Unable to dock", routestarttime, null, name, consecutiveroute, 0);
 
 						// cancelRoute(id);
-						// try docking one more time, sending alert if fail
+						//TODO: try docking one more time, sending alert if fail
 						Util.log("calling redock()", this);
 						stopNavigation();
 						Util.delay(Ros.ROSSHUTDOWNDELAY / 2); // 5000 too low, massive cpu sometimes here
@@ -803,8 +805,8 @@ public class Navigation implements Observer {
 					navlog.newItem(NavigationLog.COMPLETEDSTATUS, null, routestarttime, null, name, consecutiveroute, routemillimeters);
 
 					// subtract from routes time or no?
-					int timetodock = (int) ((System.currentTimeMillis() - start)/ 1000);
-					int routetime = (int)(System.currentTimeMillis() - routestarttime)/1000 - timetodock;
+					// int timetodock = (int) ((System.currentTimeMillis() /*- start*/)/ 1000);
+					final int routetime = (int)(System.currentTimeMillis() - routestarttime)/1000;// - timetodock;
 					NavigationUtilities.routeCompleted(name, routetime, (int)routemillimeters/1000);
 					state.delete(State.values.estimatedrouteseconds);
 					

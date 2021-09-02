@@ -50,8 +50,6 @@ public class Util {
 	public static final int MAX_HISTORY = 40;
 	public static final int PRECISION = 1;
 
-//	static State state = State.getReference();
-
 	public static String trimLength(String txt, int length){
 		if(txt.length() > length) {
 			txt = txt.substring(0, length);
@@ -82,7 +80,7 @@ public class Util {
 	}
 
 	public static String getDateStampShort() {
-		DateFormat dateFormat = new SimpleDateFormat("mm-ss");
+		DateFormat dateFormat = new SimpleDateFormat("hh-mm-ss");
 		Calendar cal = Calendar.getInstance();
 		return dateFormat.format(cal.getTime());
 	}

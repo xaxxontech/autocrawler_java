@@ -64,7 +64,7 @@ public class SwingTerminal extends JFrame {
 	PrintWriter printer = null;
 	Socket socket = null;	
 	String version = null;
-	String exclude = null;
+//	String exclude = null;
 	int rx, tx, historyPointer, statePointer = 0;
 	String ip;
 	int port;
@@ -74,6 +74,9 @@ public class SwingTerminal extends JFrame {
 
 
 	Vector<String> filter = getFilter();
+	// private String battery = "";
+	private String volts = "";
+	private String dockstatus;
 	Vector<String> getFilter() {
 		HashSet<String> init = new HashSet<String>();
 		init.add("Connection timed out: connect");
@@ -165,7 +168,7 @@ public class SwingTerminal extends JFrame {
 		
 		Arrays.sort(c); // sort doesn't work unless create string array?
 		for(int i = 0; i < c.length; i++) {
-			System.out.println(c[i]);
+			// System.out.println(c[i]);
 			listModel.addElement(c[i].toString());
 		}
 		
@@ -186,6 +189,7 @@ public class SwingTerminal extends JFrame {
 			@Override public void keyPressed(KeyEvent arg) {
 								
 				if (arg.getKeyCode() == 38) {
+					if (history.size() == 0) return;
 					if (historyPointer == history.size()-1) historyPointer = 0;
 					else historyPointer++;
 					in.setText(history.get(historyPointer));
@@ -194,12 +198,12 @@ public class SwingTerminal extends JFrame {
 				}
 				
 				if (arg.getKeyCode() == 40) {
+					if (history.size() == 0) return;
 					if (historyPointer == 0) historyPointer = history.size()-1;
 					else historyPointer--;
 					in.setText(history.get(historyPointer));
 					// System.out.println(arg.getKeyCode() + " -- " + historyPointer + " " + history.size());
 					// System.out.println(history.toString());
-
 				}
 				
 				if (arg.getKeyCode() == 39) {
@@ -273,7 +277,7 @@ public class SwingTerminal extends JFrame {
 			if(printer == null || socket.isClosed()){
 				
 				openSocket();
-				try { Thread.sleep(5000); } catch (InterruptedException e) {}
+//				Util.delay(5000);
 				if(socket != null) if(socket.isConnected()) readSocket();
 					
 			} else {
@@ -302,6 +306,7 @@ public class SwingTerminal extends JFrame {
 			setTitle("\t\t.... Disconnected");
 			appendMessages("openSocket(): " + e.getMessage());
 			closeSocket();
+			Util.delay(5000);
 		}
 	}
 	
@@ -333,7 +338,7 @@ public class SwingTerminal extends JFrame {
 			
 		} else {
 			
-			pause.setText("Paused..........." + " rx: " + rx++ + " tx: " + tx );
+			pause.setText("Paused..........." + " rx: " + rx + " tx: " + tx );
 
 		}
 		
@@ -347,7 +352,7 @@ public class SwingTerminal extends JFrame {
 					input = reader.readLine();
 					if(input == null) {
 						appendMessages("readSocket(): closing..");
-						try { Thread.sleep(5000); } catch (InterruptedException e) {}
+					//	Util.delay(1000);
 						closeSocket();
 						break;
 					}
@@ -388,7 +393,7 @@ public class SwingTerminal extends JFrame {
 		while (history.size() > MAX_HISTORY) history.remove(0);
 		if (!history.contains(input)) history.add(input);
 		
-		System.out.println(history.toString());
+		// System.out.println(history.toString());
 		
 		in.setText(""); // reset text input field better? 
 	}
@@ -396,14 +401,35 @@ public class SwingTerminal extends JFrame {
 	void appendMessages(final String input){
 		
 		if( input.toLowerCase().contains("welcome")) {
-			
-			version = input.replace("<telnet>", "");
-		
-			setTitle( version + " [" +socket.getInetAddress().toString() + "] " + exclude);
-
+			version = input.replace("<telnet> Welcome to", "");
+			// version = input.replace("welcome to", "");
+			sendCommand("state dockstatus");
+			sendCommand("state batteryvolts");
 			return;
-			
 		}
+		
+		//if( input.contains("message")) {
+			
+			// bat <state> batteryvolts 11.36
+			// mesage <messageclient> <status> battery 91%_charging
+			//if( input.contains("battery")) {
+			//	String[] t = input.split(" ");
+			//	battery = t[t.length-1];
+			//}
+		//}
+		
+		if( input.contains("dockstatus")) {	
+			String[] t = input.split(" ");
+			dockstatus = t[t.length-1];
+		}
+		
+		if( input.contains("batteryvolts")) {
+			String[] t = input.split(" ");
+			volts = t[t.length-1];
+		}
+		
+		setTitle(version + " " + dockstatus + " " + volts + " volts "  );
+
 	
 		/*	
 		for( int i = 0 ; i < ignore.size() ; i++ ) {
@@ -420,6 +446,7 @@ public class SwingTerminal extends JFrame {
 		
 		System.out.println("in.. " + input );
 		*/
+		
 		for( int i = 0 ; i < filter.size() ; i++ ) {
 			 if (input.contains(filter.get(i))) {
 				// System.out.println("filtered.. " + input + " [" + filter.get(i)+"]");
@@ -429,13 +456,12 @@ public class SwingTerminal extends JFrame {
 		
 		
 		if( pause.isSelected()) {
-			messages.append(Util.getDateStampShort().replace("-", " : ") + "       " + input + "\n");
+			messages.append(Util.getDateStampShort().replace("-", ":") + "\t" + input + "\n");
 			messages.setCaretPosition(messages.getDocument().getLength());
 		}
 	}
 	
 	public static void main(String[] args) {
-	
 		
 		if (args.length == 2) {
 			javax.swing.SwingUtilities.invokeLater(new Runnable() {
