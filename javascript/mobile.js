@@ -5,7 +5,7 @@ var webrtcinit = false;
 var mobile;
 var lastcommand="";
 var menus = [ "main_menu", "advanced_menu", "command_log_menu", "navigation_menu", "waypoints_menu",
-	"routes_menu", "developer_menu" ];
+	"routes_menu", "developer_menu", "map_menu" ];
 
 // statuses
 // var UNKNOWN = "<span style='color: #999999'>unknown</span>";
@@ -313,7 +313,7 @@ function videologo(state) {
 	var xy = findpos(sc);
 	
 	// steeringcontrols height
-	sc.style.height = (document.body.offsetHeight - vid.offsetHeight - mc.offsetHeight - cd.offsetHeight)*0.95 + "px";
+	sc.style.height = Math.floor((document.body.offsetHeight - vid.offsetHeight - mc.offsetHeight - cd.offsetHeight)*0.91) + "px";
 	
 	// statusbox size
 	sbratio = 0.15;

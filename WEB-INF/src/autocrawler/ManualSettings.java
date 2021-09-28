@@ -40,7 +40,7 @@ public enum ManualSettings {
 		config.setProperty(camhold.name(), Settings.FALSE);
         config.setProperty(webrtcserver.name(), "xaxxon.com");
         config.setProperty(webrtcport.name(), "8443");
-        config.setProperty(turnserverlogin.name(), "auto:robot");
+        config.setProperty(turnserverlogin.name(), "turn:server");
         config.setProperty(turnserverport.name(), "3478");
 		config.setProperty(ros2.name(), Settings.FALSE);
 		config.setProperty(updatelocation.name(), "https://www.xaxxon.com/downloads/"); // trailing slash required

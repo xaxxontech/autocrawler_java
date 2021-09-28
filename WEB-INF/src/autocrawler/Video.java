@@ -456,7 +456,7 @@ public class Video {
             String topic = "camera/color/image_raw";
 //            if (state.getBoolean(values.dockcamon)) topic = "fiducial_images";
             if (state.getBoolean(values.dockcamon)) topic = "usb_cam/image_raw";
-            Ros.roscommand("rosrun "+Ros.ROSPACKAGE+" image_to_shm.py _camera_topic:="+topic);
+            Ros.roscommand("rosrun "+Ros.ROSPACKAGE+" "+ Ros.IMAGE_TO_SHM+" _camera_topic:="+topic);
 
             while(state.exists(State.values.writingframegrabs)
                     && System.currentTimeMillis() - lastframegrab < Util.ONE_MINUTE) {

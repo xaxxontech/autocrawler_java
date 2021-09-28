@@ -254,7 +254,7 @@ function onRemoteTrack(event) {
         getVideoElement().srcObject = event.streams[0];
         videologo("off");
         
-        setTimeout(function() { checkvideoState(event); }, VIDEOCONNECTTIMEOUT);
+        // setTimeout(function() { checkvideoState(event); }, VIDEOCONNECTTIMEOUT);
     }
 }
 

@@ -83,6 +83,11 @@ function navigationmenu() {
 
 function rosmap(mode) {
 	
+	if (typeof mobile !== 'undefined') {
+		rosmapmobile();
+		return;
+	}
+	
 	var v = document.getElementById("main_menu_over");
 	var xy = findpos(v);
 	var x = xy[0] + v.offsetWidth;
@@ -158,6 +163,14 @@ function rosmap(mode) {
 		message("map unavailable","orange");
 	}
 	
+}
+
+function rosmapmobile() {
+	var map = document.getElementById("mapimg");
+	var str = "<img src='frameGrabHTTP?mode=rosmap&date=" + new Date().getTime() + "' ";
+	str += "style='width: 100%' alt=''>" ;
+	map.innerHTML = str;
+	menu("map_menu");
 }
 
 function rosmapImgReload() {

@@ -266,9 +266,25 @@ Nav System <span id="navsystemstatus" class="status_info">STOPPED</span><br>
 <div style="height: 2%"> </div>
 <a href="javascript: callServer('startnav','');">start navigation</a><br>
 <a href="javascript: callServer('stopnav','');">stop navigation</a><br>
+<a href="javascript: callServer('startmapping','');">start mapping</a><br>
+<a href="javascript: if (confirm(&quot;create backup and save new map\nare you sure?&quot;)) callServer('stopnav','');">save new map</a><br>
+<a href="javascript: if (confirm(&quot;shutting down mapping\nremember to the map first&quot;)) callServer('stopnav','');">stop mapping</a><br>
+<div style="height: 2%"> </div>
+<a href="javascript: rosmap();">map</a> &gt;<br>
 <a href="javascript: waypointsmenu();">waypoints</a> &gt;<br>
 <a href="javascript: routesmenu();">routes</a> &gt;<br>
 <a href="navigationlog/index.html" target="_blank">navigation log &nearr;</a><br>
+</div>
+
+<!-- MAP MENU -->
+<div id="map_menu" class="menu" style="position: absolute; display: none;" >
+<a href="javascript: menu('navigation_menu');" >
+<span class="cancelbox"><b>&lt;</b></span> BACK</a>
+&nbsp; <a href="javascript: closemenus();" >
+<span class="cancelbox"><b>X</b></span> CLOSE</a>
+<div style="height: 2%"> </div>
+<a href="javascript: rosmap();">refresh &#x21bb;</a>
+<div id="mapimg">map loading...</div>
 </div>
 
 <!-- WAYPOINTS MENU -->

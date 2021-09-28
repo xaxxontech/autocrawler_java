@@ -53,7 +53,10 @@ public class Ros {
 	public static final String DOCKCAM = "dockcam"; // gstreamer dock cam to rtmp (flash client) and aruco detect
 	public static final String DOCKWEBRTC = "dockwebrtc"; // gstreamer dock cam webrtc and aruco detect
 
-	public static final String ROS1CMD = Settings.tomcathome +Util.sep+"ros1.sh";
+    // node file name constants
+    public static final String IMAGE_TO_SHM = "image_to_shm.py";
+
+    public static final String ROS1CMD = Settings.tomcathome +Util.sep+"ros1.sh";
 	public static final String ROS2CMD = Settings.tomcathome +Util.sep+"ros2.sh";
 
 	public static BufferedImage rosmapImg() {
