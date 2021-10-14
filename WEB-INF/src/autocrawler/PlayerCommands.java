@@ -75,8 +75,8 @@ public enum PlayerCommands {
     // undocumented    
     statuscheck, block, unblock, getemailsettings, emailsettingsupdate,
     
-    // file manage 
-	deletelogs, truncmedia, archivelogs, archivenavigation, 
+    // file manage .. old dashboard
+	// deletelogs, truncmedia, archivelogs, archivenavigation,
 	
     ;
 	

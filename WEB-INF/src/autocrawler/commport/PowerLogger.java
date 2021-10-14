@@ -22,11 +22,9 @@ public class PowerLogger {
 		
 		if(logger == null) init();
 
-		// highly redundant to put class name in log 
-		String data = /* c.getClass().getName().toLowerCase() + ", " + */ msg;
 		try {
 			logger.seek(logger.length());
-			logger.writeBytes(new Date().toString() + ", " + data + "\r\n");
+			logger.writeBytes(new Date().toString() + ", " + msg + "\r\n");
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

@@ -11,6 +11,7 @@ import org.jasypt.util.password.ConfigurablePasswordEncryptor;
 
 import autocrawler.navigation.Navigation;
 import autocrawler.navigation.NavigationLog;
+import autocrawler.navigation.NavigationUtilities;
 import autocrawler.navigation.Ros;
 import autocrawler.image.OpenCVMotionDetect;
 import autocrawler.image.OpenCVObjectDetect;
@@ -112,17 +113,42 @@ public class Application implements ServletContextListener {
         network = new Network(this);
 		watchdog = new SystemWatchdog(this);
 
-        state.set(State.values.navsystemstatus, Ros.navsystemstate.stopped.toString());
+ // moved to nav ---       state.set(State.values.navsystemstatus, Ros.navsystemstate.stopped.toString());
 
 		navigation = new Navigation(this);
-
-		// run any active route 
+		Util.log("application initialize done", this);
+		
+		// run any active route ..TODO: will throw error and run route even on low battery 
+		/*
+		 * 
+ java.base@11.0.11/java.lang.Thread.sleep(Native Method)
+ autocrawler.Util.delay(Util.java:69)
+ autocrawler.navigation.Navigation.delayToNextRoute(Navigation.java:871)
+ autocrawler.navigation.Navigation.access$7(Navigation.java:849)
+ autocrawler.navigation.Navigation$5.run(Navigation.java:633)
+ java.base@11.0.11/java.lang.Thread.run(Thread.java:829)
+*/
+		
 		if (!navigation.runAnyActiveRoute() && !settings.getBoolean(ManualSettings.ros2)) {
 			Util.log("starting roscore", this);
 			Ros.roscommand(null); // start ROS1 roscore
 		}
+		
+		
+		/*
+		if ( ! settings.getBoolean(ManualSettings.ros2)) {
+			Util.log("starting roscore", this);
+			Ros.roscommand(null); // start ROS1 roscore
+		}
+		
+		if (navigation.runAnyActiveRoute()) {
+			
+			Util.log("starting route: " + NavigationUtilities.getActiveRoute(), this);
 
-		Util.log("application initialize done", this);
+			
+		}
+		*/
+
 	}
 
 
@@ -583,30 +609,10 @@ public class Application implements ServletContextListener {
 //                        "rosrun", Ros.ROSPACKAGE, "image_to_shm.py");
 //                p.start();
 //            } catch (Exception e) {}
+			
+ 			Util.log(BanList.getRefrence().toHTML(), this);
 			break;
 
-		case deletelogs: // super dangerous, purge all log folders and ros logs, causes restart
-			if( !state.equals(values.dockstatus, AutoDock.DOCKED)) {
-				Util.log("must be docked, skipping.. ", null);
-				break;
-			}
-			state.set(values.guinotify, "logs being deleted, rebooting");
-			Util.deleteLogFiles();
-			break;
-			
-		case archivelogs: // create zip of log folder 
-			Util.archiveLogFiles();
-			break;
-
-		case archivenavigation: // create zip file with settings, tailf of main logs, nav log, routes.xml 
-			Util.archiveNavigation();
-			break;
-		
-		case truncmedia: // remove any frames or videos not currently linked in autocrawler.navigation log
-			Util.truncStaleFrames();
-			Util.truncStaleAudioVideo();
-			break;
-			
 		case streammode: // TODO: testing ffmpeg/avconv streaming
 			setStreamMode(str);
 			break;
@@ -886,8 +892,7 @@ public class Application implements ServletContextListener {
 		}
 	}
 
-	private void
-    streamSettingsCustom(String str) {
+	private void streamSettingsCustom(String str) {
 		settings.writeSettings(GUISettings.vset, "vcustom");
 		settings.writeSettings(GUISettings.vcustom, str);
 		String s = "custom stream set to: " + str;
@@ -1124,6 +1129,9 @@ public class Application implements ServletContextListener {
 	}
 
 	public String logintest(String user, String pass, String remember) {
+		
+	    Util.debug("logintest user: "+user+", pass: "+pass, this);
+
         String encryptedPassword = (passwordEncryptor.encryptPassword(user + salt + pass)).trim();
 
         if(logintest(user, encryptedPassword) == null) return null;
@@ -1133,7 +1141,7 @@ public class Application implements ServletContextListener {
     }
 
 	public String logintest(String user, String encryptedpass) {
-//	    Util.debug("logintest user: "+user+", encryptedpass: "+encryptedpass, this);
+	    Util.debug("logintest user: "+user+", encryptedpass: "+encryptedpass, this);
 		int i;
 		String value = "";
 		String returnvalue = null;
@@ -1405,6 +1413,7 @@ public class Application implements ServletContextListener {
 		}
 	}
 
+	/*
 	public void factoryReset() {
 
 		final String backup = "conf"+Util.sep+"backup_autocrawler_settings.txt";
@@ -1417,6 +1426,7 @@ public class Application implements ServletContextListener {
 
 		restart();
 	}
+	*/
 
 }
 

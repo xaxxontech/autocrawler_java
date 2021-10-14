@@ -24,13 +24,12 @@ public class BanList {
 	public static final long BAN_TIME_OUT = Util.FIVE_MINUTES;
 	public static final int BAN_ATTEMPTS = 10;
 	public static final int MAX_ATTEMPTS = 12;
-//	public static final int MAX_HISTORY = 50;
 	
 	private HashMap<String, Integer> attempts = new HashMap<String, Integer>();
 	private HashMap<String, Long> blocked = new HashMap<String, Long>();
-//	private Vector<String> history = new Vector<String>();
 	private Vector<String> banned = new Vector<String>();
 	private Vector<String> known = new Vector<String>();
+	private Settings settings = Settings.getReference(); 
 	private State state = State.getReference();
 	private RandomAccessFile logfile = null;
 	private Timer timer = new Timer();
@@ -71,17 +70,7 @@ public class BanList {
 		timer.scheduleAtFixedRate(new ClearTimer(), 0, Util.ONE_MINUTE);
 	}
 	
-//	public String tail(int lines){
-//		int i = 0;
-//		StringBuffer str = new StringBuffer();
-//	 	if(history.size() > lines) i = history.size() - lines;
-//		for(; i < history.size() ; i++) str.append(history.get(i) + "\n<br />"); 
-//		return str.toString();
-//	}
-	
 	public void appendLog(final String str){
-//		if(history.size() > MAX_HISTORY) history.remove(0);
-//		history.add(Util.getTime() + ", " + str);
 		
 		if(logfile==null) return;
 		
@@ -127,8 +116,9 @@ public class BanList {
 	public synchronized boolean isBanned(final String address) {
 		
 		if(address.equals("127.0.0.1")) return false;
-		
-		if(!Settings.getReference().getBoolean(ManualSettings.checkaddresses)) return false;
+		if(address.contains("0.0.0.0")) return false;
+	
+		if( ! settings.getBoolean(ManualSettings.checkaddresses)) return false;
 
 		if(banned.contains(address)) {
 			appendLog("banned address: " + address);
@@ -154,24 +144,28 @@ public class BanList {
 	}
 	
 	public synchronized boolean knownAddress(final String address) {
-
-		if( ! Settings.getReference().getBoolean(ManualSettings.checkaddresses)) {
-			return true;
-		}
-				
-		if( ! Util.validIP(address)) return false; // basic sanity 
-		if(address.equals("0.0.0.0") || address.equals("127.0.0.1") || address.startsWith("10.42")) return true;
 		
+//		appendLog("knownAddress: " + address);
+//		Util.log("knownAddress: " + address, this);
+//		System.out.println(  "knownAddress: " + address + "knownAddress: " );
+
+		if( ! Settings.getReference().getBoolean(ManualSettings.checkaddresses)) return true;
+		
+//		if( ! Util.validIP(address)) return false; // basic sanity 
+	
+		if(address.contains("0.0.0.0") || address.equals("127.0.0.1") /* || address.startsWith("10.42") */) return true;
+		/*
 		if(state.exists(values.localaddress)) {
 			String firsttwonums = state.get(values.localaddress).replaceFirst("\\.\\d+\\.\\d+$", "");
 			if(address.replaceFirst("\\.\\d+\\.\\d+$", "").equals(firsttwonums)) {
 				if( ! known.contains(address) && ! isBanned(address)) {
-					appendLog("added LAN IP: " + address);
+					// appendLog("added LAN IP: " + address);
 					known.add(address);
 				}
 				return true;
 			}
 		} else appendLog("robot's LAN address unknown yet, system might be booting.. ");
+		*/
 		
 		if(known.contains(address)) return true;
 		else {
@@ -189,8 +183,9 @@ public class BanList {
 			appendLog(address + " is not a valid address?"); 
 			return;
 		}
-
-		Util.debug("cleared "+address, this);
+		
+		// appendLog("cleared: " + address);
+		// Util.debug("cleared "+address, this);
 		
 		if(attempts.containsKey(address)) attempts.remove(address);
 		if(blocked.containsKey(address)) blocked.remove(address);
@@ -200,29 +195,27 @@ public class BanList {
 	public synchronized void removeAddress(String remoteAddress) {
 		if(remoteAddress == null) return;
 		if(remoteAddress.equals("null")) return;
-		if(remoteAddress.equals("127.0.0.1")) return;
+		// if(remoteAddress.equals("127.0.0.1")) return;
+		/*
 		if( ! Util.validIP(remoteAddress)){
 			appendLog(remoteAddress + " is not a valid address?");
 			return;
-		}
+		}*/
+		
 		if(known.contains(remoteAddress)) known.remove(remoteAddress);
 	}
 
-		public synchronized void loginFailed(final String remoteAddress, final String user) {
-		
-		if(remoteAddress.equals("127.0.0.1")) return;
-	
-		if(banned.contains(remoteAddress)) Util.log("DANGEROUS: failed sanity check: " + user, this);
+	public synchronized void loginFailed(final String remoteAddress) { 
 		
 		if(attempts.containsKey(remoteAddress)) attempts.put(remoteAddress, attempts.get(remoteAddress)+1);
 		else attempts.put(remoteAddress, 1);  
 			
 		if(known.contains(remoteAddress)) known.remove(remoteAddress);
 		
-		appendLog("login failed: " + remoteAddress + " user: " + user + " attempts: " + attempts.get(remoteAddress));
+		appendLog("login failed: " + remoteAddress+ " attempts: " + attempts.get(remoteAddress));
 
 		if(attempts.get(remoteAddress) >= BAN_ATTEMPTS){
-			appendLog("now blocked: " + remoteAddress + " user: " + user);
+			appendLog("now blocked: " + remoteAddress);
 			blocked.put(remoteAddress, System.currentTimeMillis());
 		}
 	}
@@ -231,26 +224,16 @@ public class BanList {
 		@Override
 		public void run() {
 				
-//			if(state.exists(values.gateway)){
-//				if( ! known.contains(state.get(values.gateway)))
-//					known.add(state.get(values.gateway));
-//			}
-			
 			if(state.exists(values.localaddress)){ 
 				if( ! known.contains(state.get(values.localaddress)))
 					known.add(state.get(values.localaddress));
 			}
 			
-// was added to let external ip access dashboard without flash logging in 
-			if(Settings.getReference().getBoolean(ManualSettings.developer)){
-				if(state.exists(values.externaladdress)){ 
-					if( ! known.contains(state.get(values.externaladdress)))
-						known.add(state.get(values.externaladdress));
-				}
+			if(state.exists(values.gatewayaddress)){ 
+				if( ! known.contains(state.get(values.gatewayaddress)))
+					known.add(state.get(values.gatewayaddress));
 			}
-			
-			if(blocked.isEmpty()) return;
-						
+							
 			try {
 				for (Map.Entry<String, Long> entry : blocked.entrySet()) {				    
 					if((entry.getValue()+BAN_TIME_OUT) < System.currentTimeMillis()){
@@ -269,7 +252,8 @@ public class BanList {
 		return "<br>banned: " + banned.toString() + "<br> known:" + known.toString();
 	}
 	
-	public String geHTML(){
+	// todo: show timer for un-blocking 
+	public String toHTML(){
 		String info = "\n<table cellspacing=\"5\">\n<tbody><tr><th>Known Address<th>Banned Address</tr>\n";
 		
 		String knw = known.toString().replaceAll(",", "<br>").trim();

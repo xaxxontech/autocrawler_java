@@ -92,9 +92,9 @@ public class StateMonitor extends JFrame {
         pack();
         setVisible(true);
         
-		new Timer().scheduleAtFixedRate(new Task(), 2000, 9000);
-		new Timer().scheduleAtFixedRate(new nullTask(), autocrawler.Util.TWO_MINUTES, autocrawler.Util.TWO_MINUTES);
-
+//		new Timer().scheduleAtFixedRate(new Task(), 2000, 9000);
+		new Timer().scheduleAtFixedRate(new readTask(), 0, autocrawler.Util.TWO_MINUTES);
+		
     }
  
     class StateTableModel extends AbstractTableModel {
@@ -133,7 +133,7 @@ public class StateMonitor extends JFrame {
         }       
     }
     
-    
+    /*
 	private class Task extends TimerTask {
 		public void run(){
 			if(printer == null || socket.isClosed()){		
@@ -152,14 +152,26 @@ public class StateMonitor extends JFrame {
 			}
 		}
 	}
-	
-	private class nullTask extends TimerTask {
+	*/
+    
+	private class readTask extends TimerTask {
 		public void run(){
-			if(printer == null || socket.isClosed()){		
+			
+			if(printer == null || socket.isClosed()){	
+				
 				openSocket();
 				try { Thread.sleep(5000); } catch (InterruptedException e) {}
-				if(socket != null) if(socket.isConnected()) readSocket();					
+				if(socket != null) if(socket.isConnected()) readSocket();	
+				
 			} else {
+				
+				printer.checkError();
+				printer.flush();
+				printer.println("state"); 
+
+			}
+			
+			/*else {
 				try {
 					printer.checkError();
 					printer.flush();
@@ -188,6 +200,7 @@ public class StateMonitor extends JFrame {
 					closeSocket();
 				}
 			}
+			*/
 		}
 	}
     
@@ -199,17 +212,13 @@ public class StateMonitor extends JFrame {
 			reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 			System.out.println("openSocket(): connected to: " + socket.getInetAddress().toString());
 			setTitle(socket.getInetAddress().toString());
-//			rx = 0;
+			printer.println("state"); 
+			rx = 0;
 		} catch (Exception e) {
 			setTitle("disconnected");
 			System.out.println("openSocket(): " + e.getMessage());
 			closeSocket();
 		}
-		
-		new Thread(new Runnable() { public void run() { 
-			try { Thread.sleep(5000); } catch (InterruptedException e) {}
-			if(printer != null) printer.println("log " + this.getClass().getName().toString() + " connected to telnet"); 
-		}}).start();
 	}
 
 	void closeSocket(){
@@ -251,6 +260,8 @@ public class StateMonitor extends JFrame {
 						
 						setTitle(socket.getInetAddress().toString() + " rx: " + rx++);
 			
+						System.out.println(input);
+						
 						input = input.replace("<telnet>", "");
 						input = input.replace("=", "");
 						input = input.replace("  ", " ");
@@ -297,13 +308,31 @@ public class StateMonitor extends JFrame {
 	}
 
     public static void main(String[] args) {
-    	final String ip = args[0];
-		final int port = Integer.parseInt(args[1]);
-        javax.swing.SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-            	new StateMonitor(ip, port);
-            }
-        });
-    }
+    	
+		if (args.length == 2) {
+			javax.swing.SwingUtilities.invokeLater(new Runnable() {
+				public void run() {
+					new StateMonitor(args[0], Integer.parseInt(args[1]));
+				}
+			});
+		}
+		
+		if (args.length == 1) {
+			javax.swing.SwingUtilities.invokeLater(new Runnable() {
+				public void run() {
+					new StateMonitor(args[0], 4444);
+				}
+			});
+		}
+		
+		if (args.length == 0) {
+			javax.swing.SwingUtilities.invokeLater(new Runnable() {
+				public void run() {
+					new StateMonitor("crawler", 4444);
+				}
+			});
+		}
+	} 
+   
 }
 

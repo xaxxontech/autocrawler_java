@@ -39,6 +39,7 @@ public class Navigation implements Observer {
 	public static long routestarttime = 0;
 	public NavigationLog navlog;
 	int batteryskips = 0;
+	int unsafeskips = 0;
     private String navpstring = null;
 
 
@@ -53,6 +54,8 @@ public class Navigation implements Observer {
 		state.addObserver(this);
 		app = a;
 		state.set(values.lidar, true); // or any non null
+        state.set(State.values.navsystemstatus, Ros.navsystemstate.stopped.toString());
+
 	}
 
 	@Override
@@ -60,14 +63,20 @@ public class Navigation implements Observer {
 		if(key.equals(values.distanceangle.name())){
 			try {
 				int mm = Integer.parseInt(state.get(values.distanceangle).split(" ")[0]);
-				if(mm > 0) routemillimeters += mm;
+				if(mm > 0) {
+					
+					routemillimeters += mm;
+					// state.set(State.values.routemm, routemillimeters);
+					
+				}
 			} catch (Exception e){}
 		}
 	}
 
-	public static String getRouteMeters() {
-		return Util.formatFloat(routemillimeters / 1000, 0);
-	}
+	// was used in old dashboard only
+	//public static String getRouteMeters() {
+	//	return Util.formatFloat(routemillimeters / 1000, 0);
+	//}
 	
 	public void gotoWaypoint(final String str) {
 		if (state.getBoolean(State.values.autodocking)) {
@@ -429,7 +438,7 @@ public class Navigation implements Observer {
 		return false;
 	}
 	
-	/** only used before starting a route, ignored if un-docked */
+	/** only used before starting a route */
 	public static boolean batteryTooLow() {
 
 		if (state.get(values.batterylife).matches(".*\\d+.*")) {  // make sure batterylife != 'TIMEOUT', throws error
@@ -644,6 +653,16 @@ public class Navigation implements Observer {
 					continue;
 				}
 
+				if (!safeUndock()) {
+					unsafeskips++;
+					Util.log("robot blocked from safely undocking: " + unsafeskips, this);
+					if (unsafeskips == 1)
+						navlog.newItem(NavigationLog.ALERTSTATUS, "Robot blocked from safely undocking", 0, null, name, consecutiveroute, 0);	
+					stopNavigation(); // turn off lidar
+					if( ! delayToNextRoute(navroute, name, id)) return;
+					continue;
+				} unsafeskips = 0;
+				
 				// enable rgb cam
                 if (!(state.equals(values.stream, Application.streamstate.camera.toString()) ||
                         state.equals(values.stream, Application.streamstate.camandmic.toString()))) {
@@ -660,7 +679,12 @@ public class Navigation implements Observer {
 				routestarttime = System.currentTimeMillis();
 				state.set(State.values.lastusercommand, routestarttime);  // avoid watchdog abandoned
 				routemillimeters = 0l;
-				
+
+				// for watchdog scripts
+				// String r = state.get(State.values.navigationroute);
+				String est = NavigationUtilities.getRouteTimeEstimateString(state.get(State.values.navigationroute));
+				state.set(State.values.estimatedrouteseconds, est);
+
 				// undock if necessary
 				if (!state.get(State.values.dockstatus).equals(AutoDock.UNDOCKED)) {
 					SystemWatchdog.waitForCpu();
@@ -691,7 +715,6 @@ public class Navigation implements Observer {
 						navlog.newItem(NavigationLog.ERRORSTATUS, "current route override prior to set waypoint: "+wpname,
 								routestarttime, null, name, consecutiveroute, 0);
 						app.driverCallServer(PlayerCommands.messageclients, "current route override prior to set waypoint: "+wpname);
-						NavigationUtilities.routeFailed(state.get(values.navigationroute));
 						break;
 					}
 
@@ -769,7 +792,7 @@ public class Navigation implements Observer {
 						navlog.newItem(NavigationLog.ERRORSTATUS, "Unable to dock", routestarttime, null, name, consecutiveroute, 0);
 
 						// cancelRoute(id);
-						// try docking one more time, sending alert if fail
+						//TODO: try docking one more time, sending alert if fail
 						Util.log("calling redock()", this);
 						stopNavigation();
 						Util.delay(Ros.ROSSHUTDOWNDELAY / 2); // 5000 too low, massive cpu sometimes here
@@ -781,12 +804,12 @@ public class Navigation implements Observer {
 
 					navlog.newItem(NavigationLog.COMPLETEDSTATUS, null, routestarttime, null, name, consecutiveroute, routemillimeters);
 
-					// how long did docking take
-					int timetodock = 0; // (int) ((System.currentTimeMillis() - start)/ 1000);
-					// subtract from routes time
-					int routetime = (int)(System.currentTimeMillis() - routestarttime)/1000 - timetodock;
+					// subtract from routes time or no?
+					// int timetodock = (int) ((System.currentTimeMillis() /*- start*/)/ 1000);
+					final int routetime = (int)(System.currentTimeMillis() - routestarttime)/1000;// - timetodock;
 					NavigationUtilities.routeCompleted(name, routetime, (int)routemillimeters/1000);
-
+					state.delete(State.values.estimatedrouteseconds);
+					
 					consecutiveroute++;
 					routemillimeters = 0;
 
@@ -797,7 +820,25 @@ public class Navigation implements Observer {
 		}  }).start();
 	}
 
+	private boolean safeUndock() {
+		final double distance = settings.getDouble(ManualSettings.undockdistance);
+		String scan = state.get(State.values.rosscan);
+		if (scan == null) return false;
+		
+		String[] points = scan.split(",");
+		// Util.log("points: "+points.length, this);
+
+		// TODO: USE MORE POINTS
+		double avg = (Double.parseDouble(points[0]) + Double.parseDouble(points[points.length-1])) / 2; 
+		
+		Util.log("undock setting: "+distance, this);
+		Util.log("lidar: "+ avg, this);
+			
+		return avg > (distance * 2); // safety padding try 1.5 for prod
+	}
+	
 	private void undockandlocalize() { // blocking
+		if (!safeUndock()) return;
 		state.set(State.values.motionenabled, true);
 		double distance = settings.getDouble(ManualSettings.undockdistance);
 		app.driverCallServer(PlayerCommands.forward, String.valueOf(distance));

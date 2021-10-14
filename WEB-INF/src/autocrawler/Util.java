@@ -37,7 +37,6 @@ import autocrawler.State.values;
 
 public class Util {
 
-	// TODO: NUKE, JUST USE LINUX 
 	public final static String sep = System.getProperty("file.separator");
 
 	public static final long ONE_DAY = 86400000;
@@ -50,12 +49,6 @@ public class Util {
 	public static final int MIN_FILE_COUNT = 10;
 	public static final int MAX_HISTORY = 40;
 	public static final int PRECISION = 1;
-
-//	static Vector<String> history = new Vector<String>(MAX_HISTORY);
-//	static private String rosinfor = null;
-//	static private int rosattempts = 0;
-
-	static State state = State.getReference();
 
 	public static String trimLength(String txt, int length){
 		if(txt.length() > length) {
@@ -87,7 +80,7 @@ public class Util {
 	}
 
 	public static String getDateStampShort() {
-		DateFormat dateFormat = new SimpleDateFormat("mm-ss");
+		DateFormat dateFormat = new SimpleDateFormat("hh-mm-ss");
 		Calendar cal = Calendar.getInstance();
 		return dateFormat.format(cal.getTime());
 	}
@@ -357,6 +350,7 @@ public class Util {
 		}
 	}
 
+
 	public static long[] readProcStat() {
 		try {
 
@@ -529,6 +523,7 @@ public class Util {
 		else state.delete(values.externaladdress);
 	}
 
+	/*
 	public static void deleteLogFiles(){
 
 		if( ! Settings.getReference().getBoolean(ManualSettings.debugenabled)){
@@ -642,7 +637,6 @@ public class Util {
 		});
 	}
 
-	/*
 	public static void truncState(){
 		File[] files  = new File(Settings.logfolder).listFiles(new stateFilter());
 		debug("truncState(): " + files.length + " files in folder");
@@ -662,7 +656,6 @@ public class Util {
             return name.contains("state");
         }
 	}
-	*/
 
 	static void archiveNavigation(){
 		final String path = "./log/archive/navigation_" + System.currentTimeMillis() + ".tar";
@@ -857,8 +850,8 @@ public class Util {
 				systemCall(Settings.tomcathome + Util.sep + "systemreboot.sh");
 			} catch (Exception e){printError(e);}
 		} }).start();
-
 	}
+*/
 
 }
 
