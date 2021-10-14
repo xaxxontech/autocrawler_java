@@ -26,9 +26,6 @@ public class SystemWatchdog {
 	private static final long ABANDONDEDLOGIN= 30*Util.ONE_MINUTE; 
 	public static final String NOFORWARD = "noforward";
 
-	// stale system reboot frequency 
- 	private static final long STALE = Util.ONE_DAY * 2; 
-	
 	private State state = State.getReference();
 	
 	public String lastpowererrornotify = null; // this gets set to null on client login 
@@ -48,19 +45,19 @@ public class SystemWatchdog {
 
 			if (!application.running) this.cancel();
 
-			// regular reboot if set 
-			if (System.currentTimeMillis() - state.getLong(values.linuxboot) > STALE
-					&& !state.exists(State.values.driver.toString()) &&
-					!state.exists(State.values.powererror.toString()) &&
-					state.get(State.values.dockstatus).equals(AutoDock.DOCKED) &&
-					state.getInteger(State.values.telnetusers) == 0 &&
-					state.getUpTime() > Util.TEN_MINUTES && // prevent runaway reboots
-					(settings.getBoolean(GUISettings.reboot))){
-				
-				// String boot = new Date(state.getLong(State.values.javastartup.name())).toString();				
-				Util.log("regular reboot", this);
-				application.driverCallServer(PlayerCommands.reboot, null);
-			}
+			// regular reboot if set
+            if (settings.getInteger(GUISettings.reboot) > 0) {
+                if (System.currentTimeMillis() - state.getLong(values.linuxboot) > settings.getInteger(GUISettings.reboot)*Util.ONE_HOUR
+                        && !state.exists(State.values.driver.toString()) &&
+                        !state.exists(State.values.powererror.toString()) &&
+                        state.get(State.values.dockstatus).equals(AutoDock.DOCKED) &&
+                        state.getInteger(State.values.telnetusers) == 0 &&
+                        state.getUpTime() > Util.TEN_MINUTES) { // prevent runaway reboots
+
+                    Util.log("regular reboot", this);
+                    application.driverCallServer(PlayerCommands.reboot, null);
+                }
+            }
 			
 			// show AP mode enabled, if no driver
 			if(state.equals(values.ssid, AP)) {

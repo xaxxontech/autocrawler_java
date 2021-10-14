@@ -9,8 +9,8 @@ public enum GUISettings {
 	vlow, vmed, vhigh, vcustom, vset, maxclicknudgedelay, steeringcomp,
 	maxclickcam, loginnotify, redock, telnetport,
 	email_smtp_server, email_smtp_port, email_username, email_password, email_from_address, email_to_address,
-	volume, reboot, camhoriz,
-	cammin, cammax, reversesteeringcomp // undocumented
+	volume, camhoriz, reboot,
+    cammin, cammax, reversesteeringcomp // undocumented
 	;
 	
 	/** get basic settings */
@@ -27,7 +27,7 @@ public enum GUISettings {
 		config.setProperty(nudgedelay.name() , "80");
 		config.setProperty(maxclickcam.name() , "30");
 		config.setProperty(volume.name() , "100");
-		config.setProperty(reboot.name() , Settings.FALSE);
+		config.setProperty(reboot.name() , "0");
 		config.setProperty(fullrotationdelay.name(), "3800");
 		config.setProperty(onemeterdelay.name(), "2400");
 		config.setProperty(steeringcomp.name(), "L20");

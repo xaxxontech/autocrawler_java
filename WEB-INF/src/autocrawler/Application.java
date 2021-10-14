@@ -393,7 +393,7 @@ public class Application implements ServletContextListener {
 			if (!state.getBoolean(values.motionenabled) || state.getBoolean(values.autodocking)) return;
 			moveMacroCancel();
 			String[] metersdegrees = str.split(" ");
-			comport.arcmove(Double.parseDouble(metersdegrees[0]), Integer.parseInt(metersdegrees[1]));
+			comport.arcmove(Double.parseDouble(metersdegrees[0]), (int) Double.parseDouble(metersdegrees[1]));
 			break;
 			
 		case odometrystart:	 	comport.odometryStart(); break;

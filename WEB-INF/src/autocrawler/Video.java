@@ -589,7 +589,8 @@ public class Video {
                                 +settings.readSetting(ManualSettings.webrtcport),
                         "dockdevice:=/dev/video" + dockcamdevicenum,
                         "turnserverport:="+settings.readSetting(ManualSettings.turnserverport),
-                        "turnserverlogin:="+settings.readSetting(ManualSettings.turnserverlogin)
+                        "turnserverlogin:="+settings.readSetting(ManualSettings.turnserverlogin),
+                        "dockoffset:="+settings.readSetting(ManualSettings.dockoffset)
                 )));
 
                 state.set(State.values.controlsinverted, true);

@@ -106,7 +106,8 @@ public class AutoDock {
                     String[] dockmetrics = state.get(State.values.dockmetrics).split(" ");
                     double baselinkdistance = Double.parseDouble(dockmetrics[0]);
                     double baselinkangle = Double.parseDouble(dockmetrics[1]);
-                    double targetpitch = Double.parseDouble(dockmetrics[2]) - 2.0; // favor approach from robots right
+                    double targetpitch = Double.parseDouble(dockmetrics[2]) - settings.getDouble(ManualSettings.dockangle);
+						// ^^dockangle setting: positive value in degrees = favor approach from robot's right (reverse)
 
                     // far away, turn towards dock then move forward
                     if (baselinkdistance > 1) {

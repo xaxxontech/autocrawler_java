@@ -8,11 +8,12 @@ public enum ManualSettings {
 	gyrocomp, alertsenabled, odomturnpwm, odomlinearpwm, checkaddresses,
 	motionthreshold, redockifweakconnection,
 	arcmovecomp, usearcmoves, arcpwmthreshold, undockdistance, updatelocation,
+	lowbattery,	timedshutdown, camhold, soundthreshold, webrtcserver,
+	webrtcport, turnserverlogin, turnserverport, dockangle, dockoffset,
 
 	// undocumented
-	lowbattery, timedshutdown, camhold, soundthreshold, webrtcserver, webrtcport,
-    turnserverlogin, turnserverport, ros2
-	
+	ros2
+
 	;
 	
 	/** get basic settings, set defaults for all */
@@ -22,14 +23,16 @@ public enum ManualSettings {
 		config.setProperty(debugenabled.name(), Settings.FALSE);
 		config.setProperty(malgport.name(), Settings.ENABLED);
 		config.setProperty(powerport.name(), Settings.ENABLED);
-		config.setProperty(checkaddresses.name(), Settings.TRUE);
+		config.setProperty(checkaddresses.name(), Settings.TRUE); // TODO: nuke?!
 		config.setProperty(wheeldiameter.name(), "106");
 		config.setProperty(gyrocomp.name() , "1.095");
 		config.setProperty(alertsenabled.name() , Settings.TRUE);
 		config.setProperty(motionthreshold.name(), "0.003");
 		config.setProperty(odomlinearpwm.name(), "150");
 		config.setProperty(odomturnpwm.name(), "110");
-		config.setProperty(redockifweakconnection.name(), Settings.TRUE);   
+		config.setProperty(redockifweakconnection.name(), Settings.TRUE);
+		config.setProperty(dockangle.name(), "2.0");
+		config.setProperty(dockoffset.name(), "0.018");
 		config.setProperty(arcmovecomp.name(), "0.8");
 		config.setProperty(usearcmoves.name(), Settings.TRUE);
 		config.setProperty(arcpwmthreshold.name(), "200");
