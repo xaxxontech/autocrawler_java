@@ -36,7 +36,6 @@ var routesxml = null;
 var temproutesxml;
 var navmenuinit = false;
 
-/* // record removed until recording solved
 var navrouteavailableactions = ["rotate", "email", "rss", "photo", "record video",
 	"motion", "sound", "human", "not detect" ];
 var navrouteactiondescriptions = ["rotate in place 45 degrees at a time, at least 1 full rotation", 
@@ -46,18 +45,6 @@ var navrouteactiondescriptions = ["rotate in place 45 degrees at a time, at leas
 	"take photo at waypoint and post to navigation log",
 	"detect motion", "detect loud noise", "detect human", 
 	"alert only if action NOT detected"];
-*/
-
-// same as above, without record	
-var navrouteavailableactions = ["rotate", "email", "rss", "photo",
-	"motion", "sound", "human", "not detect" ];
-var navrouteactiondescriptions = ["rotate in place 45 degrees at a time, at least 1 full rotation", 
-	"send email alert if action detected",
-	"post new item to RSS feed if action detected",
-	"take photo at waypoint and post to navigation log",
-	"detect motion", "detect loud noise", "detect human", 
-	"alert only if action NOT detected"];
-
 
 var activeroute = null;
 var navsystemstatustext;

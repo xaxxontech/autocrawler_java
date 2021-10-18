@@ -96,7 +96,11 @@ public class Navigation implements Observer {
 			
 			// undock if necessary
 			if (!state.get(State.values.dockstatus).equals(AutoDock.UNDOCKED)) {
-				undockandlocalize();
+                if (!safeUndock()) {
+                    app.driverCallServer(PlayerCommands.messageclients, "unable to un-dock, obstacle detected");
+                    return;
+                }
+				else undockandlocalize();
 			}
 
 			if (!Ros.setWaypointAsGoal(str))
@@ -202,7 +206,7 @@ public class Navigation implements Observer {
             String currentstream = videoRestartRequiredBlocking();
 
             // launch remote_nav.launch
-            navpstring = Ros.launch(Ros.REMOTE_NAV);
+            navpstring = Ros.launch(new ArrayList<String>(Arrays.asList(Ros.REMOTE_NAV, "camscan:="+settings.readSetting(ManualSettings.navfloorscan) )));
 
             // launch realsense with RGB and depth
             String vals[] = settings.readSetting(settings.readSetting(GUISettings.vset)).split("_");
@@ -244,7 +248,7 @@ public class Navigation implements Observer {
             return;
 
         if (!state.get(values.navsystemstatus).equals(Ros.navsystemstate.mapping.toString())) {
-            Ros.killlaunch(app.video.realsensepstring);
+            Ros.kill(app.video.realsensepstring);
             Ros.roscommand("rosnode kill /camera/realsense2_camera_manager");
         }
         else { // mapping often requires ros restart after
@@ -259,7 +263,7 @@ public class Navigation implements Observer {
         Util.log("stopping autocrawler.navigation", this);
         app.driverCallServer(PlayerCommands.messageclients, "navigation stopped");
 
-        if (navpstring !=null) Ros.killlaunch(navpstring);
+        if (navpstring !=null) Ros.kill(navpstring);
         navpstring = null;
         app.video.realsensepstring = null;  
 
@@ -655,13 +659,13 @@ public class Navigation implements Observer {
 
 				if (!safeUndock()) {
 					unsafeskips++;
-					Util.log("robot blocked from safely undocking: " + unsafeskips, this);
 					if (unsafeskips == 1)
-						navlog.newItem(NavigationLog.ALERTSTATUS, "Robot blocked from safely undocking", 0, null, name, consecutiveroute, 0);	
+						navlog.newItem(NavigationLog.ALERTSTATUS, "Robot blocked from safely un-docking", 0, null, name, consecutiveroute, 0);
 					stopNavigation(); // turn off lidar
 					if( ! delayToNextRoute(navroute, name, id)) return;
 					continue;
-				} unsafeskips = 0;
+				}
+				unsafeskips = 0;
 				
 				// enable rgb cam
                 if (!(state.equals(values.stream, Application.streamstate.camera.toString()) ||
@@ -821,24 +825,30 @@ public class Navigation implements Observer {
 	}
 
 	private boolean safeUndock() {
-		final double distance = settings.getDouble(ManualSettings.undockdistance);
+
+        if (state.get(State.values.dockstatus).equals(AutoDock.UNDOCKED))
+            return true;
+
+        final double safedistance = settings.getDouble(ManualSettings.undockdistance) + 0.4;
 		String scan = state.get(State.values.rosscan);
 		if (scan == null) return false;
 		
 		String[] points = scan.split(",");
-		// Util.log("points: "+points.length, this);
 
-		// TODO: USE MORE POINTS
-		double avg = (Double.parseDouble(points[0]) + Double.parseDouble(points[points.length-1])) / 2; 
-		
-		Util.log("undock setting: "+distance, this);
-		Util.log("lidar: "+ avg, this);
-			
-		return avg > (distance * 2); // safety padding try 1.5 for prod
+		String[] ctrpoints = { points[0], points[1], points[points.length -1], points[points.length-2] };
+
+		double minimum = 999;
+		for (String s : ctrpoints) {
+		    double i = Double.parseDouble(s);
+		    if (i < minimum && i != 0) minimum = i;
+        }
+
+		return minimum > safedistance;
+
 	}
 	
 	private void undockandlocalize() { // blocking
-		if (!safeUndock()) return;
+
 		state.set(State.values.motionenabled, true);
 		double distance = settings.getDouble(ManualSettings.undockdistance);
 		app.driverCallServer(PlayerCommands.forward, String.valueOf(distance));
@@ -1190,8 +1200,7 @@ public class Navigation implements Observer {
 		// END RECORD
 		if (record && recordlink != null) {
 
-			String navlogmsg = "<a href='" + recordlink + "_video.flv' target='_blank'>Video</a>";
-			navlogmsg += "<br><a href='" + recordlink + "_audio.flv' target='_blank'>Audio</a>";
+			String navlogmsg = "<a href='" + recordlink + "' target='_blank'>Video</a>";
 			String msg = "[Autocrawler Video] ";
 			msg += navlogmsg+", time: "+
 					Util.getTime()+", at waypoint: " + wpname + ", route: " + name;

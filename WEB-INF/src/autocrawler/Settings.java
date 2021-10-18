@@ -12,9 +12,9 @@ public class Settings {
 	public final static String settingsfile = tomcathome +Util.sep+"conf"+Util.sep+"autocrawler_settings.txt";
 	public final static String telnetscripts = tomcathome +"/telnet_scripts"; // this folder needs to be moved or protected from update operation!
 	public final static String appsubdir = "webapps/autocrawler";
-	public final static String streamfolder = tomcathome + "/webapps/autocrawler/streams/";
-	public final static String framefolder = tomcathome +Util.sep+appsubdir+"/framegrabs";
-	public final static String streamsfolder = tomcathome +Util.sep+appsubdir+"/streams";
+	public final static String streamfolder = tomcathome + Util.sep + appsubdir + "/streams/";
+	public final static String framefolder = tomcathome + Util.sep + appsubdir + "/framegrabs";
+	public final static String streamsfolder = tomcathome +Util.sep+appsubdir + "/streams";
 	public final static String logfolder = tomcathome +Util.sep+"logs";
 	public final static String stdout = logfolder+Util.sep+"catalina.out";
 

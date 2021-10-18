@@ -35,8 +35,8 @@ public class Video {
     private String avprog = "avconv"; // avconv or ffmpeg
     public static long STREAM_CONNECT_DELAY = 3000; // 5000 for ros2...
     private static int dumpfps = 15;
-    private static final String STREAMSPATH= "/autocrawler/streams/";
-    public static final String FMTEXT = ".flv";
+    private static final String STREAMSLINK = "/autocrawler/streams/";
+    public static final String FMTEXT = ".3gp";
     public static final String AUDIO = "_audio";
     private static final String VIDEO = "_video";
     private static final String STREAM1 = "stream1";
@@ -71,6 +71,12 @@ public class Video {
         state.set(State.values.stream, Application.streamstate.stop.toString());
         if (settings.getBoolean(ManualSettings.ros2))
             STREAM_CONNECT_DELAY = 5000;
+
+        File theDir = new File(Settings.streamfolder);
+        if (!theDir.exists()){
+            Util.log("creating folder: "+Settings.streamfolder, this);
+            theDir.mkdirs();
+        }
     }
 
     private void setAudioDevice() {
@@ -473,8 +479,80 @@ public class Video {
 
     public String record(String mode) { return record(mode, null); }
 
+    // record to mp4 in webapps/autocarwler/streams/
     public String record(String mode, String optionalfilename) {
-        // TODO: everything
+
+        Util.debug("record("+mode+", " + optionalfilename +"): called.. ", this);
+
+        if (state.get(State.values.stream) == null) return null;
+        if (state.get(State.values.record) == null) state.set(State.values.record, Application.streamstate.stop.toString());
+        if (state.exists(State.values.sounddetect)) if (state.getBoolean(State.values.sounddetect)) return null;
+
+        if (mode.toLowerCase().equals(Settings.TRUE)) {  // TRUE, start recording
+
+            if (state.get(State.values.stream).equals(Application.streamstate.stop.toString())) {
+                app.driverCallServer(PlayerCommands.messageclients, "no stream running, unable to record");
+                return null;
+            }
+
+            if (!state.get(State.values.record).equals(Application.streamstate.stop.toString())) {
+                app.driverCallServer(PlayerCommands.messageclients, "already recording, command dropped");
+                return null;
+            }
+
+            // Save the stream to disk.
+            try {
+
+                String streamName = Util.getDateStamp();
+                if(optionalfilename != null) streamName += "_" + optionalfilename;
+                if(state.exists(values.roswaypoint) &&
+                        state.get(State.values.navsystemstatus).equals(Ros.navsystemstate.running.toString())
+                ) streamName += "_" + state.get(values.roswaypoint);
+                streamName = streamName.replaceAll(" ", "_") + FMTEXT; // no spaces in filenames
+
+                state.set(State.values.record, state.get(State.values.stream));
+
+                app.messageplayer("recording to: " + STREAMSLINK +streamName,
+                        State.values.record.toString(), state.get(State.values.record));
+
+//                recordvideopstring = Ros.launch(new ArrayList<String>(Arrays.asList(Ros.RECORDVIDEO,
+//                        "audiodevice:=--audio-device=" + adevicenum,
+//                        "videowidth:=--video-width=" + lastwidth, "videoheight:=--video-height=" + lastheight,
+//                        "videobitrate:=--video-bitrate=" + lastbitrate,
+//                        "recordpath:=--record-path=" + Settings.streamfolder+streamName
+//                        )));
+
+                String cmd = "rosrun "+Ros.ROSPACKAGE+" "+ Ros.RECORDVIDEO +
+                        " --audio-device=" + adevicenum +
+                        " --video-width=" + lastwidth + " --video-height=" + lastheight +
+                        " --video-bitrate=" + lastbitrate +
+                        " --record-path=" + Settings.streamfolder+streamName +
+                        " image_raw:=/camera/color/image_raw";
+                Ros.roscommand(cmd);
+
+                Util.log("recording: "+streamName,this);
+                return STREAMSLINK + streamName;
+
+            } catch (Exception e) {
+                Util.printError(e);
+            }
+        }
+
+        else { // FALSE, stop recording
+
+            if (state.get(State.values.record).equals(Application.streamstate.stop.toString())) {
+                app.driverCallServer(PlayerCommands.messageclients, "not recording, command dropped");
+                return null;
+            }
+
+            state.set(State.values.record, Application.streamstate.stop.toString());
+
+            Ros.roscommand("rosnode kill /"+Ros.RECORDVIDEO);
+
+            Util.log("recording stopped", this);
+            app.messageplayer("recording stopped", State.values.record.toString(), state.get(State.values.record));
+
+        }
         return null;
     }
 
@@ -622,7 +700,7 @@ public class Video {
 
     public void killrealsense() {
         if (realsensepstring != null && !state.get(State.values.navsystemstatus).equals(Ros.navsystemstate.running.toString())) {
-            Ros.killlaunch(realsensepstring);
+            Ros.kill(realsensepstring);
             realsensepstring = null;
 //            Ros.roscommand("rosnode kill /camera/realsense2_camera_manager");
         }
@@ -631,7 +709,7 @@ public class Video {
 
     private void killwebrtc() {
         if (webrtcpstring != null) {
-            Ros.killlaunch(webrtcpstring);
+            Ros.kill(webrtcpstring);
             webrtcpstring = null;
         }
     }

@@ -41,17 +41,16 @@ public class Ros {
 	static final int OCCUPIEDTHRESHOLD = 60;
 	static final int FREETHRESHOLD = 25;
 
-	// launch file name constants:
+	// launch file and node name constants:
 	public static final String REMOTE_NAV = "remote_nav"; // nav
 	public static final String MAKE_MAP = "make_map"; // mapping
     public static final String MAKE_MAP_GMAPPING = "make_map_gmapping"; // mapping lidar + gmapping
     public static final String MAKE_MAP_REALSENSE_GMAPPING = "make_map_realsense_gmapping"; // mapping realsense + gmapping TODO: NUKE
 	public static final String MAKE_MAP_REALSENSE_CARTOGRAPHER = "make_map_realsense_cartographer"; // mapping realsense + gmapping TODO: NUKE
     public static final String REALSENSE = "realsense"; // rgb and depthcam
-	public static final String RGBPUBLISH = "rgbpublish"; // gstreamer rgb to rtmp (flash client)
 	public static final String RGBWEBRTC = "rgbwebrtc"; // gstreamer webrtc rgb
-	public static final String DOCKCAM = "dockcam"; // gstreamer dock cam to rtmp (flash client) and aruco detect
 	public static final String DOCKWEBRTC = "dockwebrtc"; // gstreamer dock cam webrtc and aruco detect
+    public static final String RECORDVIDEO = "recordrs"; // node name, not launch file. Record video to file
 
     // node file name constants
     public static final String IMAGE_TO_SHM = "image_to_shm.py";
@@ -258,7 +257,7 @@ public class Ros {
 
 	}
 
-	public static void killlaunch(String str) {
+	public static void kill(String str) {
 
         List<String> items = new ArrayList<>();
 
@@ -266,7 +265,7 @@ public class Ros {
         items.add("-2");  // signal 2=SIGINT instead of default 15=SIGTERM
         items.add("-f");
         items.add(str);
-        Util.debug(items.get(3), "Ros.killlaunch()");
+        Util.debug(items.get(3), "Ros.kill()");
 
         ProcessBuilder processBuilder = new ProcessBuilder();
         processBuilder.command(items);

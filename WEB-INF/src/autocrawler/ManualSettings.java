@@ -12,7 +12,7 @@ public enum ManualSettings {
 	webrtcport, turnserverlogin, turnserverport, dockangle, dockoffset,
 
 	// undocumented
-	ros2
+	ros2, navfloorscan
 
 	;
 	
@@ -46,6 +46,7 @@ public enum ManualSettings {
         config.setProperty(turnserverlogin.name(), "turn:server");
         config.setProperty(turnserverport.name(), "3478");
 		config.setProperty(ros2.name(), Settings.FALSE);
+		config.setProperty(navfloorscan.name(), Settings.TRUE);
 		config.setProperty(updatelocation.name(), "https://www.xaxxon.com/downloads/"); // trailing slash required
         return config;
 	}
