@@ -18,7 +18,7 @@ import autocrawler.State.values;
 
 public class BanList {
 	
-	public static final String banfile = Settings.tomcathome +Util.sep+"conf"+Util.sep+"banlist.txt";
+	public static final String banfile = Settings.tomcathome +Util.sep + "conf" + Util.sep + "banlist.txt";
 	public static final String banlog =  Settings.logfolder + Util.sep + "banlist.log";
 	
 	public static final long BAN_TIME_OUT = Util.FIVE_MINUTES;
@@ -52,14 +52,6 @@ public class BanList {
 		} catch (Exception e) {
 			Util.log(e.getLocalizedMessage(), this);
 		}
-
-//		File log = new File(banlog);
-//		if (log.exists()) {
-//			if (log.length() > ROLL_OVER) {
-//				Util.log("BanList(): file too large, rolling over: " + log.getAbsolutePath(), this);
-//				log.delete();
-//			}
-//		}
 		
 		try {
 			logfile = new RandomAccessFile(banlog, "rw");
@@ -153,19 +145,7 @@ public class BanList {
 		
 //		if( ! Util.validIP(address)) return false; // basic sanity 
 	
-		if(address.contains("0.0.0.0") || address.equals("127.0.0.1") /* || address.startsWith("10.42") */) return true;
-		/*
-		if(state.exists(values.localaddress)) {
-			String firsttwonums = state.get(values.localaddress).replaceFirst("\\.\\d+\\.\\d+$", "");
-			if(address.replaceFirst("\\.\\d+\\.\\d+$", "").equals(firsttwonums)) {
-				if( ! known.contains(address) && ! isBanned(address)) {
-					// appendLog("added LAN IP: " + address);
-					known.add(address);
-				}
-				return true;
-			}
-		} else appendLog("robot's LAN address unknown yet, system might be booting.. ");
-		*/
+		if(address.contains("0.0.0.0") || address.equals("127.0.0.1") || address.startsWith("10.42")) return true;
 		
 		if(known.contains(address)) return true;
 		else {
@@ -184,8 +164,8 @@ public class BanList {
 			return;
 		}
 		
-		// appendLog("cleared: " + address);
-		// Util.debug("cleared "+address, this);
+		appendLog("cleared: " + address);
+		Util.debug("cleared "+address, this);
 		
 		if(attempts.containsKey(address)) attempts.remove(address);
 		if(blocked.containsKey(address)) blocked.remove(address);
@@ -195,12 +175,6 @@ public class BanList {
 	public synchronized void removeAddress(String remoteAddress) {
 		if(remoteAddress == null) return;
 		if(remoteAddress.equals("null")) return;
-		// if(remoteAddress.equals("127.0.0.1")) return;
-		/*
-		if( ! Util.validIP(remoteAddress)){
-			appendLog(remoteAddress + " is not a valid address?");
-			return;
-		}*/
 		
 		if(known.contains(remoteAddress)) known.remove(remoteAddress);
 	}

@@ -94,12 +94,6 @@ public class LoginRecords {
 			}
 		}
 
-// nuke 
-// read from state
-//		if (app.commandServer!=null) {
-//			result+="telnet connections: "+state.get(State.values.telnetusers); // +app.commandServer.printers.size();
-//		}
-
 		return result;
 	} 
 	

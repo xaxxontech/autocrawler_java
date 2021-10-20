@@ -88,21 +88,16 @@ public class TelnetServer implements Observer {
 				}
 
 				// client is terminating?
-				if (str == null) {
-					break;
-				}
-					
+				if (str == null) break;
+				
 				try {
 	
 					// parse and run it 
 					str = str.trim();
-					if(str.length()>=1){
-						
-						if( ! manageCommand(str, out, in, clientSocket)) {
+					if(str.length() > 0)
+						if( ! manageCommand(str, out, in, clientSocket)) 
 							doPlayer(str, out);
-						}
-					}	
-							
+		
 				} catch (Exception e) {
 					Util.log("parse error: " + e.getLocalizedMessage(), this);
 				}
@@ -212,10 +207,6 @@ public class TelnetServer implements Observer {
 	
 	private void sendToSocket(String str, PrintWriter out) {
 		Boolean multiline = false;
-//		if (str.matches(".*<br>.*")) {
-//			multiline = true;
-//			str = (str.replaceAll("<br>", "\r\n")).trim();
-//		}
 		if (str.contains("<br>")) {
 			multiline = true;
 			str = (str.replaceAll("<br>", "\r\n")).trim();

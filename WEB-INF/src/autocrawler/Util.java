@@ -45,9 +45,6 @@ public class Util {
 	public static final long FIVE_MINUTES = 300000;
 	public static final long TEN_MINUTES = 600000;
 	public static final long ONE_HOUR = 3600000;
-
-	public static final int MIN_FILE_COUNT = 10;
-	public static final int MAX_HISTORY = 40;
 	public static final int PRECISION = 1;
 
 	public static String trimLength(String txt, int length){
