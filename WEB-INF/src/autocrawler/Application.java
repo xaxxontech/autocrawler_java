@@ -104,8 +104,6 @@ public class Application implements ServletContextListener {
 		Util.setSystemVolume(settings.getInteger(GUISettings.volume));
 		state.set(State.values.volume, settings.getInteger(GUISettings.volume));
 
-		state.set(values.driverstream, driverstreamstate.disabled.toString());
-
 		video = new Video(this);
 
 		state.set(State.values.lastusercommand, System.currentTimeMillis()); // must be before watchdog
@@ -207,21 +205,18 @@ public class Application implements ServletContextListener {
         if (!state.getBoolean(State.values.autodocking) &&
                 !(state.exists(values.navigationroute) && !state.exists(values.nextroutetime)) ) {
 
-            if (!state.get(State.values.driverstream).equals(driverstreamstate.pending.toString())) {
+			if (state.get(State.values.stream) != null) {
+				if (!state.get(State.values.stream).equals(streamstate.stop.toString())) {
+					publish(streamstate.stop);
+				}
+			}
 
-                if (state.get(State.values.stream) != null) {
-                    if (!state.get(State.values.stream).equals(streamstate.stop.toString())) {
-                        publish(streamstate.stop);
-                    }
-                }
+			if (comport.isConnected()) {
+				comport.setSpotLightBrightness(0);
+				comport.floodLight(0);
+				comport.stopGoing();
+			}
 
-                if (comport.isConnected()) {
-                    comport.setSpotLightBrightness(0);
-                    comport.floodLight(0);
-                    comport.stopGoing();
-                }
-
-            }
         }
 
         state.delete(values.driverclientid);
@@ -317,7 +312,7 @@ public class Application implements ServletContextListener {
 		case systemshutdown: powerdown(); break;
 
 		case softwareupdate: softwareUpdate(str); break;
-//		case muterovmiconmovetoggle: muteROVMicOnMoveToggle(); break;
+
 		case quitserver: shutdownApplication(); break;
 		case email: new SendMail(str, this); break;
 		case uptime:
@@ -456,8 +451,7 @@ public class Application implements ServletContextListener {
 			state.set(State.values.volume, str);
 			break;		
 
-		case spotlightsetbrightness: // deprecated, maintained for mobile client compatibility
-		case spotlight: 
+		case spotlight:
 			comport.setSpotLightBrightness(Integer.parseInt(str));
 			break;
 		case floodlight: 
@@ -866,8 +860,6 @@ public class Application implements ServletContextListener {
 
 			str += " rovvolume " + settings.readSetting(GUISettings.volume);
 			str += " stream " + state.get(State.values.stream);
-			if (!state.get(values.driverstream).equals(driverstreamstate.disabled.toString()))
-				str += " selfstream " + state.get(State.values.driverstream);
 
 			if (loginRecords.isAdmin()) str += " admin true";
 			

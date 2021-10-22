@@ -78,6 +78,7 @@ select  { background-color: #cccccc; color: #000000; border: 1px solid #666666; 
 <body id="thebody" onkeydown= "keyBoardPressed(event);" onkeyup = "keyBoardReleased(event);"
 onload="loaded();" onunload="playerexit();" onresize="browserwindowresized();">
 
+<div id="visiblepage" style="display: none">
 <table><tr><td style="height: 8px"></td></tr></table>
 
 <!--  base_popup_menu -->
@@ -386,7 +387,7 @@ style="padding-left: 3px; padding-right: 3px">
 
 </div><!-- ** end of main_menu_contents div ** -->
 </div><!-- ** end of main_menu_over div ** -->
-
+</div><!-- ** end of visible page div -->
 
 
 <!--  dockline  -->
@@ -423,10 +424,6 @@ position: absolute"> </div>
 <div id="mousecontrolshighlitebox" class="mousecontrolshighlitebox" style="display: none;
 position: absolute; "> </div>
 <div id="forwardhighlitebox" class="forwardhighlitebox" style="display: none; position: absolute;"> </div>
-
-<!-- video overlay invisible -->
-<div id="videooverlay" style="position: absolute; background-color: #000000; z-index: 4;
-filter:alpha(opacity=0); opacity: 0.0; -moz-opacity:0.0; line-height: 0px"></div>
 
 <!-- video overlay logo -->
 <img id="videologo" src="images/eye.gif"
@@ -1017,7 +1014,6 @@ onKeyPress="if (keypress(event)==13) { systemcall('',''); }">
 
 
 <a class="blackbg" href="javascript: motionenabletoggle();">motion enable/disable</a><br>
-<a class="blackbg" href="javascript: clicksteer('');">crosshairs on/off</a><br>
 <a class="blackbg" href="frameGrabHTTP" target="_blank">frame grab</a><br>
 <a class="blackbg" href="rss.xml" target="_blank">rss feed</a><br>
 <a class="blackbg" href="media" target="_blank">recordings and frame grabs</a><br>
@@ -1210,21 +1206,9 @@ onblur="keyboard('enable'); this.style.backgroundColor='#151515';">
 <div id="edit_route_contents" style="line-height: 23px;"></div>
 </div>
 
-<!--  overlay -->
-<div id="overlay" class="overlay"
-style="position: fixed; z-index: 7; left: 0px; top: 0px; width: 100%; height: 100%"> </div>
-
-<!--  overlay contents -->
-<div id="overlaycontents"
-style="position: absolute; z-index: 8;left: 0px; top: 0px; width: 100%;">
-<table align="center" style="height: 100%"><tr valign="top">
-<td>
-
-<!--  overlaydefault -->
-<div id="overlaydefault" style="padding-top: 150px; font-size: 16px">LOADING...</div>
 
 <!--  login -->
-<div id="login" style="display: none; line-height: 25px; padding-top: 150px;">
+<div id="login" style="display: none; line-height: 75px; padding-top: 50px; padding-left: 50px;">
 Login:<br>
 <table><tr>
 <td>username: </td>
@@ -1236,27 +1220,24 @@ class="inputbox" onfocus="this.style.backgroundColor='#000000';" onblur="this.st
 <td><input id="pass" type="password" name="password" size="10" onKeyPress="if (keypress(event)==13) { loginsend(); }"
 class="inputbox" onfocus="this.style.backgroundColor='#000000';" onblur="this.style.backgroundColor='#151515';"></td>
 </tr></table>
-
 <input type="checkbox" id="user_remember" name="user_remember" value="remember" checked="checked"> remember me<br>
 <a class="blackbg" href="javascript: loginsend();">LOGIN</a>
 </div>
 
-<!-- someone already driving box -->
-<div id="someonealreadydrivingbox" style="display: none; padding-top: 150px">
-<span id="usernamealreadydrivingbox"></span>&nbsp;is at the controls of AUTOCRAWLER<br>
-Choose action:<br>
-<a class="blackbg" href="javascript: beapassenger();">be a passenger</a><br>
-<a class="blackbg" href="javascript: assumecontrol();">assume control</a><br>
-<a class="blackbg" href="javascript: logout();">logout</a>
-</div>
 
-</td></tr></table>
+<!--  overlay -->
+<div id="overlay" class="overlay" style="position: fixed; z-index: 7; left: 0px; top: 0px; width: 100%; 
+display: none; height: 100%"> </div>
 
+
+<!--  overlay contents -->
+<div id="overlaycontents"
+style="position: absolute; z-index: 8;left: 0px; top: 0px; width: 100%;">
 
 <!--  hidden message box container -->
 <div id="hiddenmessageboxcontainer" style="display: none; padding-top: 20px; padding-left: 25px">
 <a class="blackbg" href= "javascript: overlay('off');">
-<span class="cancelbox"><b>X</b></span> CLOSE</a>
+<span class="cancelbox" ><b>X</b></span> CLOSE</a>
 <div id="hiddenmessagebox" style="padding-top: 10px;"> </div>
 <br>
 </div>

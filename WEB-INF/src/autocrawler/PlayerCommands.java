@@ -69,9 +69,6 @@ public enum PlayerCommands {
     // experimental (undocumented)
     test,
 
-    // deprecated (kept for mobile client compatibility, undocumented)
-    spotlightsetbrightness,
-    
     // undocumented    
     statuscheck, block, unblock, getemailsettings, emailsettingsupdate,
     
@@ -82,12 +79,12 @@ public enum PlayerCommands {
 	
 	// sub-set that are restricted to "user0"
 	private enum AdminCommands {
-		docklineposupdate, autodockcalibrate, getemailsettings, emailsettingsupdate,
+		docklineposupdate, getemailsettings, emailsettingsupdate,
 		getdrivingsettings, drivingsettingsupdate,  
 		systemcall, 
 		new_user_add, user_list, delete_user, extrauser_password_update, username_update, 
 		showlog, softwareupdate,
-		arduinoreset, muterovmiconmovetoggle, 
+		arduinoreset,
 	    writesetting, holdservo, opennisensor,  restart, shutdown,
 	    setstreamactivitythreshold, email, state, uptime, help, memory, who, 
 	    loginrecords, settings, messageclients, dockgrabtest, rssaddb, block, 

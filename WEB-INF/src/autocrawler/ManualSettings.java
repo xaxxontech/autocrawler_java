@@ -9,10 +9,11 @@ public enum ManualSettings {
 	motionthreshold, redockifweakconnection,
 	arcmovecomp, usearcmoves, arcpwmthreshold, undockdistance, updatelocation,
 	lowbattery,	timedshutdown, camhold, soundthreshold, webrtcserver,
-	webrtcport, turnserverlogin, turnserverport, dockangle, dockoffset,
-
+	webrtcport, turnserverlogin, turnserverport, dockangle, dockoffset, navfloorscan,
+	safeundock,
+	
 	// undocumented
-	ros2, navfloorscan
+	ros2
 
 	;
 	
@@ -38,6 +39,7 @@ public enum ManualSettings {
 		config.setProperty(arcpwmthreshold.name(), "200");
 		config.setProperty(soundthreshold.name(), "-25");
 		config.setProperty(undockdistance.name(), "0.5");
+		config.setProperty(safeundock.name(), Settings.FALSE);
 		config.setProperty(lowbattery.name(), "30");
         config.setProperty(timedshutdown.name(), Settings.TRUE);
 		config.setProperty(camhold.name(), Settings.FALSE);

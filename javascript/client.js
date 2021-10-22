@@ -22,9 +22,6 @@ var cspulsate=false;
 var cspulsatetimer = null; //timer
 var ctroffset = 0; 
 var ctroffsettemp;
-var docklinewidth=60;
-var videooverlaymouseposinterval = null; // timer
-var videomouseaction = false;
 var connected = false;
 var logintimeout = 5000; 
 var logintimer; // timer
@@ -35,7 +32,6 @@ var steeringmode;
 var cameramoving = false;
 var broadcasting = null;
 var broadcastmicon = false; 
-var clicksteeron = false;
 var maxmessagecontents = 50000; // was 150000
 var maxmessageboxsize = 4000;
 var relay = false;
@@ -44,8 +40,6 @@ var tempimage = new Image();
 tempimage.src = 'images/eye.gif';
 var tempimage2 = new Image();
 tempimage2.src = 'images/ajax-loader.gif';
-var tempimage3 = new Image();
-tempimage3.src = 'images/dockline.gif';
 var tempimage4 = new Image();
 tempimage4.src = 'images/steering_icon_selected.gif';
 
@@ -75,30 +69,24 @@ var lastcommand;
 var maintopbarTimer = null;
 var subwindows = ["aux", "context", "menu", "main", "rosmap"];  // purposely skipped "error" window
 var windowpos = [null, null, null, null]; // needs same length as above
-var oculusPrimeplayerSWF = null;
 var recordmode = streammode;
 var firstresize = true;
 var webrtcinit = false;
 
 function loaded() {
-	oculusPrimeplayerSWF = document.getElementById("oculusPrime_player"); 
 
 	loadwindowpositions();
 	loadrosmapwindowpos();
 		
-	if (clicksteeron) { clicksteer("on"); }
-    overlay("on");
     browserwindowresized();
 	
-	if (oculusPrimeplayerSWF == null) { 
-		commClientLoaded(); 
-		if (/auth=/.test(document.cookie)) { 
-			commLoginFromCookie(); 
-			logintimer = setTimeout("eraseCookie('auth'); window.location.reload()", logintimeout);
-		}
-		else login(); // user input goes out thru commLogin() below
-		videologo("on");
+	commClientLoaded(); 
+	if (/auth=/.test(document.cookie)) { 
+		commLoginFromCookie(); 
+		logintimer = setTimeout("eraseCookie('auth'); window.location.reload()", logintimeout);
 	}
+	else login(); // user input goes out thru commLogin() below
+	videologo("on");
 
 }
 
@@ -136,11 +124,6 @@ function main_window_resize() {
 	under.style.display = "none";
 }
 
-function flashloaded() {
-	videologoflash("on");
-	openxmlhttp("rtmpPortRequest",rtmpPortReturned);
-}
-
 function openxmlhttp(theurl, functionname) {
 	  if (window.XMLHttpRequest) {// code for all new browsers
 	    xmlhttp=new XMLHttpRequest();}
@@ -158,40 +141,21 @@ function openxmlhttp(theurl, functionname) {
 	  }
 }
 
-function rtmpPortReturned() { //xmlhttp event handler
-	if (xmlhttp.readyState==4) {// 4 = "loaded"
-		if (xmlhttp.status==200) {// 200 = OK
-			oculusPrimeplayerSWF.setRtmpPort(xmlhttp.responseText);
-			if (/auth=/.test(document.cookie)) { loginfromcookie(); }
-			else { login(); }
-		}
-	}
-}
-
 function resized() {
 	var bw = document.body.clientWidth;
 	if (bw < bworig) {
 		document.body.style.paddingLeft = (bworig-bw)+"px";
 	}
 	else { document.body.style.paddingLeft = "0px"; }
-	
-	docklineposition();
-	videooverlayposition();
-	overlay("");
+
 	videologo("");
 }
 
 function browserwindowresized() {
-//	if (document.body.clientHeight < document.getElementById("visiblepagediv").offsetHeight + 40) {
-//		document.getElementById("topgap").style.height = "5px";
-//	}
-//	else { document.getElementById("topgap").style.height = "30px"; }
 	
-	docklineposition();
-	videooverlayposition();
-	overlay("");
 	videologo("");	
 	bworig= document.body.clientWidth;
+	
 }
 
 function countdowntostatuscheck() {
@@ -274,27 +238,14 @@ function play(str) { // called by javascript only?
 	var s = str.split("_");
 	if (s[1]=="2") { num = 2; streammode = s[0] } // separate audio stream with avconv
 	if (streammode == "stop") { num =0 ; } 
-	if (oculusPrimeplayerSWF != null)
-		oculusPrimeplayerSWF.flashplay(num, videoscale);
-}
-
-function getFlashMovie(movieName) {
-	var isIE = navigator.appName.indexOf("Microsoft") != -1;
-	return (isIE) ? window[movieName] : document[movieName];
 }
 
 function publish(str) { 
 	if (str=="broadcast_mic") {  // forces page reload
 		callServer("playerbroadcast","mic"); 
-//		broadcasting = "mic";
-//		message ("sending: playerbroadcast miconly",sentcmdcolor);
-//		clicksteer("off");
 	}
 	else if (str=="broadcast_off") { // forces page reload
 		callServer("playerbroadcast","off"); 
-//		broadcasting = null;
-//		message ("sending: playerbroadcast off",sentcmdcolor);
-//		clicksteer("on"); 
 	}
 	else {
 		message("sending command: publish " + str, sentcmdcolor);
@@ -357,8 +308,6 @@ function message(message, colour, status, value) {
 			datetime +="</span>";
 			b.innerHTML = message + hiddenmessageboxping + " &nbsp; " + datetime + "<br>" + str + " ";
 		}
-		// if (tempmessage == "playing stream") { videologo("off"); } 
-		// if (tempmessage == "stream stopped") { videologo("on"); docklinetoggle("off"); }
 		lagtimer = 0;
 	}
 	if (status != null) {  //(!/\S/.test(d.value))
@@ -386,8 +335,7 @@ function setstatus(status, value) {
 			if (s[0] != streammode) { play(value); }
 			value = s[0];
 
-			if (value == "stop" || value == "mic") { videologo("on"); } // docklinetoggle("off"); }
-			else if ( oculusPrimeplayerSWF != null && (value == "camera" || value == "camandmic")) videologo("off");
+			if (value == "stop" || value == "mic") { videologo("on"); }  
 		}
 
 		a.innerHTML = value;
@@ -419,19 +367,17 @@ function setstatus(status, value) {
 	}
 	
 	if (status=="vidctroffset") { ctroffset = parseInt(value); }
-	else if (status=="connection" && (value == "connected" || value == "relay") && !connected) { // initialize
-		overlay("off");
+	else if (status=="connection" && (value == "connected" || value == "relay") && !connected) { // loggin OK, initialize
+		document.getElementById("visiblepage").style.display="";
 		countdowntostatuscheck(); 
 		connected = true;
 		keyboard("enable");
-		setTimeout("videomouseaction = true;",30); // firefox screen glitch fix
 		clearTimeout(logintimer);
 		if (value == "relay") { relay = true; }
 	}
 	else if (status == "storecookie") {
 		createCookie("auth",value,30); 
 	}
-	else if (status == "someonealreadydriving") { someonealreadydriving(value); }
 	else if (status == "user") { username = value; }
 	else if (status == "hijacked") { window.location.reload(); }
 	else if (status == "admin" && value == "true") { admin = true; }
@@ -442,14 +388,10 @@ function setstatus(status, value) {
 				message("docked","green");
 			}
 		}
-		if (!/docking/i.test(value)) {
-			docklinetoggle("off");
-		}
 	}
 	else if (status == "streamsettings") {
 		streamdetails = value.split("_");
 	}
-	else if (status=="autodocklock") { autodocklock(value)}
 	else if (status=="autodockcancelled") { autodocking=false; autodock("cancel"); }
 	else if (status=="softwareupdate") {
 		if (value=="downloadcomplete") { softwareupdate("downloadcomplete",""); }
@@ -478,18 +420,7 @@ function setstatus(status, value) {
 		playerexit();
 		window.open(value,'_self');
 	}
-	else if (status=="selfstream") {
-		if (value == "mic") {
-			broadcasting = "mic";
-			clicksteer("off");
-		}
-		else {
-			broadcasting = "off";
-			clicksteer("on");
-		}
-		document.getElementById("selfstream_controls").style.display = "";
-		document.getElementById("self_stream_status").style.display = "";
-	}
+
 	else if (status=="record") {
 		recordmode = value;
 		a= document.getElementById("stream_status");
@@ -505,10 +436,10 @@ function setstatus(status, value) {
 			b.href="javascript: callServer('record','true');";
 		}
 	}
-	else if (status=="videowidth" && oculusPrimeplayerSWF == null) {
+	else if (status=="videowidth") {
 		document.getElementById("video").style.width = value+"px";
 	}
-	else if (status=="videoheight" && oculusPrimeplayerSWF == null) {
+	else if (status=="videoheight") {
 		document.getElementById("video").style.height = value+"px";
 		browserwindowresized();
 		main_window_resize();
@@ -539,20 +470,12 @@ function setstatusunknown() {
 }
 
 function hiddenmessageboxShow() {
-	document.getElementById("overlaydefault").style.display = "none";
-	document.getElementById("login").style.display = "none";
-	document.getElementById("someonealreadydrivingbox").style.display = "none";
-//	document.getElementById("advancedmenubox").style.display = "none";
 	document.getElementById("extrastuffcontainer").style.display = "none";
 	document.getElementById("hiddenmessageboxcontainer").style.display = "";
 	overlay("on");
 }
 
 function extrastuffboxShow() {
-	document.getElementById("overlaydefault").style.display = "none";
-	document.getElementById("login").style.display = "none";
-	document.getElementById("someonealreadydrivingbox").style.display = "none";
-//	document.getElementById("advancedmenubox").style.display = "none";
 	document.getElementById("hiddenmessageboxcontainer").style.display = "none";
 	document.getElementById("extrastuffcontainer").style.display = "";
 	overlay("on");
@@ -611,15 +534,8 @@ function keyBoardPressed(event) {
 			popupmenu('menu', 'show', null, null, document.getElementById("advanced_menu").innerHTML);
 			oculuscommanddivShow();
 		}
-		// if (steeringmode == "forward") { document.getElementById("forward").style.backgroundImage = "none"; }
-		
-		else if (keycode == 89 && broadcastmicon==false && pushtotalk==true && (broadcasting=="mic" || broadcasting=="camandmic")) { // Y
-			oculusPrimeplayerSWF.unmutePlayerMic();
-			broadcastmicon = true;
-			setstatus("selfstream","mic ON");
-			//message("unmute player mic", "orange");
-		}
-		else if (keycode == 80) { // P      && streammode != "stop"
+
+		else if (keycode == 80) { // P     
 			autodock('start');
 			autodock('go');
 		}
@@ -639,50 +555,16 @@ function keyBoardPressed(event) {
 function keyBoardReleased(event) {
 	if (enablekeyboard) {
 		var keycode = event.keyCode;
-		if (keycode == 84 && pushtotalk==true && (broadcasting=="mic" || broadcasting=="camandmic")) {
-			oculusPrimeplayerSWF.mutePlayerMic();
-			setstatus("selfstream",broadcasting);
-			broadcastmicon = false;
-			//message("mute player mic", "orange");
-		}
-	}
-}
 
-function pushtotalktoggle() {
-	var str;
-	if (pushtotalk) {
-		pushtotalk = false;
-		oculusPrimeplayerSWF.unmutePlayerMic();
-		str = "false";
 	}
-	else {
-		pushtotalk = true;
-		oculusPrimeplayerSWF.mutePlayerMic();
-		str = "true";			
-	}
-	if (broadcasting=="mic" || broadcasting=="camandmic") {
-		setstatus("selfstream",broadcasting);
-		if (str=="true") { broadcastmicon  = false; }
-		else { broadcastmicon = true; }
-	}
-	message("sending: sending push T to talk "+str, sentcmdcolor);
-	callServer("pushtotalktoggle", str);
-	lagtimer = new Date().getTime(); // has to be *after* message()
 }
 
 function motionenabletoggle() {
 	message("sending: motion enable/disable", sentcmdcolor);
 	callServer("motionenabletoggle", "");
 	lagtimer = new Date().getTime(); // has to be *after* message()
-	// overlay("off");
 }
 
-function muteROVonmovetoggle() {
-	message("sending: mute ROV mic onmove toggle", sentcmdcolor);
-	callServer("muterovmiconmovetoggle", "");
-	lagtimer = new Date().getTime(); // has to be *after* message()
-	// overlay("off");
-}
 function move(str) {
 	message("sending command: "+str, sentcmdcolor);
 	callServer("move", str);
@@ -694,75 +576,6 @@ function nudge(direction) {
 	callServer("nudge", direction);
 	lagtimer = new Date().getTime();
 }
-
-function docklinetoggle(str) {
-	var a = document.getElementById("dockline");
-	var b = document.getElementById("docklineleft");
-	var c = document.getElementById("docklineright");
-	if (str=="") {
-		if (a.style.display == "") { str="off"; }
-		else { str="on"; }
-	}
-	if (str=="off") { 
-		a.style.display="none"; 
-		b.style.display="none";
-		c.style.display="none";
-		popupmenu("context", "close");
-	}
-	if (str=="on" && streammode != "stop") {
-		clicksteer("on");
-		a.style.display="";
-		b.style.display="";
-		c.style.display="";
-		docklineposition();
-		
-		var str = "<table><tr><td style='height: 5px'></td></tr></table>";
-				str += "<img src='images/dockline.png'"; 
-		str += " border='0' height='22' style='vertical-align: middle'> ";
-		str += "Manual dock <table><tr><td style='height: 20px'></td></tr></table>";
-		str += "&nbsp; <a href='javascript: dock();'><span class='cancelbox'>&#x2714;</span> GO</a>";
-		str += "&nbsp; <a href='javascript: docklinetoggle(&quot;off&quot;); move(&quot;stop&quot;);'><span "; 
-		str += "class='cancelbox'><b>X</b></span> CANCEL</a>";
-		str += "<table><tr><td style='height: 20px'></td></tr></table>";
-		str += "<a href='javascript: camera(&quot;reverse&quot;)'>reverse camera</a>";
-		
-	    var link = document.getElementById("docklink");
-	    var xy = findpos(link);
-	    popupmenu("context", "show", xy[0] + link.offsetWidth + 60, xy[1] + link.offsetHeight, str, null, 1,1);
-
-	}
-}
-
-function docklineposition(n) {
-	var i = ctroffset * videoscale/100;
-	if (n) { i = n; }
-	var a = document.getElementById("dockline");
-	var b = document.getElementById("video");
-	var xy = findpos(b);
-	var c = document.getElementById("docklineleft");
-	var d = document.getElementById("docklineright");
-	var top = xy[1];
-	var height = b.offsetHeight;
-	var ctr = xy[0] + b.offsetWidth/2;
-	a.style.left = (ctr+i) +"px";
-	c.style.left = (ctr+i-(docklinewidth/2))+"px";
-	d.style.left = (ctr+i+(docklinewidth/2))+"px";
-	a.style.top = top + "px";
-	a.style.height = height + "px";
-	c.style.top = height/2 - 60 + top + "px";
-	c.style.height = "120px";
-	d.style.top = height/2 - 60 + top + "px";
-	d.style.height = "120px";
-}
-
-// function speech() {
-	// var a = document.getElementById('speechbox');
-	// var str = a.value;
-	// a.value = "";
-	// callServer("speech", str);
-	// message("sending command: say '" + str + "'", sentcmdcolor, 0);
-	// lagtimer = new Date().getTime();
-// }
 
 function mainmenu(id) {
 	streamdetailspopulate();
@@ -1116,10 +929,6 @@ function dock() {
 
 function autodock(str) {
 	if (str=="start" &! autodocking) { //  && streammode != "stop"
- 		overlay("off");
-		clicksteeron = false;
-//		document.getElementById("video").style.zIndex = "0";
-		clicksteer("off");
 		
 	    var str = "<img src='images/charge.png'"; 
 		str += " border='0' height='26' style='vertical-align: middle'> " +
@@ -1131,9 +940,6 @@ function autodock(str) {
 	    str+= "<span class='cancelbox'>&#x2714;</span> GO</a> &nbsp; &nbsp;";
 	    str+="<a href='javascript: autodock(&quot;cancel&quot;);'>";
 	    str+= "<span class='cancelbox'><b>X</b></span> CANCEL</a>";
-	    str+="<table><tr><td style='height: 20px'></td></tr></table>";
-		str += "<a href='javascript: docklinetoggle(&quot;on&quot;);'><img src='images/dockline.png'"; 
-		str += " border='0' height='22' style='vertical-align: middle'> manual dock</a>";
 
 	    var link = document.getElementById("docklink");
 	    var xy = findpos(link);
@@ -1141,33 +947,13 @@ function autodock(str) {
 	}
 	if (str=="cancel") {
 		popupmenu("context", "close");
-		docklinetoggle("off");
-		clicksteer("on");
 		if (autodocking) {
 			callServer("autodock", "cancel");
 			message("sending autodock cancel", sentcmdcolor);
 			lagtimer = new Date().getTime(); // has to be *after* message()
 		}
 	}
-	if (str=="calibrate" && streammode != "stop") {
-//		overlay("off");
-		popupmenu("menu","close");
-		clicksteeron = false;
-		document.getElementById("video").style.zIndex = "0";
-		videooverlayposition();
-		var a =document.getElementById("videooverlay");
-	    a.onclick = autodockcalibrate;
-	    var str = "Auto-Dock Calibration: <table><tr><td style='height: 7px'></td></tr></table>";
-	    str+="Align robot with charging dock, reverse camera, then click within white area of target"
-    	str+="<table><tr><td style='height: 11px'></td></tr></table>";
-		str += "<a href='javascript: camera(&quot;reverse&quot;)'>reverse camera</a>";
-    	str+="<table><tr><td style='height: 11px'></td></tr></table>";
-    	str+="<a href='javascript: autodock(&quot;cancel&quot;);'>"
-	    str+= "<span class='cancelbox'><b>X</b></span> CANCEL</a><br>"
-	    var video = document.getElementById("video");
-	    var xy = findpos(video);
-	    popupmenu("context", "show", xy[0] + video.offsetWidth - 10, xy[1] + 10, str, 160, 1, 0);
-	}
+
 	if (str=="go") {
 		callServer("autodock", "go");
 		message("sending autodock-go", sentcmdcolor);
@@ -1182,84 +968,6 @@ function autodock(str) {
 	    str+= "<span class='cancelbox'><b>X</b></span> CANCEL</a><br>"
     	popupmenu("context","show",null,null,str);
 	}
-}
-
-function autodockclick(ev) { // TODO: unused if autodock("go") used above, instead
-	ev = ev || window.event;
-	if (ev.pageX) {
-		var x = ev.pageX;
-		var y = ev.pageY;
-	}
-	else {
-		var x = ev.clientX + document.body.scrollLeft - document.body.clientLeft;
-		var y = ev.clientY + document.body.scrollTop - document.body.clientTop;
-	}
-	var v = document.getElementById("video");
-	var xy = findpos(v);
-	x -= xy[0];
-	y -= xy[1];
-	//alert(v.offsetLeft);
-	
-	var b = document.getElementById("docklinecalibratebox")
-    var str = "Auto Dock: <table><tr><td style='height: 7px'></td></tr></table>";
-    str+="in progress... stand by"
-	str+="<table><tr><td style='height: 11px'></td></tr></table>";
-    str+="<a href='javascript: autodock(&quot;cancel&quot;);'>"
-    str+= "<span class='cancelbox'><b>X</b></span> CANCEL</a><br>"
-    b.innerHTML = str;
-	
-	callServer("autodockgo", x+" "+y);
-	message("sending autodock-go: " + x+" "+y, sentcmdcolor);
-	lagtimer = new Date().getTime(); // has to be *after* message()
-	autodocking = true;
-}
-
-function autodocklock(str) {
-	 clicksteer("on");
-	splitstr = str.split(" ");
-	//x,y,width,height
-	videooverlayposition();
-	var scale =2;
-	var video = document.getElementById("video");
-	var xy = findpos(video);
-	var box = document.getElementById("facebox");
-	splitstr = str.split(" "); // left top width height
-	box.style.width = (splitstr[2]*scale*videoscale/100)+"px";
-	box.style.height = (splitstr[3]*scale*videoscale/100)+"px";
-	//box.style.left = (video.offsetLeft + (splitstr[0]*scale)) + "px";
-	box.style.left = xy[0] + (video.offsetWidth/2) + 
-	   (((splitstr[0]*scale) - (video.offsetWidth/2)) * (videoscale/100)) + "px";
-	box.style.top = xy[1] + (video.offsetHeight/2) + 
-	   (((splitstr[1]*scale) - (video.offsetHeight/2)) * (videoscale/100)) + "px";
-	box.style.display = "";
-	setTimeout("document.getElementById('facebox').style.display='none';",500);
-}
-
-function autodockcalibrate(ev) {
-	ev = ev || window.event;
-	if (ev.pageX) {
-		var x = ev.pageX;
-		var y = ev.pageY;
-	}
-	else {
-		var x = ev.clientX + document.body.scrollLeft - document.body.clientLeft;
-		var y = ev.clientY + document.body.scrollTop - document.body.clientTop;
-	}
-	var video = document.getElementById("video");
-	var xy = findpos(video);
-	scale = 2; // convert to 320
-	var xctroffset = x - (xy[0] + (video.offsetWidth/scale)); 
-	var yctroffset = y - (xy[1] + (video.offsetHeight/scale)); 
-	if (!(xctroffset ==0 && yctroffset==0)) {
-		xctroffset /= videoscale/100;
-		yctroffset /= videoscale/100;
-	}
-	x = Math.round(xctroffset)+320;
-	y = Math.round(yctroffset)+240;
-	callServer("autodockcalibrate", x+" "+y);
-	message("sending autodock-calibrate: " + x+" "+y, sentcmdcolor);
-	lagtimer = new Date().getTime(); // has to be *after* message()
-	autodock("cancel");
 }
 
 function popupmenu(pre_id, command, x, y, str, sizewidth, x_offsetmult, y_offsetmult) {
@@ -1310,16 +1018,10 @@ function popupmenu(pre_id, command, x, y, str, sizewidth, x_offsetmult, y_offset
 		popupmenu_xoffset = null;
 		popupmenu_yoffset = null;
 		document.body.onclick = null;
-		if (clicksteeron && document.getElementById("videologo").style.display == "none") {  
-			clicksteer("off");
-			clicksteeron = true;
-		}
+
 		document.onmouseup = function () { 
 			document.onmousemove = null;
 			document.onmouseup = null;
-			if (clicksteeron && document.getElementById("videologo").style.display == "none") {
-				clicksteer("on");
-			}
 		}
 	}
 	else if (command=="close") {
@@ -1371,17 +1073,10 @@ function popupmenusize(pre_id, ev) {
 	document.onmousemove = function(event) { popupmenusizedrag(event, pre_id); }
 	
 	document.body.onclick = null;
-	if (clicksteeron && document.getElementById("videologo").style.display == "none") {  
-		clicksteer("off");
-		clicksteeron = true;
-	}
 	
 	document.onmouseup = function (pre_id) { 
 		document.onmousemove = null;
 		document.onmouseup = null;
-		if (clicksteeron && document.getElementById("videologo").style.display == "none") {
-			clicksteer("on");
-		}
 	}
 }
 
@@ -1549,12 +1244,10 @@ function crosshairspulsate() {
 }
 
 function systemcall(str,conf) {
-	overlay("off");
 	if (str=="") {
 		var a = document.getElementById('usersyscommand');
 		str=a.value;
 		a.value = "";
-//		overlay('off');
 		message("sending system command: "+str,sentcmdcolor);
 	}
 	if (conf=="y") {
@@ -1641,7 +1334,6 @@ function softwareupdate(command,value) {
 		callServer("softwareupdate","check");
 		message("sending software update request",sentcmdcolor);
 		lagtimer = new Date().getTime(); // has to be *after* message()
-//		overlay('off');
 	}
 	if (command=="available") {
 		if (confirm(value)) {
@@ -1661,207 +1353,17 @@ function softwareupdate(command,value) {
 		message("sending software version request",sentcmdcolor);
 		lagtimer = new Date().getTime(); // has to be *after* message()
 		callServer("softwareupdate","versiononly");
-//		overlay("off");
 	}
 }
 
-function clicksteer(str) {
-	var sendmsg = false;
-	if (str=="") { sendmsg = true; }
-	if (str=="" && !clicksteeron) { str = "on"; }
-	if (str == "on") { 
-		document.getElementById("video").style.zIndex = "0";
-		clicksteeron = true;
-		videooverlayposition();
-		var a =document.getElementById("videooverlay");
-
-		a.onmouseover = videoOverlayMouseOver;
-	    a.onmouseout = videoOverlayMouseOut;
-	    a.onclick = videoOverlayClick;
-	    // above event function assign WORKs in ie9. Must be something else, like 0 size window?
-	    
-	    a.style.cursor="crosshair";
-	}
-	else {
-		str="off";
-		document.getElementById("video").style.zIndex = "5";
-		clicksteeron = false;
-		//str = 'off'
-	}
-//	overlay('off');
-	if (sendmsg) message("clicksteer "+str,"green");
-}
-
-function videooverlayposition() {
-	var a = document.getElementById("videooverlay");
-    var video = document.getElementById("video");
-    var xy = findpos(video);
-    a.style.width = video.offsetWidth + "px";
-    a.style.height = video.offsetHeight + "px";
-    a.style.left = xy[0] + "px";
-    a.style.top = xy[1] + "px";
-}
-
-function videoOverlayMouseOver() {
-	if (videomouseaction && clicksteeron) {
-		videooverlayposition();
-		videoOverlaySetMousePosGrabber();
-		document.getElementById("videocursor_top").style.display="";
-		document.getElementById("videocursor_bottom").style.display="";
-		document.getElementById("videocursor_left").style.display="";
-		document.getElementById("videocursor_right").style.display="";
-		crosshairs("on");
-//		var a=document.getElementById("videocursor_ctr"); // <canvas>
-//		a.style.display = "";
-//		try {
-//
-//			var ctx = a.getContext("2d");
-//			ctx.strokeStyle = "#34ae2b"; // "#45F239";
-//			ctx.beginPath();
-//			ctx.arc(25,25,24,0,Math.PI*2,true);
-//			ctx.stroke();
-//		}
-//		catch(err) { 
-//			html5=false;
-//		} // some non html5 browsers
-//		html5=false;
-//		if (html5==false) {
-//			a.style.display = "none";
-		var a=document.getElementById("videocursor_ctr_html4");
-		a.style.display = "";
-//
-//		}
-		videoOverlayGetMousePos(); // ie fix
-	}
-}
-
-function videoOverlaySetMousePosGrabber() {
-	document.onmousemove = videoOverlayGetMousePos;
-}
-	
-function videoOverlayGetMousePos(ev) {
-	ev = ev || window.event;
-	if (ev.pageX || ev.pageY) {
-		var x = ev.pageX;
-		var y = ev.pageY;
-	}
-	else {
-		var x = ev.clientX + document.body.scrollLeft - document.body.clientLeft;
-		var y = ev.clientY + document.body.scrollTop - document.body.clientTop;
-	}
-    //debug(x+" "+y);
-	var b = document.getElementById("videocursor_top");
-	b.style.left = x + "px";
-    var video = document.getElementById("video");
-    var xy = findpos(video);
-    b.style.top = xy[1] + "px";
-    var th = y - xy[1] -15; if (th<0) { th=0; } 
-    b.style.height = th + "px";
-	var c = document.getElementById("videocursor_bottom");
-	c.style.left = x + "px";
-    c.style.top = (y + 16) + "px";
-    var bh = xy[1] + video.offsetHeight - y -15; if (bh<0) { bh=0; }
-    c.style.height = bh + "px";
-    var d = document.getElementById("videocursor_left");
-    d.style.left = xy[0] + "px";
-    d.style.top = y + "px";
-    var lw = x - xy[0] - 15; if (lw<0) { lw=0; }
-    d.style.width = lw + "px";
-    var e = document.getElementById("videocursor_right");
-    e.style.top = y + "px";
-    e.style.left = (x +16) + "px";
-    var rw = xy[0] + video.offsetWidth - x -15; if (rw<0) { rw=0; }
-    e.style.width = rw + "px";
-//    if (html5) { var f = document.getElementById("videocursor_ctr"); }
-//    else { var f = document.getElementById("videocursor_ctr_html4"); }
-    var f = document.getElementById("videocursor_ctr_html4");
-	f.style.display = "";
-	f.style.left = (x-15) + "px";
-	f.style.top = (y-15) + "px";
-	document.onmousemove = null;
-	videooverlaymouseposinterval = setTimeout("videoOverlaySetMousePosGrabber();", 20)
-}
-
-function videoOverlayClick(ev) {
-	if (videomouseaction && clicksteeron) {
-		ev = ev || window.event;
-		if (ev.pageX || ev.pageY) {
-				var x = ev.pageX;
-				var y = ev.pageY;
-		}
-		else {
-			var x = ev.clientX + document.body.scrollLeft - document.body.clientLeft;
-			var y = ev.clientY + document.body.scrollTop - document.body.clientTop;
-		}
-		var video = document.getElementById("video");
-		var xy = findpos(video);
-		scale = 2; // convert to 320
-		var xctroffset = x - (xy[0] + (video.offsetWidth/scale)); 
-		var yctroffset = y - (xy[1] + (video.offsetHeight/scale)); 
-		if (Math.abs(xctroffset) < 30*videoscale/100 ) { xctroffset = 0; }
-		else { flashvidcursor("videocursor_top"); flashvidcursor("videocursor_bottom"); }
-		if (Math.abs(yctroffset) < 15*videoscale/100) { yctroffset = 0; }
-		else { flashvidcursor("videocursor_left"); flashvidcursor("videocursor_right"); }
-		if (!(xctroffset ==0 && yctroffset==0)) {
-			xctroffset /= videoscale/100;
-			yctroffset /= videoscale/100;
-			var str = Math.round(xctroffset)+" "+Math.round(yctroffset);
-			callServer("clicksteer",str);
-			message("sending: clicksteer "+str, sentcmdcolor);
-			lagtimer = new Date().getTime(); // has to be *after* message()
-		}
-	}
-}
-
-//		ctroffset = Math.round(ctroffsettemp/(videoscale/100));
-
-
-function videoOverlayMouseOut() {
-	if (videomouseaction && clicksteeron) {
-		document.onmousemove = null;
-		clearTimeout(videooverlaymouseposinterval);
-		document.getElementById("videocursor_top").style.display="none";
-		document.getElementById("videocursor_bottom").style.display="none";
-		document.getElementById("videocursor_left").style.display="none";
-		document.getElementById("videocursor_right").style.display="none";
-//		document.getElementById("videocursor_ctr").style.display="none";
-		document.getElementById("videocursor_ctr_html4").style.display="none";
-		crosshairs("off");
-	}
-}
-
-function flashvidcursor(id) {
-	var a =document.getElementById(id);
-	var clr1 = "#ffffff";
-	var clr2 = "#45F239";
-	var str1 = "document.getElementById('"+id+"').style.borderColor='"+clr1+"';";
-	str1 += "document.getElementById('"+id+"').style.borderWidth='2px';";
-	var str2 = "document.getElementById('"+id+"').style.borderColor='"+clr2+"';";
-	str2 += "document.getElementById('"+id+"').style.borderWidth='1px';";
-	eval(str1);
-	setTimeout(str2, 100);
-	setTimeout(str1, 200);
-	setTimeout(str2, 300);
-}
 
 function overlay(str) {
 	var a=document.getElementById("overlay");
 	var c=document.getElementById("overlaycontents");
 	if (str=="on") { a.style.display = ""; c.style.display = ""; resized(); }
 	if (str=="off") { a.style.display = "none"; c.style.display = "none"; resized(); }
-	
-	/*
-	var b = document.body;
-	if (b.scrollHeight > b.offsetHeight) {
-		a.style.height = b.scrollHeight + "px";
-		c.style.height = b.scrollHeight + "px";
-	}
-	else { 
-		a.style.height = b.offsetHeight + "px";
-		c.style.height = b.offsetHeight + "px";
-	}
-	*/
 }
+
 
 function createCookie(name,value,days) {
 	if (days) {
@@ -1891,30 +1393,27 @@ function eraseCookie(name) {
 function loginfromcookie() {
 	var str = ""; 
 	str = readCookie("auth");
-	oculusPrimeplayerSWF.connect(str);
 	logintimer = setTimeout("eraseCookie('auth'); window.location.reload()", logintimeout);
 }
 
 function login() {
-	document.getElementById("overlaydefault").style.display = "none";
+	document.getElementById("visiblepage").style.display = "none";
 	document.getElementById("login").style.display = "";
 	document.getElementById("user").focus();	
 }
 
 function loginsend() {
-	document.getElementById("overlaydefault").style.display = "";
 	document.getElementById("login").style.display = "none";
+	document.getElementById("visiblepage").style.display = "";
+
 	var str1= document.getElementById("user").value;
 	var str2= document.getElementById("pass").value;
 	var str3= document.getElementById("user_remember").checked;
 	if (str3 == true) { str3="remember"; }
 	else { eraseCookie("auth"); }
 	
-	if (oculusPrimeplayerSWF == null) commLogin(str1, str2, str3);
-	else { 
-		console.log("attempting oculusPrimeplayerSWF.connect");
-		oculusPrimeplayerSWF.connect(str1+" "+str2+" "+str3+" ");
-	}
+	commLogin(str1, str2, str3);
+
 	logintimer = setTimeout("window.location.reload()", logintimeout);
 }
 
@@ -1924,17 +1423,9 @@ function logout() {
 	setTimeout("window.location.reload()", 250);
 }
 
-function someonealreadydriving(value) {
-	clearTimeout(logintimer);
-	overlay("on");
-	document.getElementById("overlaydefault").style.display = "none";
-	document.getElementById("someonealreadydrivingbox").style.display = "";
-	document.getElementById("usernamealreadydrivingbox").innerHTML = value.toUpperCase();
-}
 
 function beapassenger() {
 	callServer("beapassenger", username);
-	overlay("off");
 	setstatus("connection","PASSENGER");
 }
 
@@ -2060,11 +1551,6 @@ function steeringmouseup(id) {
 
 function videologo(state) {
 	
-	if (oculusPrimeplayerSWF != null) {
-		videologoflash(state);
-		return;
-	}
-	
 	var i = document.getElementById("videologo");
 
 	if (state != "on" && state != "off") {
@@ -2093,82 +1579,6 @@ function videologo(state) {
     
 }
 
-function videologoflash(state) {
-	// pass "" as state to reposition only
-	var i = document.getElementById("videologo");
-    var video = document.getElementById("video");
-    var xy = findpos(video);
-	if (state=="on") { i.style.display = ""; }
-	if (state=="off") { i.style.display = "none"; }
-	
-	i.width = video.offsetWidth;
-	i.height = video.offsetHeight;
-
-    var x = xy[0] + (video.offsetWidth/2) - (i.width/2);
-    var y = xy[1] + (video.offsetHeight/2) - (i.height/2);
-    i.style.left = x + "px";
-    i.style.top = y + "px";
-}
-
-function docklinecalibrate(str) {
-	if (str == "start" && streammode != "stop") {
-		
-//		overlay("off");
-		popupmenu("menu","close");
-		clicksteeron = false;
-		document.getElementById("video").style.zIndex = "0";
-		videooverlayposition();
-		var a =document.getElementById("videooverlay");
-	    a.onclick = docklineclick;
-	    ctroffsettemp = ctroffset;
-	    document.getElementById("dockline").style.display = "";
-	    document.getElementById("docklineleft").style.display = "";
-	    document.getElementById("docklineright").style.display = "";
-	    docklineposition();
-
-	    var str = "Manual Dock Guide Calibration:"
-	    str += "<table><tr><td style='height: 7px'></td></tr></table>";
-	    str += "Align robot with charging dock, then click screen to align guide line";
-	    str += "<table><tr><td style='height: 7px'></td></tr></table>";
-	    str += "<a href='javascript: docklinecalibrate(&quot;save&quot;);'>";
-	    str += "<span class='cancelbox'>&#x2714;</span> SAVE</a> &nbsp; &nbsp; ";
-	    str += "<a href='javascript: docklinecalibrate(&quot;cancel&quot;);'>";
-	    str += "<span class='cancelbox'><b>X</b></span> CANCEL</a><br>";
-	    
-	    var video = document.getElementById("video");
-	    var xy = findpos(video);
-	    popupmenu("context", "show", xy[0] + video.offsetWidth - 10, xy[1] + 10, str, 180, 1, 0);
-	}
-
-	if (str == "save") {
-		docklinetoggle("off");
-		ctroffset = Math.round(ctroffsettemp/(videoscale/100));
-		popupmenu("close");
-		clicksteer("on");
-		message("sending dockline position: " + ctroffset, sentcmdcolor);
-		callServer("docklineposupdate", ctroffset);
-		lagtimer = new Date().getTime();
-	}
-	if (str == "cancel") {
-		docklinetoggle("off");
-		clicksteer("on");
-	}
-}
-
-function docklineclick(ev) {
-	ev = ev || window.event;
-	if (ev.pageX) {
-		var x = ev.pageX;
-	}
-	else {
-		var x = ev.clientX + document.body.scrollLeft - document.body.clientLeft;
-	} 
-	// var x = ev.clientX + document.body.scrollLeft - document.body.clientLeft;
-	var video = document.getElementById("video");
-	var xy = findpos(video);
-	ctroffsettemp  = x - (xy[0] + (video.offsetWidth/2));
-	docklineposition(ctroffsettemp);
-}
 
 function account(str) { // change_password, password_update  DONE
 	// // change_other_pass, add_user, delete_user, newuser_add, change_username
@@ -2203,7 +1613,6 @@ function account(str) { // change_password, password_update  DONE
 		popupmenu("menu","show",null,null,str);
 	}
 	if (str=="newuser_add") {
-//		overlay("off");
 		var user = document.getElementById('newusername').value;
 		var pass = document.getElementById('newuserpass').value;
 		var passagain = document.getElementById('newuserpass_again').value;
@@ -2347,7 +1756,6 @@ function deluserconf(str) {
 }
 
 function updateextrapass(str) {
-	overlay("off");
 	var pass = document.getElementById('extrauserpass_'+str).value;
 	var passagain = document.getElementById('extrauserpassagain_'+str).value;
 	var oktosend = true;
@@ -2388,7 +1796,6 @@ function disconnectOtherConnections() {
 	message("request eliminate passengers: "+str, sentcmdcolor);
 	callServer("disconnectotherconnections", "");
 	lagtimer = new Date().getTime();
-	overlay("off");
 }
 
 function speakchat(command,id) {
@@ -2541,7 +1948,6 @@ function streamset(str) {
 		message("sending custom stream values: " + s, sentcmdcolor);
 		lagtimer = new Date().getTime(); // has to be *after* message()
 		// document.getElementById("extendedsettingsbox").style.display = "none";
-		overlay("off");
 	}
 	else {
 		streamdetails[0] = "v"+str;

@@ -39,7 +39,6 @@ public class Navigation implements Observer {
 	public static long routestarttime = 0;
 	public NavigationLog navlog;
 	int batteryskips = 0;
-	int unsafeskips = 0;
     private String navpstring = null;
 
 
@@ -624,7 +623,7 @@ public class Navigation implements Observer {
 				}
 
 				// skip route if battery low (settings.txt)
-				if(batteryTooLow()){
+				if(batteryTooLow()) {
 					batteryskips++;
 					Util.log("battery too low: " + state.get(values.batterylife) + " skips: " + batteryskips, this);
 					if(batteryskips == 1){	// only log once !
@@ -657,22 +656,31 @@ public class Navigation implements Observer {
 					continue;
 				}
 
+				// enable rgb cam
+				if (!(state.equals(values.stream, Application.streamstate.camera.toString()) ||
+						state.equals(values.stream, Application.streamstate.camandmic.toString()))) {
+					Util.delay(Video.STREAM_CONNECT_DELAY);
+					app.driverCallServer(PlayerCommands.publish, Application.streamstate.camera.toString());
+				}
+
 				if (!safeUndock()) {
-					unsafeskips++;
-					if (unsafeskips == 1)
-						navlog.newItem(NavigationLog.ALERTSTATUS, "Robot blocked from safely un-docking", 0, null, name, consecutiveroute, 0);
+					app.driverCallServer(PlayerCommands.messageclients, "unable to un-dock, obstacle detected");
+
+					String navlogmsg = "Robot blocked from safely un-docking";
+
+					// take photo
+					String link = FrameGrabHTTP.saveToFile(null);
+//					Util.delay(2000); // allow time for framgrabusy flag to be set true
+					long timeout = System.currentTimeMillis() + 10000;
+					while (state.getBoolean(values.framegrabbusy) && System.currentTimeMillis() < timeout) Util.delay(10);
+					Util.delay(3000); // allow time to download
+					navlogmsg += "<br><a href='" + link + "' target='_blank'>Photo</a>";
+
+					navlog.newItem(NavigationLog.ALERTSTATUS, navlogmsg, 0, null, name, consecutiveroute, 0);
 					stopNavigation(); // turn off lidar
 					if( ! delayToNextRoute(navroute, name, id)) return;
 					continue;
 				}
-				unsafeskips = 0;
-				
-				// enable rgb cam
-                if (!(state.equals(values.stream, Application.streamstate.camera.toString()) ||
-                        state.equals(values.stream, Application.streamstate.camandmic.toString()))) {
-                    Util.delay(Video.STREAM_CONNECT_DELAY);
-                    app.driverCallServer(PlayerCommands.publish, Application.streamstate.camera.toString());
-                }
 
 				// check if cancelled while waiting
 				if (!state.exists(State.values.navigationroute)) return;
@@ -826,10 +834,10 @@ public class Navigation implements Observer {
 
 	private boolean safeUndock() {
 
-        if (state.get(State.values.dockstatus).equals(AutoDock.UNDOCKED))
+        if (state.get(State.values.dockstatus).equals(AutoDock.UNDOCKED) || !settings.getBoolean(ManualSettings.safeundock))
             return true;
 
-        final double safedistance = settings.getDouble(ManualSettings.undockdistance) + 0.4;
+        final double safedistance = settings.getDouble(ManualSettings.undockdistance) + 0.3;
 		String scan = state.get(State.values.rosscan);
 		if (scan == null) return false;
 		
@@ -1098,7 +1106,7 @@ public class Navigation implements Observer {
 				String link = "";
 				if (streamactivity.contains("video") || streamactivity.contains(OpenCVObjectDetect.HUMAN)) {
 					link = FrameGrabHTTP.saveToFile("?mode=processedImgJPG");
-					navlogmsg += "<br><a href='" + link + "' target='_blank'>autocrawler.image link</a>";
+					navlogmsg += "<br><a href='" + link + "' target='_blank'>Photo</a>";
 				}
 
 				if (email || rss) {
@@ -1106,12 +1114,12 @@ public class Navigation implements Observer {
 					if (streamactivity.contains(OpenCVObjectDetect.HUMAN)) {
 						msg = "[Autocrawler Detected "+streamactivity+"] " + msg;
 						msg += "\nimage link: " + link + "\n";
-						Util.delay(3000); // allow time for download thread to capture autocrawler.image before turning off camera
+						Util.delay(3000); // allow time for download thread to capture photo before turning off camera
 					}
 					if (streamactivity.contains("video")) {
 						msg = "[Autocrawler Detected Motion] " + msg;
 						msg += "\nimage link: " + link + "\n";
-						Util.delay(3000); // allow time for download thread to capture autocrawler.image before turning off camera
+						Util.delay(3000); // allow time for download thread to capture photo before turning off camera
 					}
 					else if (streamactivity.contains("audio")) {
 						msg = "[Autocrawler Sound Detection] Sound " + msg;

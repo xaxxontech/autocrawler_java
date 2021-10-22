@@ -149,6 +149,27 @@ ontouchstart="steeringmousedown(this.id);" ontouchend="steeringmouseup(this.id);
 onmousedown="steeringmousedown(this.id);" onmouseup="steeringmouseup(this.id);"> </td>
 </tr></table>
 
+<!-- LOGIN -->
+<div id="login" style="display: none; background-color: #151515;
+padding-left: 5%; padding-right: 5%; padding-top: 5%; padding-bottom: 0%;
+font-size: 4vh; line-height: 150%;">
+Login:
+<table><tr><td>
+username:
+</td><td>
+<input id="user" type="text" size="6" onKeyPress="if (keypress(event)==13) { loginsend(); }"
+class="inputbox" onfocus="this.style.backgroundColor='#000000';" >
+</td></tr><tr><td>
+password:
+</td><td>
+<input id="pass" type="password" name="password" size="6" onKeyPress="if (keypress(event)==13) { loginsend(); }"
+class="inputbox" onfocus="this.style.backgroundColor='#000000';">
+</td></tr></table>
+<input type="checkbox" id="user_remember" name="user_remember" value="remember" checked="checked"> remember me
+<br><br>
+<a href="javascript: loginsend();">LOGIN</a>
+</div>
+
 </div> <!-- end of pagediv>
 
 <!--status box-->
@@ -342,24 +363,6 @@ gripper <a href="javascript: callServer('state','arm open');">open</a> /
 <a href="javascript: callServer('state','arm rest');">arm rest</a><br>
 <table><tr><td style="height: 7px"></td></tr></table>
 <a href="javascript: callServer('state','arm pickup');">arm pickup</a><br>
-</div>
-
-<!-- LOGIN -->
-<div id="login" style="display: none; background-color: #151515;
-padding-left: 5%; padding-right: 5%; padding-top: 5%; padding-bottom: 0%;
-font-size: 4vh; line-height: 150%; "
-Login:<br>
-username:
-<input id="user" type="text" size="6" onKeyPress="if (keypress(event)==13) { loginsend(); }"
-class="inputbox" onfocus="this.style.backgroundColor='#000000';" >
-<br>
-password:
-<input id="pass" type="password" name="password" size="6" onKeyPress="if (keypress(event)==13) { loginsend(); }"
-class="inputbox" onfocus="this.style.backgroundColor='#000000';">
-<br>
-<input type="checkbox" id="user_remember" name="user_remember" value="remember" checked="checked"> remember me
-<br><br>
-<a href="javascript: loginsend();">LOGIN</a>
 </div>
 
 <!--message box-->

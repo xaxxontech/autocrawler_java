@@ -4,6 +4,8 @@ var PINGINTERVAL = 5000;
 var webrtcinit = false;
 var mobile;
 var lastcommand="";
+var logintimer;
+var LOGINTIMEOUT = 5000;
 var menus = [ "main_menu", "advanced_menu", "command_log_menu", "navigation_menu", "waypoints_menu",
 	"routes_menu", "developer_menu", "map_menu" ];
 
@@ -22,7 +24,10 @@ function mobileloaded() { // called by body onload
 	videologo("on");
 	setstatusunknown();
 	
-	if (/auth=/.test(document.cookie)) commLoginFromCookie(); 
+	if (/auth=/.test(document.cookie)) {
+		commLoginFromCookie(); 
+		logintimer = setTimeout("eraseCookie('auth'); window.location.reload()", LOGINTIMEOUT);
+	}
 	else login();
 }
 
@@ -137,6 +142,7 @@ function setstatus(status, value) {
 		else if (value == "connected") { 
 			document.getElementById("login").style.display = "none";
 			videologo("on");
+			clearTimeout(logintimer);
 		}
 	}
 

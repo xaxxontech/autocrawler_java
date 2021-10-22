@@ -479,7 +479,7 @@ public class Video {
 
     public String record(String mode) { return record(mode, null); }
 
-    // record to mp4 in webapps/autocarwler/streams/
+    // record to video file in webapps/autocarwler/streams/
     public String record(String mode, String optionalfilename) {
 
         Util.debug("record("+mode+", " + optionalfilename +"): called.. ", this);
