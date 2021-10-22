@@ -11,7 +11,7 @@ public enum ManualSettings {
 	lowbattery,	timedshutdown, camhold, soundthreshold, webrtcserver,
 	webrtcport, turnserverlogin, turnserverport, dockangle, dockoffset, navfloorscan,
 	safeundock,
-	
+
 	// undocumented
 	ros2
 

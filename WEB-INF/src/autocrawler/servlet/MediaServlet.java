@@ -105,22 +105,31 @@ public class MediaServlet extends HttpServlet {
 				}
 			});
 
-			str.append("\n <table> ");
+			StringBuffer tbl = new StringBuffer();
+
+			tbl.append("\n <table> ");
+			Long totalbytes = 0L;
 			for (int c = 0; c < files.length; c++) {
 
 				if (files[c].getName().toLowerCase().endsWith(".jpg"))
-					str.append("<tr><td><div class=\'" + IMAGE + "\'><a href=\"/autocrawler/framegrabs/" + files[c].getName()
+					tbl.append("<tr><td><div class=\'" + IMAGE + "\'><a href=\"/autocrawler/framegrabs/" + files[c].getName()
 							+ "\" target='_blank'>"
 							+ files[c].getName() + "</a></div><td style=\"text-align: right;\">" + files[c].length() + " bytes" + "</tr>\n");
 
 				else // if(files[c].getName().toLowerCase().endsWith(".flv"))
-					str.append("<tr><td><div class=\'" + VIDEO + "\'><a href=\"/autocrawler/streams/" + files[c].getName()
+					tbl.append("<tr><td><div class=\'" + VIDEO + "\'><a href=\"/autocrawler/streams/" + files[c].getName()
 							+ "\" target='_blank'>"
 							+ files[c].getName() + "</a></div><td style=\"text-align: right;\">" + files[c].length() + " bytes" + "</tr>\n");
+
+				totalbytes += files[c].length();
 			}
 
-			str.append("\n </table> ");
+			tbl.append("\n </table> ");
+			str.append("<div style='padding-top: 5px; padding-bottom: 5px; padding-left: 15px; '>Total: "+
+					totalbytes/1000000L+"Mb in "+ files.length+" file(s)</div>\n");
+			str.append(tbl);
 		}
+
 		else { str.append ("<div style='padding-left: 15px'>No media yet</div>" ); }
         out.println(str+ FILEEND);
         out.close();	
