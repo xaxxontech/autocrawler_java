@@ -62,20 +62,10 @@ public class Navigation implements Observer {
 		if(key.equals(values.distanceangle.name())){
 			try {
 				int mm = Integer.parseInt(state.get(values.distanceangle).split(" ")[0]);
-				if(mm > 0) {
-					
-					routemillimeters += mm;
-					// state.set(State.values.routemm, routemillimeters);
-					
-				}
+				if(mm > 0) routemillimeters += mm;
 			} catch (Exception e){}
 		}
 	}
-
-	// was used in old dashboard only
-	//public static String getRouteMeters() {
-	//	return Util.formatFloat(routemillimeters / 1000, 0);
-	//}
 	
 	public void gotoWaypoint(final String str) {
 		if (state.getBoolean(State.values.autodocking)) {
@@ -113,7 +103,7 @@ public class Navigation implements Observer {
 
 		if (state.get(State.values.navsystemstatus).equals(Ros.navsystemstate.mapping.toString()) ||
 				state.get(State.values.navsystemstatus).equals(Ros.navsystemstate.stopping.toString())) {
-			app.driverCallServer(PlayerCommands.messageclients, "Navigation.waitForNavSystem(): can't start autocrawler.navigation");
+			app.driverCallServer(PlayerCommands.messageclients, "Navigation.waitForNavSystem(): can't start navigation");
 			return false;
 		}
 
@@ -124,7 +114,7 @@ public class Navigation implements Observer {
 				&& System.currentTimeMillis() - start < NAVSTARTTIMEOUT*3) { Util.delay(50);  } // wait
 
 		if (!state.get(State.values.navsystemstatus).equals(Ros.navsystemstate.running.toString())) {
-			app.driverCallServer(PlayerCommands.messageclients, "Navigation.waitForNavSystem(): autocrawler.navigation start failure");
+			app.driverCallServer(PlayerCommands.messageclients, "Navigation.waitForNavSystem(): navigation start failure");
 			return false;
 		}
 
@@ -185,10 +175,8 @@ public class Navigation implements Observer {
             app.driverCallServer(PlayerCommands.messageclients, "starting mapping "+str+" please wait");
             state.set(State.values.navsystemstatus, Ros.navsystemstate.starting.toString()); // set running by ROS node when ready
 
-        }  }).start();
-
+        } }).start();
 	}
-
 
 	public void startNavigation() {
 		if (!state.equals(State.values.navsystemstatus, Ros.navsystemstate.stopped)) {
@@ -197,7 +185,7 @@ public class Navigation implements Observer {
         }
 
 		new Thread(new Runnable() { public void run() {
-			app.driverCallServer(PlayerCommands.messageclients, "starting autocrawler.navigation, please wait");
+			app.driverCallServer(PlayerCommands.messageclients, "starting navigation, please wait");
 
             app.driverCallServer(PlayerCommands.cameracommand, Malg.cameramove.horiz.toString());
 
@@ -236,7 +224,7 @@ public class Navigation implements Observer {
 				stopNavigation(); // failure
 			}
 
-		}  }).start();
+		}}).start();
 	}
 
 
@@ -259,7 +247,7 @@ public class Navigation implements Observer {
             app.driverCallServer(PlayerCommands.publish, Application.streamstate.stop.toString());
 
         state.set(State.values.navsystemstatus, Ros.navsystemstate.stopped.toString());
-        Util.log("stopping autocrawler.navigation", this);
+        Util.log("stopping navigation", this);
         app.driverCallServer(PlayerCommands.messageclients, "navigation stopped");
 
         if (navpstring !=null) Ros.kill(navpstring);
@@ -461,7 +449,7 @@ public class Navigation implements Observer {
 
 		// assumes goto dock at the end, whether or not dock is a waypoint
 
-		if (state.getBoolean(State.values.autodocking)) {
+		if (state.getBoolean(State.values.autodocking) || state.getBoolean(State.values.docking)) {
 			app.driverCallServer(PlayerCommands.messageclients, "command dropped, autodocking");
 			return;
 		}
@@ -474,8 +462,8 @@ public class Navigation implements Observer {
 			return;
 		}
 
-		if (state.exists(State.values.navigationroute))  cancelAllRoutes(); // if another route running
-		if (state.exists(values.roscurrentgoal))   goalCancel();  // override any active goal
+		if (state.exists(State.values.navigationroute)) cancelAllRoutes(); // if another route running
+		if (state.exists(values.roscurrentgoal)) goalCancel();  // override any active goal
 
 		// check for route name
 		Document document = Util.loadXMLFromString(routesLoad());
@@ -568,7 +556,6 @@ public class Navigation implements Observer {
 								startroute = true;
 								break;
 							}
-
 						}
 
 						if (daynow == daynums[i]) nextdayindex = i;
@@ -626,18 +613,19 @@ public class Navigation implements Observer {
 				if(batteryTooLow()) {
 					batteryskips++;
 					Util.log("battery too low: " + state.get(values.batterylife) + " skips: " + batteryskips, this);
-					if(batteryskips == 1){	// only log once !
+					if(batteryskips == 1)	// only log once !
 						navlog.newItem(NavigationLog.ALERTSTATUS, "Battery too low to start: " + state.get(values.batterylife), 0, null, name, consecutiveroute, 0);	
-					}
 
-                    if( ! state.get(values.batterylife).contains("_charging")) {
-                        Util.log("batteryTooLow(): not charging, powerreset: "+ state.get(values.batterylife), "Navigation.runRoute()");
-                        app.driverCallServer(PlayerCommands.powerreset, null);
-                    }
+// danrgerous loop					
+//                    if( ! state.get(values.batterylife).contains("_charging")) {
+//                        Util.log("batteryTooLow(): not charging, powerreset: "+ state.get(values.batterylife), "Navigation.runRoute()");
+//                        app.driverCallServer(PlayerCommands.powerreset, null);
+//                    }
 
 					if( ! delayToNextRoute(navroute, name, id)) return;
 					continue;
-				} else { batteryskips = 0; }
+				} 
+				batteryskips = 0; 
 
                 // start ros nav system
 				if (!waitForNavSystem()) {
@@ -645,7 +633,7 @@ public class Navigation implements Observer {
 					if (!state.exists(State.values.navigationroute)) return;
 					if (!state.get(State.values.navigationrouteid).equals(id)) return;
 
-					navlog.newItem(NavigationLog.ERRORSTATUS, "unable to start autocrawler.navigation system", routestarttime, null, name, consecutiveroute, 0);
+					navlog.newItem(NavigationLog.ERRORSTATUS, "unable to start navigation system", routestarttime, null, name, consecutiveroute, 0);
 
 					if (state.getUpTime() > Util.TEN_MINUTES) {
 						app.driverCallServer(PlayerCommands.reboot, null);
@@ -693,7 +681,6 @@ public class Navigation implements Observer {
 				routemillimeters = 0l;
 
 				// for watchdog scripts
-				// String r = state.get(State.values.navigationroute);
 				String est = NavigationUtilities.getRouteTimeEstimateString(state.get(State.values.navigationroute));
 				state.set(State.values.estimatedrouteseconds, est);
 
@@ -794,23 +781,27 @@ public class Navigation implements Observer {
 					while (System.currentTimeMillis() - start < SystemWatchdog.AUTODOCKTIMEOUT + WAYPOINTTIMEOUT) {
 						if (!state.exists(State.values.navigationroute)) return;
 						if (!state.get(State.values.navigationrouteid).equals(id)) return;
-						if (state.get(State.values.dockstatus).equals(AutoDock.DOCKED) && !state.getBoolean(State.values.autodocking))
-							break;
-						Util.delay(100); // success
+						
+						// success
+						if (state.get(State.values.dockstatus).equals(AutoDock.DOCKED) && !state.getBoolean(State.values.autodocking)) break;
+						
+						Util.delay(100); 
 					}
 
 					if (!state.get(State.values.dockstatus).equals(AutoDock.DOCKED)) {
 
+						cancelRoute(id);
 						navlog.newItem(NavigationLog.ERRORSTATUS, "Unable to dock", routestarttime, null, name, consecutiveroute, 0);
-
-						// cancelRoute(id);
-						//TODO: try docking one more time, sending alert if fail
+						
 						Util.log("calling redock()", this);
 						stopNavigation();
-						Util.delay(Ros.ROSSHUTDOWNDELAY / 2); // 5000 too low, massive cpu sometimes here
+						Util.delay(5000);
+						Util.systemCall("pkill roscore");
+						Util.delay(5000);
 						app.driverCallServer(PlayerCommands.redock, SystemWatchdog.NOFORWARD);
 
 						if (!delayToNextRoute(navroute, name, id)) return;
+
 						continue;
 					}
 
@@ -829,7 +820,7 @@ public class Navigation implements Observer {
 
 				if (!delayToNextRoute(navroute, name, id)) return;
 			}
-		}  }).start();
+		}}).start();
 	}
 
 	private boolean safeUndock() {
@@ -902,9 +893,6 @@ public class Navigation implements Observer {
 
 	/**
 	 * process actions for single waypoint 
-	 * 
-	 * @param actions
-	 * @param duration
 	 */
 	private void processWayPointActions(NodeList actions, long duration, String wpname, String name, String id) {
 		

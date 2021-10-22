@@ -94,8 +94,7 @@ public class Application implements ServletContextListener {
 		state.set(State.values.httpport, settings.readHTTPport());
 		initialstatuscalled = false;
 
-		if (!settings.readSetting(GUISettings.telnetport).equals(Settings.DISABLED.toString()))
-			commandServer = new TelnetServer(this);
+		commandServer = new TelnetServer(this);
 
 		// OpenCV
 		OpenCVUtils ocv = new OpenCVUtils(this);
@@ -116,37 +115,10 @@ public class Application implements ServletContextListener {
 		navigation = new Navigation(this);
 		Util.log("application initialize done", this);
 		
-		// run any active route ..TODO: will throw error and run route even on low battery 
-		/*
-		 * 
- java.base@11.0.11/java.lang.Thread.sleep(Native Method)
- autocrawler.Util.delay(Util.java:69)
- autocrawler.navigation.Navigation.delayToNextRoute(Navigation.java:871)
- autocrawler.navigation.Navigation.access$7(Navigation.java:849)
- autocrawler.navigation.Navigation$5.run(Navigation.java:633)
- java.base@11.0.11/java.lang.Thread.run(Thread.java:829)
-*/
-		
 		if (!navigation.runAnyActiveRoute() && !settings.getBoolean(ManualSettings.ros2)) {
 			Util.log("starting roscore", this);
 			Ros.roscommand(null); // start ROS1 roscore
 		}
-		
-		
-		/*
-		if ( ! settings.getBoolean(ManualSettings.ros2)) {
-			Util.log("starting roscore", this);
-			Ros.roscommand(null); // start ROS1 roscore
-		}
-		
-		if (navigation.runAnyActiveRoute()) {
-			
-			Util.log("starting route: " + NavigationUtilities.getActiveRoute(), this);
-
-			
-		}
-		*/
-
 	}
 
 
@@ -228,8 +200,8 @@ public class Application implements ServletContextListener {
 	}
 
 	/**
-	 * called by remote flash or commservlet
-	 * */
+	 * called by commservlet
+	 */
 	public void playerCallServer(String fn, String str) {
 		
 		if (fn == null) return;
@@ -604,7 +576,6 @@ public class Application implements ServletContextListener {
 //                p.start();
 //            } catch (Exception e) {}
 			
- 			Util.log(BanList.getRefrence().toHTML(), this);
 			break;
 
 		case streammode: // TODO: testing ffmpeg/avconv streaming
@@ -1404,22 +1375,6 @@ public class Application implements ServletContextListener {
 			messageplayer(msg, null, null);
 		}
 	}
-
-	/*
-	public void factoryReset() {
-
-		final String backup = "conf"+Util.sep+"backup_autocrawler_settings.txt";
-
-		// backup
-		new File(Settings.settingsfile).renameTo(new File(backup));
-
-		// delete it, build on startup
-		new File(Settings.settingsfile).delete();
-
-		restart();
-	}
-	*/
-
 }
 
 

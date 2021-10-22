@@ -40,10 +40,6 @@ import autocrawler.PlayerCommands;
 import autocrawler.State;
 import autocrawler.Util;
 
-//todo: scollpane tabbed .. count state vars use
-//         button panel 
-//         history up arrows
-// 		
 // high res monitors: https://stackoverflow.com/questions/26877517/java-swing-on-high-dpi-screen
 //
 public class SwingTerminal extends JFrame {
@@ -54,8 +50,6 @@ public class SwingTerminal extends JFrame {
 	DefaultListModel<String> listModel = new DefaultListModel<String>();
 	JList<String> list = new JList<String>(listModel);
 	
-//	JTable table = new JTable
-	
 	JToggleButton pause = new JToggleButton("waiting", true);
 	JTextArea messages = new JTextArea();	
 	JTextField in = new JTextField();
@@ -64,6 +58,8 @@ public class SwingTerminal extends JFrame {
 	PrintWriter printer = null;
 	Socket socket = null;	
 	String version = null;
+	String cpu = "0";
+
 //	String exclude = null;
 	int rx, tx, historyPointer, statePointer = 0;
 	String ip;
@@ -94,11 +90,10 @@ public class SwingTerminal extends JFrame {
 		// this.exclude = exclude;
 		
 		// hack
-		/*
 		history.add("runroute red");
 		history.add("stopnav");
-		history.add("gotodock");
-		*/
+		history.add("startnav");
+		history.add("autodock  go");
 		
 		setDefaultLookAndFeelDecorated(true);
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
@@ -193,8 +188,8 @@ public class SwingTerminal extends JFrame {
 					if (historyPointer == history.size()-1) historyPointer = 0;
 					else historyPointer++;
 					in.setText(history.get(historyPointer));
-					// System.out.println(arg.getKeyCode() + " ++ " + historyPointer + " " + history.size());
-					// System.out.println(history.toString());
+					System.out.println(arg.getKeyCode() + " ++ " + historyPointer + " " + history.size());
+					System.out.println(history.toString());
 				}
 				
 				if (arg.getKeyCode() == 40) {
@@ -202,8 +197,8 @@ public class SwingTerminal extends JFrame {
 					if (historyPointer == 0) historyPointer = history.size()-1;
 					else historyPointer--;
 					in.setText(history.get(historyPointer));
-					// System.out.println(arg.getKeyCode() + " -- " + historyPointer + " " + history.size());
-					// System.out.println(history.toString());
+					System.out.println(arg.getKeyCode() + " -- " + historyPointer + " " + history.size());
+					System.out.println(history.toString());
 				}
 				
 				if (arg.getKeyCode() == 39) {
@@ -277,18 +272,18 @@ public class SwingTerminal extends JFrame {
 			if(printer == null || socket.isClosed()){
 				
 				openSocket();
-//				Util.delay(5000);
 				if(socket != null) if(socket.isConnected()) readSocket();
 					
 			} else {
 				try {
+					
 					printer.checkError();
 					printer.flush();
 					printer.println("\n\n\n"); 
 					// send dummy message to test the connection
 					
 				} catch (Exception e) {
-					appendMessages("TimerTask(): "+e.getMessage());
+					appendMessages("swing.TimerTask(): "+e.getMessage());
 					closeSocket();
 				}
 			}
@@ -297,14 +292,16 @@ public class SwingTerminal extends JFrame {
 	
 	void openSocket(){	
 		try {	
-			setTitle("\t\t.... Trying to connect");
+			setTitle("..Trying to connect");
 			socket = new Socket(ip, port);
 			printer = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream())), true);
 			reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-			appendMessages("openSocket(): connected to: " + socket.getInetAddress().toString());
+			appendMessages("swing.openSocket(): connected to: " + socket.getInetAddress().toString());
+			rx = 0;
+			tx = 0;
 		} catch (Exception e) {
-			setTitle("\t\t.... Disconnected");
-			appendMessages("openSocket(): " + e.getMessage());
+			setTitle("..Disconnected");
+			appendMessages("swing.openSocket(): " + e.getMessage());
 			closeSocket();
 			Util.delay(5000);
 		}
@@ -320,13 +317,13 @@ public class SwingTerminal extends JFrame {
 				reader.close();
 				reader = null;
 			} catch (IOException e) {
-				appendMessages("closeSocket(): " + e.getLocalizedMessage());
+				appendMessages("swing.closeSocket(): " + e.getLocalizedMessage());
 			}
 		}
 		try { 
 			if(socket != null) socket.close(); 
 		} catch (IOException ex) {
-			appendMessages("closeSocket(): " + ex.getLocalizedMessage());
+			appendMessages("swing.closeSocket(): " + ex.getLocalizedMessage());
 		}
 	}
 
@@ -338,7 +335,7 @@ public class SwingTerminal extends JFrame {
 			
 		} else {
 			
-			pause.setText("Paused..........." + " rx: " + rx + " tx: " + tx );
+			pause.setText("......Paused....." + " rx: " + rx + " tx: " + tx );
 
 		}
 		
@@ -351,8 +348,7 @@ public class SwingTerminal extends JFrame {
 				try {
 					input = reader.readLine();
 					if(input == null) {
-						appendMessages("readSocket(): closing..");
-					//	Util.delay(1000);
+						appendMessages("swing.readSocket(): closing..");
 						closeSocket();
 						break;
 					}
@@ -363,10 +359,11 @@ public class SwingTerminal extends JFrame {
 						
 						rx++;
 						updateButtonText();
-						appendMessages( input );
+						appendMessages(input);
+						
 					}
 				} catch (Exception e) {
-					appendMessages("readSocket(): "+e.getMessage());
+					appendMessages("swing.readSocket(): "+e.getMessage());
 					closeSocket();
 				}
 			}
@@ -402,7 +399,6 @@ public class SwingTerminal extends JFrame {
 		
 		if( input.toLowerCase().contains("welcome")) {
 			version = input.replace("<telnet> Welcome to", "");
-			// version = input.replace("welcome to", "");
 			sendCommand("state dockstatus");
 			sendCommand("state batteryvolts");
 			return;
@@ -428,7 +424,12 @@ public class SwingTerminal extends JFrame {
 			volts = t[t.length-1];
 		}
 		
-		setTitle(version + " " + dockstatus + " " + volts + " volts "  );
+		if( input.contains("cpu") && ! input.contains("wait")) {
+			String[] t = input.split(" ");
+			cpu = t[t.length-1];
+		}
+		
+		setTitle( dockstatus + " " + volts + "_volts cpu_ " + cpu + "%   " + version);
 
 	
 		/*	
@@ -453,8 +454,7 @@ public class SwingTerminal extends JFrame {
 				return;
 			}
 		}
-		
-		
+	
 		if( pause.isSelected()) {
 			messages.append(Util.getDateStampShort().replace("-", ":") + "\t" + input + "\n");
 			messages.setCaretPosition(messages.getDocument().getLength());
