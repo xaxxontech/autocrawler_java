@@ -601,18 +601,6 @@ developer</a> &gt;
 <!-- main menu non-admin -->
 <div id = "main_menu_nonadmin" style="display: none;">
 
-<a class="blackbg" href="javascript: chatdivShow();">chat</a><span
-id="chatdiv" style="display: none">:<br>&nbsp;
-<input id="chatbox_input" class="inputbox" type="text" size="30"
-onfocus="keyboard('disable'); this.style.backgroundColor='#000000';"
-onblur="keyboard('enable'); this.style.backgroundColor='#151515'; chatdivHide();"
-onKeyPress="if (keypress(event)==13) { chat(); }">
-<a class="blackbg" href="javascript: chatdivHide();">
-<span class="cancelbox"><b>X</b></span></a>&thinsp;
-<a class="blackbg" href="javascript: chat();" onmousedown="chat();">
-<span class="cancelbox">&#x2714;</span></a>
-</span><br>
-
 <a class="blackbg" href="javascript: account('change_password');">change password</a><br>
 <a class="blackbg" href="javascript: logout();">logout</a><br>
 </div>
@@ -783,6 +771,7 @@ Account Settings:<br>
 
 <table><tr><td style='height: 11px'></td></tr></table>
 
+<!--
 <a class="blackbg" href="javascript: chatdivShow();">chat</a><span
 id="chatdiv" style="display: none">:<br>&nbsp;
 <input id="chatbox_input" class="inputbox" type="text" size="30"
@@ -794,7 +783,10 @@ onKeyPress="if (keypress(event)==13) { chat(); }">
 <a class="blackbg" href="javascript: chat();" onmousedown="chat();">
 <span class="cancelbox">&#x2714;</span></a>
 </span><br>
+-->
+	
 </div>
+
 
 <!-- change username -->
 <div id="changeusername" style="display: none;">
@@ -1209,6 +1201,7 @@ onblur="keyboard('enable'); this.style.backgroundColor='#151515';">
 
 <!--  login -->
 <div id="login" style="display: none; line-height: 75px; padding-top: 50px; padding-left: 50px;">
+<div id="loginfailedmsg" style="color: red; visibility: hidden;">login failed</div>
 Login:<br>
 <table><tr>
 <td>username: </td>

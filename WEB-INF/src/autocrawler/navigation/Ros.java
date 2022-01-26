@@ -32,8 +32,9 @@ public class Ros {
 	private static double lastmapupdate = 0f;
 
 	public static File waypointsfile = new File(Settings.tomcathome + "/conf/waypoints.txt");
-	public static String mapfilename = "map.pgm";
-	public static String mapyamlname = "map.yaml";
+	public static final String MAPNAME = "map";
+	public static final String MAPFILENAME = MAPNAME+".pgm";
+	public static final String MAPYAMLNAME = MAPNAME+".yaml";
 
 	public static final String ROSPACKAGE = "autocrawler";
 	public static String rospackagedir;
@@ -45,15 +46,24 @@ public class Ros {
 	public static final String REMOTE_NAV = "remote_nav"; // nav
 	public static final String MAKE_MAP = "make_map"; // mapping
     public static final String MAKE_MAP_GMAPPING = "make_map_gmapping"; // mapping lidar + gmapping
-    public static final String MAKE_MAP_REALSENSE_GMAPPING = "make_map_realsense_gmapping"; // mapping realsense + gmapping TODO: NUKE
-	public static final String MAKE_MAP_REALSENSE_CARTOGRAPHER = "make_map_realsense_cartographer"; // mapping realsense + gmapping TODO: NUKE
     public static final String REALSENSE = "realsense"; // rgb and depthcam
 	public static final String RGBWEBRTC = "rgbwebrtc"; // gstreamer webrtc rgb
 	public static final String DOCKWEBRTC = "dockwebrtc"; // gstreamer dock cam webrtc and aruco detect
     public static final String RECORDVIDEO = "recordrs"; // node name, not launch file. Record video to file
 
-    // node file name constants
-    public static final String IMAGE_TO_SHM = "image_to_shm.py";
+	// node file name constants
+	public static final String IMAGE_TO_SHM = "image_to_shm.py";
+
+	// ros2 launched node process descriptors, for clean termination by PID search
+	public static final String[][] ROS2LAUNCHPROCESSES = {
+		{ RGBWEBRTC, "node:=webrtc_status_listener", "node:=webrtcrs" },
+		{ REALSENSE, "realsense2_camera_node", "base_to_realsense_broadcaster" },
+		{ DOCKWEBRTC, "base_to_dockcam_broadcaster", "node:=docktargettostate", "node:=webrtc_status_listener",
+			"usb_cam_node_exe", "aruco_detect", "node:=webrtcrs" },
+		{ IMAGE_TO_SHM, ROSPACKAGE+"/image_to_shm.py" }, // have to kill python3 command, not ros2 run command, for some reason
+        { MAKE_MAP, "node:=lidarbroadcast", "node:=odom_tf", "node:=map_remote", "node:=base_to_lidar_broadcaster",
+            "node:=cartogapher_node", "node:=occupancy_grid_node" }
+	};
 
     public static final String ROS1CMD = Settings.tomcathome +Util.sep+"ros1.sh";
 	public static final String ROS2CMD = Settings.tomcathome +Util.sep+"ros2.sh";
@@ -64,7 +74,7 @@ public class Ros {
 		String mapinfo[] = state.get(State.values.rosmapinfo).split(",");
 
 		if (map == null || Double.parseDouble(mapinfo[6]) > lastmapupdate) {
-			Util.log("Ros.rosmapImg(): fetching new map", "");
+//			Util.log("Ros.rosmapImg(): fetching new map", "");
 			map = updateMapImg();
 			lastmapupdate = Double.parseDouble(mapinfo[6]);
 		}
@@ -208,14 +218,6 @@ public class Ros {
 
 	public static String launch(List <String> strarray) {
 
-//		if(Settings.getReference().getBoolean(ManualSettings.debugenabled)) {
-//			int n=0;
-//			while (n < args.size()) {
-//				Util.debug("ros.launch: "+args.get(n), null);
-//				n++;
-//			}
-//		}
-
 		List <String> args = new ArrayList<>(strarray); // to prevent modifying original
 
         ProcessBuilder processBuilder = new ProcessBuilder();
@@ -249,7 +251,7 @@ public class Ros {
 		processBuilder.command(args);
 
         try {
-			Process proc = processBuilder.start();
+			processBuilder.start();
 		} catch (Exception e) { e.printStackTrace(); }
 
 		Util.debug("Ros.launch PString: "+pstring, "Ros.launch()");
@@ -262,7 +264,7 @@ public class Ros {
         List<String> items = new ArrayList<>();
 
         items.add("pkill");
-        items.add("-2");  // signal 2=SIGINT instead of default 15=SIGTERM
+		items.add("-2");  // signal 2=SIGINT instead of default 15=SIGTERM
         items.add("-f");
         items.add(str);
         Util.debug(items.get(3), "Ros.kill()");
@@ -273,6 +275,37 @@ public class Ros {
         catch (Exception e) { e.printStackTrace(); }
 
     }
+
+    public static void ros2kill(String str) {
+		int n = -1;
+		for (int i=0; i<ROS2LAUNCHPROCESSES.length; i++) {
+			if (ROS2LAUNCHPROCESSES[i][0].equals(str)) {
+				n = i;
+				break;
+			}
+		}
+
+		if (n == -1) return; // error
+
+		for (int i = 1; i < ROS2LAUNCHPROCESSES[n].length; i++) {
+
+			String[] pids = Util.getPIDs(ROS2LAUNCHPROCESSES[n][i]);
+
+			for (int r=0; r<pids.length; r++) {
+
+				String p = pids[r];
+
+				Util.log("terminating: " + ROS2LAUNCHPROCESSES[n][i] + ", " + p, "Ros.ros2kill(" + str + ")");
+
+				try {
+					Runtime.getRuntime().exec("kill -2 " + p);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+
+			}
+		}
+	}
 
 	public static void roscommand(String str) {
 	    Util.debug("Ros.java roscommand: "+str, null);
@@ -386,10 +419,36 @@ public class Ros {
 	public static String getRosPackageDir() {
 		try {
 
+			if (settings.getBoolean(ManualSettings.ros2)) {
+
+				String[] cmd = { "bash", "-ic", "ros2 pkg prefix "+ROSPACKAGE };
+				Process proc = Runtime.getRuntime().exec(cmd);
+				BufferedReader procReader = new BufferedReader(new InputStreamReader(proc.getInputStream()));
+				String dir = procReader.readLine();
+
+				dir = dir.substring(0, dir.indexOf("install"));
+                dir += "src"+Util.sep;
+
+                File d = new File(dir);
+                String[] packages = d.list();
+                String returndir = null;
+                for (String pkg : packages) {
+                    if (pkg.startsWith(ROSPACKAGE)) {
+                        returndir = dir + pkg;
+                        break;
+                    }
+                }
+
+                Util.log("ROS2 getRosPackageDir: "+returndir, "Ros.getRosPackageDir()");
+				return returndir;
+			}
+
+			// ros1
 			String[] cmd = { "bash", "-ic", "roscd "+ROSPACKAGE+" ; pwd" };
 			Process proc = Runtime.getRuntime().exec(cmd);
 			BufferedReader procReader = new BufferedReader(new InputStreamReader(proc.getInputStream()));
 			String str = procReader.readLine();
+			Util.log("ROS1 getRosPackageDir: "+str, "Ros.getRosPackageDir()");
 			return str;
 
 		} catch (Exception e) {
@@ -400,18 +459,18 @@ public class Ros {
 
 	public static void backUpMappgm() {
 		String mapfilepath = getMapFilePath();
-		File oldname = new File(mapfilepath+mapfilename);
+		File oldname = new File(mapfilepath+ MAPFILENAME);
 		if (oldname.exists()) {
-			File newname = new File(mapfilepath + Util.getDateStamp() + "_" + mapfilename);
+			File newname = new File(mapfilepath + Util.getDateStamp() + "_" + MAPFILENAME);
 			oldname.renameTo(newname);
 		}
 	}
 
 	public static void backUpYaml() {
 		String mapfilepath = getMapFilePath();
-		File oldname = new File(mapfilepath+mapyamlname);
+		File oldname = new File(mapfilepath+ MAPYAMLNAME);
 		if (oldname.exists()) {
-			File newname = new File(mapfilepath + Util.getDateStamp() + "_" + mapyamlname);
+			File newname = new File(mapfilepath + Util.getDateStamp() + "_" + MAPYAMLNAME);
 			oldname.renameTo(newname);
 		}
 	}
@@ -419,24 +478,32 @@ public class Ros {
 	public static boolean saveMap() {
 		try {
 			// nuke any existing files in root dir
-			Path sourcepath = Paths.get( Settings.tomcathome +Util.sep+mapfilename);
+			Path sourcepath = Paths.get( Settings.tomcathome +Util.sep+ MAPFILENAME);
 			if (Files.exists(sourcepath)) Files.delete(sourcepath);
-			sourcepath = Paths.get( Settings.tomcathome +Util.sep+mapyamlname);
+			sourcepath = Paths.get( Settings.tomcathome +Util.sep+ MAPYAMLNAME);
 			if (Files.exists(sourcepath)) Files.delete(sourcepath);
 
 			// call ros map_saver
-			String cmd =  ROS1CMD; // Settings.redhome+Util.sep+"ros.sh"; // setup ros environment
-//			cmd += " rosrun map_server map_saver";
-			cmd += " rosrun map_server map_saver --occ "+OCCUPIEDTHRESHOLD+" --free "+FREETHRESHOLD;
-			Util.systemCall(cmd);
+            if (settings.getBoolean(ManualSettings.ros2)) {
+                String cmd = ROS2CMD;
+                // ros2 run nav2_map_server map_saver_cli -f map
+                cmd += " ros2 run nav2_map_server map_saver_cli -f " + MAPNAME +
+                       " --occ 0." + OCCUPIEDTHRESHOLD + " --free 0." + FREETHRESHOLD;
+                Util.systemCall(cmd);
+            }
+            else {
+                String cmd = ROS1CMD; //  setup ros environment
+                cmd += " rosrun map_server map_saver --occ " + OCCUPIEDTHRESHOLD + " --free " + FREETHRESHOLD;
+                Util.systemCall(cmd);
+            }
 
 			// backup existing map files in ros map dir
 			backUpMappgm();
 			backUpYaml();
 
 			// move files from root to ros map dir
-			sourcepath = Paths.get( Settings.tomcathome +Util.sep+mapfilename);
-			Path destinationpath = Paths.get(getMapFilePath()+mapfilename);
+			sourcepath = Paths.get( Settings.tomcathome +Util.sep+ MAPFILENAME);
+			Path destinationpath = Paths.get(getMapFilePath()+ MAPFILENAME);
 
 			long timeout = System.currentTimeMillis() + 10000;
 			while (!Files.exists(sourcepath) && System.currentTimeMillis()< timeout) Util.delay(10);
@@ -445,10 +512,9 @@ public class Ros {
 				return false;
 			}
 			Files.move(sourcepath, destinationpath, StandardCopyOption.REPLACE_EXISTING);
-//			Files.delete(sourcepath);
 
-			sourcepath = Paths.get( Settings.tomcathome +Util.sep+mapyamlname);
-			destinationpath = Paths.get(getMapFilePath()+mapyamlname);
+			sourcepath = Paths.get( Settings.tomcathome +Util.sep+ MAPYAMLNAME);
+			destinationpath = Paths.get(getMapFilePath()+ MAPYAMLNAME);
 			timeout = System.currentTimeMillis() + 10000;
 			while (!Files.exists(sourcepath) && System.currentTimeMillis()< timeout) Util.delay(10);
 			if (!Files.exists(sourcepath)) {
@@ -456,7 +522,6 @@ public class Ros {
 				return false;
 			}
 			Files.move(sourcepath, destinationpath, StandardCopyOption.REPLACE_EXISTING);
-//			Files.delete(sourcepath);
 
 		} catch (Exception e) {
 			e.printStackTrace();

@@ -69,8 +69,8 @@ public class Video {
         lastbitrate = Long.parseLong(vals[3]);
 
         state.set(State.values.stream, Application.streamstate.stop.toString());
-        if (settings.getBoolean(ManualSettings.ros2))
-            STREAM_CONNECT_DELAY = 5000;
+//        if (settings.getBoolean(ManualSettings.ros2))
+//            STREAM_CONNECT_DELAY = 5000;
 
         File theDir = new File(Settings.streamfolder);
         if (!theDir.exists()){
@@ -211,7 +211,6 @@ public class Video {
                                 "turnserverlogin:=--turnserver-login="+settings.readSetting(ManualSettings.turnserverlogin)
                         ));
 
-                        webrtcStatusListener(webrtccmdarray, mode.toString());
                         webrtcpstring = Ros.launch(webrtccmdarray);
                     }
 
@@ -222,7 +221,7 @@ public class Video {
                     if (realsensepstring == null) {
                         realsensepstring = Ros.launch(new ArrayList<String>(Arrays.asList(Ros.REALSENSE,
                             "color_width:="+lastwidth, "color_height:="+lastheight, "color_fps:="+lastfps,
-                            "enable_depth:=false", "initial_reset:=true")));
+                            "enable_depth:=false", "initial_reset:=false")));
                     }
 
                     if (state.exists(values.driverclientid)) {
@@ -238,7 +237,7 @@ public class Video {
                                 "turnserverlogin:=--turnserver-login="+settings.readSetting(ManualSettings.turnserverlogin)
                         ));
 
-                        webrtcStatusListener(webrtccmdarray, mode.toString());
+//                        webrtcStatusListener(webrtccmdarray, mode.toString());
                         webrtcpstring = Ros.launch(webrtccmdarray);
                     }
 
@@ -343,6 +342,7 @@ public class Video {
 
     }
 
+    // TODO: UNUSED, never really helped, check js then nuke
     // restart webrtc connection, called by javascript for periodic webkit connect failure
     public void webrtcRestart() {
         new Thread(new Runnable() { public void run() {
@@ -458,11 +458,18 @@ public class Video {
 
             state.set(State.values.writingframegrabs, true);
 
-            // run ros node
-            String topic = "camera/color/image_raw";
-//            if (state.getBoolean(values.dockcamon)) topic = "fiducial_images";
-            if (state.getBoolean(values.dockcamon)) topic = "usb_cam/image_raw";
-            Ros.roscommand("rosrun "+Ros.ROSPACKAGE+" "+ Ros.IMAGE_TO_SHM+" _camera_topic:="+topic);
+            // ros1 realsense: /camera/color/image_raw
+            // ros1 dockcam:  /usb_cam/image_raw
+            // ros2 realsese: /color/image_raw
+            // ros2 dockcam: /image_raw
+
+            if (settings.getBoolean(ManualSettings.ros2))
+                Ros.roscommand("ros2 run "+ Ros.ROSPACKAGE + " "+Ros.IMAGE_TO_SHM);
+            else {
+                String topic = "camera/color/image_raw";
+                if (state.getBoolean(values.dockcamon)) topic = "usb_cam/image_raw";
+                Ros.roscommand("rosrun " + Ros.ROSPACKAGE + " " + Ros.IMAGE_TO_SHM + " _camera_topic:=" + topic);
+            }
 
             while(state.exists(State.values.writingframegrabs)
                     && System.currentTimeMillis() - lastframegrab < Util.ONE_MINUTE) {
@@ -470,8 +477,12 @@ public class Video {
             }
 
             state.delete(State.values.writingframegrabs);
+
             // kill ros node
-            Ros.roscommand("rosnode kill /image_to_shm");
+            if (settings.getBoolean(ManualSettings.ros2))
+                Ros.ros2kill(Ros.IMAGE_TO_SHM);
+            else
+                Ros.roscommand("rosnode kill /image_to_shm");
 
         } }).start();
 
@@ -661,15 +672,26 @@ public class Video {
                 if (state.exists(values.driverclientid))
                     peerid = state.get(values.driverclientid);
 
+//                webrtcpstring = Ros.launch(new ArrayList<String>(Arrays.asList(Ros.DOCKWEBRTC,
+//                        "peerid:="+peerid,
+//                        "webrtcserver:=wss://"+settings.readSetting(ManualSettings.webrtcserver)+":"
+//                                +settings.readSetting(ManualSettings.webrtcport),
+//                        "dockdevice:=/dev/video" + dockcamdevicenum,
+//                        "turnserverport:="+settings.readSetting(ManualSettings.turnserverport),
+//                        "turnserverlogin:="+settings.readSetting(ManualSettings.turnserverlogin),
+//                        "dockoffset:="+settings.readSetting(ManualSettings.dockoffset)
+//                )));
+
+
                 webrtcpstring = Ros.launch(new ArrayList<String>(Arrays.asList(Ros.DOCKWEBRTC,
-                        "peerid:="+peerid,
-                        "webrtcserver:=wss://"+settings.readSetting(ManualSettings.webrtcserver)+":"
+                        "peerid:=--peer-id=" + peerid,
+                        "webrtcserver:=--server=wss://"+settings.readSetting(ManualSettings.webrtcserver)+":"
                                 +settings.readSetting(ManualSettings.webrtcport),
-                        "dockdevice:=/dev/video" + dockcamdevicenum,
-                        "turnserverport:="+settings.readSetting(ManualSettings.turnserverport),
-                        "turnserverlogin:="+settings.readSetting(ManualSettings.turnserverlogin),
-                        "dockoffset:="+settings.readSetting(ManualSettings.dockoffset)
+                        "turnserverport:=--turnserver-port="+settings.readSetting(ManualSettings.turnserverport),
+                        "turnserverlogin:=--turnserver-login="+settings.readSetting(ManualSettings.turnserverlogin),
+                        "dockdevice:=/dev/video" + dockcamdevicenum
                 )));
+
 
                 state.set(State.values.controlsinverted, true);
 
@@ -679,18 +701,20 @@ public class Video {
             } }).start();
 
         }
+
         else if ( (str.equalsIgnoreCase(Settings.OFF) || str.equalsIgnoreCase(Settings.DISABLED)) &&
                 state.getBoolean(values.dockcamon)) { // turn off
 
             if (state.exists(State.values.driver))
                 app.driverCallServer(PlayerCommands.clientjs, "dockview off");
 
+            killwebrtc();
+
             state.set(values.dockcamon, false);
             state.delete(values.dockcamready);
 
             state.set(State.values.controlsinverted, false);
             app.driverCallServer(PlayerCommands.streammode, Application.streamstate.stop.toString());
-            killwebrtc();
 
             forceShutdownFrameGrabs();
 
@@ -700,16 +724,25 @@ public class Video {
 
     public void killrealsense() {
         if (realsensepstring != null && !state.get(State.values.navsystemstatus).equals(Ros.navsystemstate.running.toString())) {
-            Ros.kill(realsensepstring);
+            if (settings.getBoolean(ManualSettings.ros2))
+                Ros.ros2kill(Ros.REALSENSE);
+            else
+                Ros.kill(realsensepstring);
             realsensepstring = null;
-//            Ros.roscommand("rosnode kill /camera/realsense2_camera_manager");
         }
     }
 
 
     private void killwebrtc() {
         if (webrtcpstring != null) {
-            Ros.kill(webrtcpstring);
+            if (settings.getBoolean(ManualSettings.ros2)) {
+                if (state.getBoolean(values.dockcamon))
+                    Ros.ros2kill(Ros.DOCKWEBRTC);
+                else
+                    Ros.ros2kill(Ros.RGBWEBRTC);
+            }
+            else
+                Ros.kill(webrtcpstring);
             webrtcpstring = null;
         }
     }

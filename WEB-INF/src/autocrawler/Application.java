@@ -602,7 +602,7 @@ public class Application implements ServletContextListener {
                 sendplayerfunction(arr[0], arr[1]);
             break;
 
-        case webrtcrestart:
+        case webrtcrestart: // TODO: unused, never really helped
             video.webrtcRestart();
             break;
 

@@ -24,7 +24,7 @@ var ctroffset = 0;
 var ctroffsettemp;
 var connected = false;
 var logintimeout = 5000; 
-var logintimer; // timer
+//var logintimer;  
 var username;
 var streammode = "stop";
 var streamdetails = [];
@@ -83,7 +83,7 @@ function loaded() {
 	commClientLoaded(); 
 	if (/auth=/.test(document.cookie)) { 
 		commLoginFromCookie(); 
-		logintimer = setTimeout("eraseCookie('auth'); window.location.reload()", logintimeout);
+		//logintimer = setTimeout("eraseCookie('auth'); window.location.reload()", logintimeout);
 	}
 	else login(); // user input goes out thru commLogin() below
 	videologo("on");
@@ -216,6 +216,7 @@ function checkforstatusreceived() {
 }
 
 function connectionlost() {
+	if (!connected) return;
 	setstatus("connection","<span style='color: red;'>CLOSED</span>");
 	document.title = "closed";
 	connected = false;
@@ -367,13 +368,19 @@ function setstatus(status, value) {
 	}
 	
 	if (status=="vidctroffset") { ctroffset = parseInt(value); }
-	else if (status=="connection" && (value == "connected" || value == "relay") && !connected) { // loggin OK, initialize
-		document.getElementById("visiblepage").style.display="";
+	else if (status=="connection" && value == "connected" && !connected) { // login OK, initialize
+		document.getElementById("login").style.display = "none";
+		document.getElementById("visiblepage").style.display = "";
+
 		countdowntostatuscheck(); 
 		connected = true;
 		keyboard("enable");
-		clearTimeout(logintimer);
-		if (value == "relay") { relay = true; }
+		//clearTimeout(logintimer);
+	}
+	else if (status=="connection" && value == "denied") {
+		eraseCookie("auth");
+		login();
+		document.getElementById("loginfailedmsg").style.visibility = "visible";
 	}
 	else if (status == "storecookie") {
 		createCookie("auth",value,30); 
@@ -1390,21 +1397,21 @@ function eraseCookie(name) {
 	createCookie(name,"",-1);
 }
 
-function loginfromcookie() {
-	var str = ""; 
-	str = readCookie("auth");
-	logintimer = setTimeout("eraseCookie('auth'); window.location.reload()", logintimeout);
-}
+// TODO: nuke
+//function loginfromcookie() {
+	//var str = ""; 
+	//str = readCookie("auth");
+	//logintimer = setTimeout("eraseCookie('auth'); window.location.reload()", logintimeout);
+//}
 
 function login() {
 	document.getElementById("visiblepage").style.display = "none";
 	document.getElementById("login").style.display = "";
+	document.getElementById("loginfailedmsg").style.visibility = "hidden";
 	document.getElementById("user").focus();	
 }
 
 function loginsend() {
-	document.getElementById("login").style.display = "none";
-	document.getElementById("visiblepage").style.display = "";
 
 	var str1= document.getElementById("user").value;
 	var str2= document.getElementById("pass").value;
@@ -1414,7 +1421,6 @@ function loginsend() {
 	
 	commLogin(str1, str2, str3);
 
-	logintimer = setTimeout("window.location.reload()", logintimeout);
 }
 
 function logout() {

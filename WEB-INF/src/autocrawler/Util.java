@@ -11,12 +11,9 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.Locale;
-import java.util.Vector;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -217,23 +214,63 @@ public class Util {
 		Settings.getReference().writeSettings(GUISettings.volume.name(), percent);
 	}
 
-	public static synchronized long getPIDOfProcess(Process p) {
-		long pid = -1;
+
+	// return 1st PID as string as result of ps xa | grep searchstring
+	// NOTE: will return false PID if process doesn't exist, since grep returns its own process
+	public static String getPID(String searchstring) {
+
+		String pid = null;
 
 		try {
-			if (p.getClass().getName().equals("java.lang.UNIXProcess")) {
-				Field f = p.getClass().getDeclaredField("pid");
-				f.setAccessible(true);
-				pid = f.getLong(p);
-				f.setAccessible(false);
-			}
+
+			Runtime rt = Runtime.getRuntime();
+			String[] cmd = { "/bin/sh", "-c", "ps ax | grep "+searchstring };
+			Process proc = rt.exec(cmd);
+			BufferedReader is = new BufferedReader(new InputStreamReader(proc.getInputStream()));
+			String line = is.readLine();
+
+			Matcher m = Pattern.compile("\\d+").matcher(line);
+			m.find();
+			pid = m.group();
+
 		} catch (Exception e) {
-			pid = -1;
-			printError(e);
+			e.printStackTrace();
 		}
-		Util.debug("pid returned = "+pid, "Util.getPIDOfProcess");
+
 		return pid;
 	}
+
+	// return all PID as string as result of ps xa | grep searchstring
+	// NOTE: will skip self spawning 'grep' processes
+	public static String[] getPIDs(String searchstring) {
+
+		ArrayList<String> pids = new ArrayList();
+
+		try {
+
+			Runtime rt = Runtime.getRuntime();
+			String[] cmd = { "/bin/sh", "-c", "ps ax | grep "+searchstring };
+			Process proc = rt.exec(cmd);
+			BufferedReader is = new BufferedReader(new InputStreamReader(proc.getInputStream()));
+
+			String line;
+			while ((line = is.readLine()) != null) {
+
+				Matcher m = Pattern.compile("\\d+").matcher(line);
+				if (m.find() && !line.contains("grep "+searchstring)) {
+					pids.add(m.group());
+//					System.out.println(line);
+				}
+			}
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		return pids.toArray(new String[pids.size()]);
+
+	}
+
 
 	public static String readUrlToString(String urlString) {
 		try {

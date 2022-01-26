@@ -4,7 +4,7 @@ var msgsrcvd = 0;
 var msgPollTimeout = null;
 var initiallogin = false;
 var commclientid = null;
-var commclientdebug = false;
+var COMMCLIENTDEBUG = false;
 
 
 function commClientLoaded() {
@@ -166,5 +166,5 @@ function postxmlhttp(theurl, data) {
 }
 
 function comm_client_log(str) {
-	if (commclientdebug) console.log(str);
+	if (COMMCLIENTDEBUG) console.log(str);
 }

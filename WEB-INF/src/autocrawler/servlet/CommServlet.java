@@ -26,6 +26,8 @@ public class CommServlet extends HttpServlet {
 	private static final String RESP = "ok";
 	public static String clientaddress = null;
 	volatile long clientID = 0;
+	static final long LOGINDELAY = 5000;
+	volatile long lastloginattempt = 0;
 
 
 	public static void setApp(Application a) { app = a; }
@@ -48,12 +50,15 @@ public class CommServlet extends HttpServlet {
 			reset(request);
 
             String cookie = getPostData(request);
-			logdebug("logincookie: "+cookie, this);
+            logdebug("logincookie: "+cookie, this);
+
+            if (System.currentTimeMillis() - lastloginattempt < LOGINDELAY) return;
+
 		    String username = app.logintest("", cookie);
+
             if(username == null) {
-            	logdebug("logincookie: sending SC_FORBIDDEN", this);
-            	response.sendError(HttpServletResponse.SC_FORBIDDEN);
-            	return;
+                loginfail(request, response);
+                return;
             }
 
             clientaddress = request.getRemoteAddr();
@@ -69,15 +74,15 @@ public class CommServlet extends HttpServlet {
 			reset(request);
 
 		    logdebug("loginpass: "+request.getParameter("loginpass"), this);
+
+            if (System.currentTimeMillis() - lastloginattempt < LOGINDELAY) return;
+
             String username = app.logintest(request.getParameter(params.loginuser.toString()),
 					request.getParameter(params.loginpass.toString()), request.getParameter(params.loginremember.toString()));
+
             if(username == null) {
-            	
-            	// login fail
-            	ban.loginFailed(request.getLocalAddr());
-				logdebug("username=null, loginuser: sending SC_FORBIDDEN", this);
-            	response.sendError(HttpServletResponse.SC_FORBIDDEN);
-            	return;
+                loginfail(request, response);
+                return;
             }
 
 			clientaddress = request.getRemoteAddr();
@@ -138,6 +143,23 @@ public class CommServlet extends HttpServlet {
 		}
 
 	}
+
+	void loginfail(HttpServletRequest request, HttpServletResponse response) {
+
+        lastloginattempt = System.currentTimeMillis();
+
+        JSONObject obj = new JSONObject();
+        obj.put("str", "");
+        obj.put("colour", "green");
+        obj.put("status", "connection");
+        obj.put("value", "denied");
+        String msg = obj.toJSONString();
+
+        msgFromServer.add(msg);
+        sendServerMessage(response);
+        app.messageplayer("", "connection", "denied");
+        ban.loginFailed(request.getLocalAddr());
+    }
 
 
 	void sendServerMessage(HttpServletResponse response) {

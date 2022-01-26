@@ -132,44 +132,6 @@ public class Navigation implements Observer {
 
             if (str.equals("gmapping")) navpstring = Ros.launch(Ros.MAKE_MAP_GMAPPING);
 
-            else if (str.equals("realsensegmapping")) { // TODO: nuke, sensor inadequate for mapping
-                app.driverCallServer(PlayerCommands.cameracommand, Malg.cameramove.horiz.toString());
-
-                // stop any current video
-                String currentstream = videoRestartRequiredBlocking();
-
-                // launch remote_nav.launch
-                navpstring = Ros.launch(Ros.MAKE_MAP_REALSENSE_GMAPPING);
-
-                // launch realsense with RGB and depth
-                String vals[] = settings.readSetting(settings.readSetting(GUISettings.vset)).split("_");
-                app.video.realsensepstring = Ros.launch(new ArrayList<String>(Arrays.asList(Ros.REALSENSE,
-                        "color_width:=" + vals[0], "color_height:=" + vals[1], "color_fps:=" + vals[2],
-                        "enable_depth:=true", "initial_reset:=true")));
-
-                // re-launch stream-to-client if there was current video
-                if (currentstream != null) app.driverCallServer(PlayerCommands.publish, currentstream);
-            }
-
-			else if (str.equals("realsensecartographer")) { // TODO: nuke, sensor inadequate for mapping
-				app.driverCallServer(PlayerCommands.cameracommand, Malg.cameramove.horiz.toString());
-
-				// stop any current video
-				String currentstream = videoRestartRequiredBlocking();
-
-				// launch remote_nav.launch
-				navpstring = Ros.launch(Ros.MAKE_MAP_REALSENSE_CARTOGRAPHER);
-
-				// launch realsense with RGB and depth
-				String vals[] = settings.readSetting(settings.readSetting(GUISettings.vset)).split("_");
-				app.video.realsensepstring = Ros.launch(new ArrayList<String>(Arrays.asList(Ros.REALSENSE,
-						"color_width:=" + vals[0], "color_height:=" + vals[1], "color_fps:=" + vals[2],
-						"enable_depth:=true", "initial_reset:=true")));
-
-				// re-launch stream-to-client if there was current video
-				if (currentstream != null) app.driverCallServer(PlayerCommands.publish, currentstream);
-			}
-
             else navpstring = Ros.launch(Ros.MAKE_MAP);
 
             app.driverCallServer(PlayerCommands.messageclients, "starting mapping "+str+" please wait");
@@ -234,12 +196,21 @@ public class Navigation implements Observer {
                 state.get(State.values.navsystemstatus).equals(Ros.navsystemstate.stopping.toString()) )
             return;
 
-        if (!state.get(values.navsystemstatus).equals(Ros.navsystemstate.mapping.toString())) {
-            Ros.kill(app.video.realsensepstring);
-            Ros.roscommand("rosnode kill /camera/realsense2_camera_manager");
+        if (!state.get(values.navsystemstatus).equals(Ros.navsystemstate.mapping.toString())) { // nav
+			if (!settings.getBoolean(ManualSettings.ros2)) {
+				Ros.kill(app.video.realsensepstring);
+				Ros.roscommand("rosnode kill /camera/realsense2_camera_manager");
+
+				if (navpstring !=null) Ros.kill(navpstring);
+				app.video.realsensepstring = null;
+			}
+			else {} // TODO: ros2
         }
-        else { // mapping often requires ros restart after
-			Util.systemCall("pkill roscore");
+        else { // mapping
+			if (!settings.getBoolean(ManualSettings.ros2))
+				Util.systemCall("pkill roscore"); // mapping often requires ros1 restart after
+			else
+				Ros.ros2kill(Ros.MAKE_MAP);
 		}
 
         if (!state.get(values.stream).equals(Application.streamstate.stop.toString())
@@ -250,12 +221,7 @@ public class Navigation implements Observer {
         Util.log("stopping navigation", this);
         app.driverCallServer(PlayerCommands.messageclients, "navigation stopped");
 
-        if (navpstring !=null) Ros.kill(navpstring);
         navpstring = null;
-        app.video.realsensepstring = null;  
-
-//        Ros.roscommand("rosnode kill /remote_nav");
-//        Ros.roscommand("rosnode kill /map_remote");
 
     }
 

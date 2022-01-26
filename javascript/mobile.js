@@ -4,8 +4,7 @@ var PINGINTERVAL = 5000;
 var webrtcinit = false;
 var mobile;
 var lastcommand="";
-var logintimer;
-var LOGINTIMEOUT = 5000;
+var mobileconnected = false;
 var menus = [ "main_menu", "advanced_menu", "command_log_menu", "navigation_menu", "waypoints_menu",
 	"routes_menu", "developer_menu", "map_menu" ];
 
@@ -26,7 +25,6 @@ function mobileloaded() { // called by body onload
 	
 	if (/auth=/.test(document.cookie)) {
 		commLoginFromCookie(); 
-		logintimer = setTimeout("eraseCookie('auth'); window.location.reload()", LOGINTIMEOUT);
 	}
 	else login();
 }
@@ -38,8 +36,9 @@ function driverexit() { // called by body unload
 
 
 function login() {
-	
+	mobileconnected = false;
 	logindisplay("on");
+	document.getElementById("loginfailedmsg").style.visibility = "hidden";
 	document.getElementById("user").focus();	
 }
 
@@ -57,8 +56,6 @@ function loginsend() {
 	else { eraseCookie("auth"); }
 	
 	commLogin(str1, str2, str3); // comm_client.js
-	
-	logindisplay("off");
 }
 
 function logindisplay(state) {
@@ -140,9 +137,14 @@ function setstatus(status, value) {
 	else if (status == "connection") {
 		if (value == "closed") connectionlost();
 		else if (value == "connected") { 
-			document.getElementById("login").style.display = "none";
+			mobileconnected = true;
+			logindisplay("off");
 			videologo("on");
-			clearTimeout(logintimer);
+		}
+		else if (value == "denied") {
+			eraseCookie("auth");
+			login();
+			document.getElementById("loginfailedmsg").style.visibility = "visible";
 		}
 	}
 
@@ -275,6 +277,8 @@ function keypress(e) {
 }
 
 function connectionlost() {
+	if (!mobileconnected) return;
+	
 	document.title = "closed";
 	connected = false;
 	clearTimeout(pingtimer);

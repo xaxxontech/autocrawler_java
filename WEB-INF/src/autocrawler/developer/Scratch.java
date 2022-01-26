@@ -1,10 +1,12 @@
 package autocrawler.developer;
 
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
+import java.io.File;
+import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 
 public class Scratch {
@@ -36,14 +38,24 @@ public class Scratch {
     public static void main(String[] args) {
 //        new Scratch().regexp();
 
-        try {
-            String[] cmd = {"/bin/bash", "-c", "roscd autocrawler ; pwd"};
-            Process proc = Runtime.getRuntime().exec(cmd);
-            BufferedReader procReader = new BufferedReader(new InputStreamReader(proc.getInputStream()));
-            String str = procReader.readLine();
-            System.out.println(str);
+        ArrayList myList = new ArrayList();
+        myList.add("asdf");
+        myList.add(null);
+        System.out.println(myList.size());
+        String[] asdf = {"asdf", "fdsa", "sdfgg"};
+        if (asdf.length == 0)
+            asdf = null;
 
-        } catch (Exception e) { e.printStackTrace(); }
+//        try {
+//            File d = new File("/home/auto/ros2_ws/");
+//            String[] pathnames = d.list();
+//            for (String pathname : pathnames) {
+//                // Print the names of files and directories
+//                System.out.println(pathname);
+//            }
+//
+//
+//        } catch (Exception e) { e.printStackTrace(); }
 
 
     }

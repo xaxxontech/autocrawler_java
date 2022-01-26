@@ -258,6 +258,7 @@ function onRemoteTrack(event) {
     }
 }
 
+// TODO: currently unused, never really did help
 function checkvideoState(event) {
 	var state = getVideoElement().readyState;
 	webrtc_logdebug("getVideoElement().readyState="+state);

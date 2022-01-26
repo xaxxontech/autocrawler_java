@@ -81,7 +81,7 @@ public class FrameGrabHTTP extends HttpServlet {
 			else if (mode.equals("rosmapdownload")) {
 				res.setContentType("image/x-portable-graymap");
 				res.setHeader("Content-Disposition", "attachment; filename=\"map.pgm\"");
-				FileInputStream a = new FileInputStream(Ros.getMapFilePath()+Ros.mapfilename);
+				FileInputStream a = new FileInputStream(Ros.getMapFilePath()+Ros.MAPFILENAME);
 				while(a.available() > 0)
 					res.getWriter().append((char)a.read());
 				a.close();
@@ -97,7 +97,7 @@ public class FrameGrabHTTP extends HttpServlet {
 					return;
 				}
 
-				File save = new File(Ros.getMapFilePath(), Ros.mapfilename );
+				File save = new File(Ros.getMapFilePath(), Ros.MAPFILENAME);
 				Ros.backUpMappgm();
 				part.write(save.getAbsolutePath());
 				app.message("map saved as: " + save.getAbsolutePath(), null, null);
